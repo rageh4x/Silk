@@ -5,6 +5,7 @@ import com.volt.mixin.MinecraftClientAccessor;
 import com.volt.module.Category;
 import com.volt.module.Module;
 import com.volt.module.setting.BooleanSetting;
+import com.volt.module.setting.ModeSetting;
 import com.volt.module.setting.NumberSetting;
 import com.volt.utils.friend.FriendManager;
 import com.volt.utils.math.TimerUtil;
@@ -15,6 +16,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.AxeItem;
 import net.minecraft.item.Items;
 import net.minecraft.util.hit.EntityHitResult;
+import org.lwjgl.glfw.GLFW;
 
 public final class ShieldBreaker extends Module {
     public static boolean breakingShield = false;
@@ -24,6 +26,7 @@ public final class ShieldBreaker extends Module {
     private final NumberSetting attackDelay = new NumberSetting("Attack Delay", 0, 500, 50, 10);
     private final NumberSetting swapBackDelay = new NumberSetting("Swap Back Delay", 0, 500, 100, 10);
 
+    private final ModeSetting mode = new ModeSetting("Mode", "Auto", "Auto", "OnHit");
     private final BooleanSetting revertSlot = new BooleanSetting("Revert Slot", true);
     private final BooleanSetting rayTraceCheck = new BooleanSetting("Check Facing", true);
     private final BooleanSetting disableIfUsingItem = new BooleanSetting("Disable if using item", true);
@@ -38,7 +41,7 @@ public final class ShieldBreaker extends Module {
 
     public ShieldBreaker() {
         super("Shield Breaker", "Automatically breaks the opponent's shield", -1, Category.COMBAT);
-        this.addSettings(reactionDelay, swapDelay, attackDelay, swapBackDelay,
+        this.addSettings(mode, reactionDelay, swapDelay, attackDelay, swapBackDelay,
                 revertSlot, rayTraceCheck, disableIfUsingItem, ignoreFriends);
     }
 
@@ -53,8 +56,10 @@ public final class ShieldBreaker extends Module {
 
         boolean isBlocking = target.isBlocking() && target.isHolding(Items.SHIELD);
         boolean canBreak = !rayTraceCheck.getValue() || !CombatUtil.isShieldFacingAway(target);
+        boolean mousePressed = GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        boolean shouldActivate = mode.getMode().equals("Auto") || (mode.getMode().equals("OnHit") && mousePressed);
 
-        if (isBlocking && canBreak) {
+        if (isBlocking && canBreak && shouldActivate) {
             if (!(mc.player.getMainHandStack().getItem() instanceof AxeItem)) {
                 if (reactionTimer.hasElapsedTime(reactionDelay.getValueInt())) {
                     if (savedSlot == -1 && swapTimer.hasElapsedTime(swapDelay.getValueInt())) {
