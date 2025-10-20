@@ -4,7 +4,6 @@ import com.volt.event.impl.player.TickEvent;
 import com.volt.mixin.MinecraftClientAccessor;
 import com.volt.module.Category;
 import com.volt.module.Module;
-import com.volt.module.setting.BooleanSetting;
 import com.volt.module.setting.KeybindSetting;
 import com.volt.module.setting.NumberSetting;
 import com.volt.utils.keybinding.KeyUtils;
@@ -16,120 +15,92 @@ import org.lwjgl.glfw.GLFW;
 
 public final class PearlCatch extends Module {
     private final KeybindSetting pearlChargeKeybind = new KeybindSetting("Pearl Charge Key", GLFW.GLFW_KEY_H, true);
-    private final BooleanSetting silentMode = new BooleanSetting("Silent", true);
-    private final NumberSetting windDelayMs = new NumberSetting("Wind Delay (ms)", 0, 2000, 200, 1);
+    private final NumberSetting windDelay = new NumberSetting("Wind Delay", 0, 2000, 200, 1);
+    private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 0, 500, 50, 10);
 
     private final TimerUtil pearlDelayTimer = new TimerUtil();
+    private final TimerUtil switchTimer = new TimerUtil();
     private boolean keyPressed = false;
     private boolean pearlThrown = false;
     private int originalSlot = -1;
-    private boolean needsSlotRestore = false;
+    private boolean needsSwitchBack = false;
 
     public PearlCatch() {
         super("Pearl Catch", "Throws pearl then windcharge", -1, Category.MISC);
-        this.addSettings(pearlChargeKeybind, silentMode, windDelayMs);
+        this.addSettings(pearlChargeKeybind, windDelay, switchDelay);
         this.getSettings().removeIf(setting -> setting instanceof KeybindSetting && !setting.equals(pearlChargeKeybind));
     }
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
-        if (isNull()) return;
-        if (mc.currentScreen != null) return;
+        if (isNull() || mc.currentScreen != null) return;
 
         boolean currentKeyState = KeyUtils.isKeyPressed(pearlChargeKeybind.getKeyCode());
 
         if (currentKeyState && !keyPressed) {
-            handlePearlChargeSequence();
+            throwPearl();
         }
 
-        if (pearlThrown && pearlDelayTimer.hasElapsedTime(windDelayMs.getValueInt())) {
+        if (pearlThrown && pearlDelayTimer.hasElapsedTime(windDelay.getValueInt())) {
             throwWindCharge();
             pearlThrown = false;
         }
 
-        if (needsSlotRestore && originalSlot != -1) {
+        if (needsSwitchBack && switchTimer.hasElapsedTime(switchDelay.getValueInt())) {
             mc.player.getInventory().selectedSlot = originalSlot;
-            needsSlotRestore = false;
+            needsSwitchBack = false;
             originalSlot = -1;
         }
 
         keyPressed = currentKeyState;
     }
 
-    private void handlePearlChargeSequence() {
-        int pearlSlot = findPearlInHotbar();
+    private void throwPearl() {
+        int pearlSlot = findPearlSlot();
         if (pearlSlot == -1) return;
 
-        if (silentMode.getValue()) {
-            throwPearlSilently(pearlSlot);
-        } else {
-            throwPearlNormally(pearlSlot);
+        if (mc.player.getItemCooldownManager().isCoolingDown(Items.ENDER_PEARL)) {
+            return;
         }
+
+        originalSlot = mc.player.getInventory().selectedSlot;
+        mc.player.getInventory().selectedSlot = pearlSlot;
+        mc.player.swingHand(Hand.MAIN_HAND);
+        ((MinecraftClientAccessor) mc).invokeDoItemUse();
+        needsSwitchBack = true;
+        switchTimer.reset();
 
         pearlThrown = true;
         pearlDelayTimer.reset();
     }
 
-    private void throwWindChargeSilently(int windChargeSlot) {
-        originalSlot = mc.player.getInventory().selectedSlot;
-        mc.player.getInventory().selectedSlot = windChargeSlot;
-
-        ((MinecraftClientAccessor) mc).invokeDoItemUse();
-
-        needsSlotRestore = true;
-    }
-
-    private void throwWindChargeNormally(int windChargeSlot) {
-        originalSlot = mc.player.getInventory().selectedSlot;
-        mc.player.getInventory().selectedSlot = windChargeSlot;
-
-        ((MinecraftClientAccessor) mc).invokeDoItemUse();
-
-        needsSlotRestore = true;
-    }
-
     private void throwWindCharge() {
-        int windChargeSlot = findWindChargeInHotbar();
+        int windChargeSlot = findWindChargeSlot();
         if (windChargeSlot == -1) return;
 
-        if (silentMode.getValue()) {
-            throwWindChargeSilently(windChargeSlot);
-        } else {
-            throwWindChargeNormally(windChargeSlot);
+        if (mc.player.getItemCooldownManager().isCoolingDown(Items.WIND_CHARGE)) {
+            return;
         }
-    }
 
-    private void throwPearlSilently(int pearlSlot) {
-        int currentSlot = mc.player.getInventory().selectedSlot;
-        mc.player.getInventory().selectedSlot = pearlSlot;
-
-        mc.player.swingHand(Hand.MAIN_HAND);
+        originalSlot = mc.player.getInventory().selectedSlot;
+        mc.player.getInventory().selectedSlot = windChargeSlot;
         ((MinecraftClientAccessor) mc).invokeDoItemUse();
-
-        mc.player.getInventory().selectedSlot = currentSlot;
+        needsSwitchBack = true;
+        switchTimer.reset();
     }
 
-    private void throwPearlNormally(int pearlSlot) {
-        mc.player.getInventory().selectedSlot = pearlSlot;
-
-        mc.player.swingHand(Hand.MAIN_HAND);
-        ((MinecraftClientAccessor) mc).invokeDoItemUse();
-    }
-
-    private int findWindChargeInHotbar() {
+    private int findPearlSlot() {
         for (int i = 0; i < 9; i++) {
-            var stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty() && stack.getItem() == Items.WIND_CHARGE) {
+            if (mc.player.getInventory().getStack(i).getItem() == Items.ENDER_PEARL) {
                 return i;
             }
         }
         return -1;
     }
 
-    private int findPearlInHotbar() {
+    private int findWindChargeSlot() {
         for (int i = 0; i < 9; i++) {
-            var stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty() && stack.getItem() == Items.ENDER_PEARL) {
+            if (mc.player.getInventory().getStack(i).getItem() == Items.WIND_CHARGE) {
                 return i;
             }
         }
@@ -141,15 +112,15 @@ public final class PearlCatch extends Module {
         keyPressed = false;
         pearlThrown = false;
         originalSlot = -1;
-        needsSlotRestore = false;
+        needsSwitchBack = false;
         pearlDelayTimer.reset();
+        switchTimer.reset();
         super.onEnable();
     }
 
     @Override
     public void onDisable() {
         pearlThrown = false;
-        needsSlotRestore = false;
         super.onDisable();
     }
 

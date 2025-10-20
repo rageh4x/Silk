@@ -1,6 +1,5 @@
 package com.volt.module.modules.misc;
 
-
 import com.volt.event.impl.player.TickEvent;
 import com.volt.mixin.MinecraftClientAccessor;
 import com.volt.module.Category;
@@ -16,127 +15,76 @@ import org.lwjgl.glfw.GLFW;
 
 public final class WindChargeKey extends Module {
     private final KeybindSetting windChargeKeybind = new KeybindSetting("Wind Charge Key", GLFW.GLFW_KEY_G, true);
-    private final NumberSetting switchDelayMS = new NumberSetting("Switch Delay (MS)", 1, 500, 50, 1);
-    private final NumberSetting throwDelayMS = new NumberSetting("Throw Delay (MS)", 50, 1000, 200, 25);
-    private final BooleanSetting silentMode = new BooleanSetting("Silent", false);
+    private final NumberSetting throwDelay = new NumberSetting("Throw Delay", 50, 1000, 200, 25);
+    private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 0, 500, 50, 10);
     private final BooleanSetting autoJump = new BooleanSetting("Auto Jump", true);
-    private final NumberSetting jumpDelayMS = new NumberSetting("Jump Delay (MS)", 0, 100, 10, 5);
     private final TimerUtil throwTimer = new TimerUtil();
-    private final TimerUtil switchBackTimer = new TimerUtil();
-    private final TimerUtil jumpTimer = new TimerUtil();
+    private final TimerUtil switchTimer = new TimerUtil();
     private boolean keyPressed = false;
     private int originalSlot = -1;
-    private boolean needsSlotRestore = false;
-    private boolean firstThrow = true;
-    private boolean jumpExecuted = false;
+    private boolean needsSwitchBack = false;
 
     public WindChargeKey() {
         super("Wind Charge Key", "Automatically throws wind charges", -1, Category.MISC);
-        this.addSettings(windChargeKeybind, switchDelayMS, throwDelayMS, silentMode, autoJump, jumpDelayMS);
+        this.addSettings(windChargeKeybind, throwDelay, switchDelay, autoJump);
         this.getSettings().removeIf(setting -> setting instanceof KeybindSetting && !setting.equals(windChargeKeybind));
     }
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
-        if (isNull()) return;
-        if (mc.currentScreen != null) return;
+        if (isNull() || mc.currentScreen != null) return;
+
         boolean currentKeyState = KeyUtils.isKeyPressed(windChargeKeybind.getKeyCode());
 
-        if (currentKeyState && !keyPressed) {
-            handleWindChargeThrow();
+        if (currentKeyState && !keyPressed && throwTimer.hasElapsedTime(throwDelay.getValueInt(), false)) {
+            throwWindCharge();
+            throwTimer.reset();
         }
 
-
-        if (jumpExecuted && jumpTimer.hasElapsedTime(jumpDelayMS.getValueInt())) {
-            if (autoJump.getValue() && mc.player.isOnGround()) {
-                mc.player.jump();
-            }
-            jumpExecuted = false;
-        }
-
-        if (needsSlotRestore && switchBackTimer.hasElapsedTime(switchDelayMS.getValueInt())) {
-            if (originalSlot != -1 && originalSlot != mc.player.getInventory().selectedSlot) {
-                mc.player.getInventory().selectedSlot = originalSlot;
-            }
-            needsSlotRestore = false;
+        if (needsSwitchBack && switchTimer.hasElapsedTime(switchDelay.getValueInt())) {
+            mc.player.getInventory().selectedSlot = originalSlot;
+            needsSwitchBack = false;
             originalSlot = -1;
         }
 
         keyPressed = currentKeyState;
     }
 
-    private void handleWindChargeThrow() {
-        if (!firstThrow && !throwTimer.hasElapsedTime(throwDelayMS.getValueInt())) {
+    private void throwWindCharge() {
+        int windChargeSlot = findWindChargeSlot();
+        if (windChargeSlot == -1) return;
+
+        if (mc.player.getItemCooldownManager().isCoolingDown(Items.WIND_CHARGE)) {
             return;
         }
 
-        int windChargeSlot = findWindChargeInHotbar();
-        if (windChargeSlot == -1) return;
-
-
         if (autoJump.getValue() && mc.player.isOnGround()) {
-            if (jumpDelayMS.getValueInt() == 0) {
-
-                mc.player.jump();
-            } else {
-
-                jumpExecuted = true;
-                jumpTimer.reset();
-            }
+            mc.player.jump();
         }
 
-        if (silentMode.getValue()) {
-            throwWindChargeSilently(windChargeSlot);
-        } else {
-            throwWindChargeNormally(windChargeSlot);
-        }
-
-        firstThrow = false;
-        throwTimer.reset();
-    }
-
-    private void throwWindChargeSilently(int windChargeSlot) {
-        int currentSlot = mc.player.getInventory().selectedSlot;
-
-        mc.player.getInventory().selectedSlot = windChargeSlot;
-
-        ((MinecraftClientAccessor) mc).invokeDoItemUse();
-
-        mc.player.getInventory().selectedSlot = currentSlot;
-    }
-
-    private void throwWindChargeNormally(int windChargeSlot) {
         originalSlot = mc.player.getInventory().selectedSlot;
-
         mc.player.getInventory().selectedSlot = windChargeSlot;
-
         ((MinecraftClientAccessor) mc).invokeDoItemUse();
-
-        needsSlotRestore = true;
-        switchBackTimer.reset();
+        needsSwitchBack = true;
+        switchTimer.reset();
     }
 
-    private int findWindChargeInHotbar() {
+    private int findWindChargeSlot() {
         for (int i = 0; i < 9; i++) {
-            var stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty() && stack.getItem() == Items.WIND_CHARGE) {
+            if (mc.player.getInventory().getStack(i).getItem() == Items.WIND_CHARGE) {
                 return i;
             }
         }
         return -1;
     }
 
-
     @Override
     public void onEnable() {
         keyPressed = false;
         originalSlot = -1;
-        needsSlotRestore = false;
-        firstThrow = true;
-        jumpExecuted = false;
+        needsSwitchBack = false;
         throwTimer.reset();
-        switchBackTimer.reset();
-        jumpTimer.reset();
+        switchTimer.reset();
         super.onEnable();
     }
 
