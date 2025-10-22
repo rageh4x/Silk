@@ -1,5 +1,6 @@
 package com.volt.module.modules.combat;
 
+import com.volt.event.impl.player.AttackEvent;
 import com.volt.event.impl.player.TickEvent;
 import com.volt.mixin.MinecraftClientAccessor;
 import com.volt.module.Category;
@@ -16,7 +17,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.AxeItem;
 import net.minecraft.item.Items;
 import net.minecraft.util.hit.EntityHitResult;
-import org.lwjgl.glfw.GLFW;
 
 public final class ShieldBreaker extends Module {
     public static boolean breakingShield = false;
@@ -38,11 +38,20 @@ public final class ShieldBreaker extends Module {
     private final TimerUtil swapBackTimer = new TimerUtil();
 
     private int savedSlot = -1;
+    private boolean lastAttackPressed = false;
 
     public ShieldBreaker() {
         super("Shield Breaker", "Automatically breaks the opponent's shield", -1, Category.COMBAT);
         this.addSettings(mode, reactionDelay, swapDelay, attackDelay, swapBackDelay,
                 revertSlot, rayTraceCheck, disableIfUsingItem, ignoreFriends);
+    }
+
+    @EventHandler
+    private void onAttackEvent(AttackEvent event) {
+        if (isNull()) return;
+        if (mode.getMode().equals("OnHit")) {
+            lastAttackPressed = true;
+        }
     }
 
     @EventHandler
@@ -56,8 +65,7 @@ public final class ShieldBreaker extends Module {
 
         boolean isBlocking = target.isBlocking() && target.isHolding(Items.SHIELD);
         boolean canBreak = !rayTraceCheck.getValue() || !CombatUtil.isShieldFacingAway(target);
-        boolean mousePressed = GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
-        boolean shouldActivate = mode.getMode().equals("Auto") || (mode.getMode().equals("OnHit") && mousePressed);
+        boolean shouldActivate = mode.getMode().equals("Auto") || (mode.getMode().equals("OnHit") && lastAttackPressed);
 
         if (isBlocking && canBreak && shouldActivate) {
             if (!(mc.player.getMainHandStack().getItem() instanceof AxeItem)) {
@@ -78,6 +86,9 @@ public final class ShieldBreaker extends Module {
                     swapBackTimer.reset();
                     breakingShield = false;
                 }
+            }
+            if (mode.getMode().equals("OnHit")) {
+                lastAttackPressed = false;
             }
         } else {
             if (!reactionTimer.hasElapsedTime(reactionDelay.getValueInt() / 2)) {
@@ -100,6 +111,7 @@ public final class ShieldBreaker extends Module {
         }
         savedSlot = -1;
         breakingShield = false;
+        lastAttackPressed = false;
         super.onDisable();
     }
 }
