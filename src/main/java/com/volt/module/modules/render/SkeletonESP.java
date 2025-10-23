@@ -40,6 +40,7 @@ public final class SkeletonESP extends Module {
         try {
             RendererUtils.setupRender();
 
+            RenderSystem.disableDepthTest();
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
             RenderSystem.setShader(GameRenderer::getPositionColorProgram);
@@ -55,8 +56,9 @@ public final class SkeletonESP extends Module {
             }
 
             GL11.glLineWidth(1.0f);
-
             GL11.glDisable(GL11.GL_LINE_SMOOTH);
+            
+            RenderSystem.enableDepthTest();
         } catch (Exception ignored) {
         } finally {
             try {
