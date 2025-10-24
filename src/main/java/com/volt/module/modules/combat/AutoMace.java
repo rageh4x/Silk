@@ -32,6 +32,8 @@ public final class AutoMace extends Module {
     private double fallStartY = -1;
     private boolean isFalling = false;
     private boolean slamExecuted = false;
+    private boolean maceHit = false;
+    private int slamTick = 0;
 
     public AutoMace() {
         super("Auto Mace", "Automatically attacks with mace", -1, Category.COMBAT);
@@ -66,6 +68,8 @@ public final class AutoMace extends Module {
             isFalling = true;
             fallStartY = currentY;
             slamExecuted = false;
+            maceHit = false;
+            slamTick = 0;
         } else if (falling && fallStartY != -1 && currentY > fallStartY) {
             fallStartY = currentY;
         }
@@ -84,7 +88,9 @@ public final class AutoMace extends Module {
             handleSlam(target, fallDist);
         }
         
-        handleMaceAttack(target);
+        if (!stunSlam.getValue() || slamExecuted || slamTick == 0) {
+            handleMaceAttack(target);
+        }
     }
 
     private void handleSlam(Entity target, double fallDist) {
@@ -92,17 +98,20 @@ public final class AutoMace extends Module {
                                 player.isHolding(Items.SHIELD) && 
                                 player.isBlocking();
         
-        if (targetBlocking && fallDist > minFallDistance.getValueFloat() && !slamExecuted) {
+        if (targetBlocking && fallDist > minFallDistance.getValueFloat() && !slamExecuted && slamTick == 0) {
             if (savedSlot == -1) savedSlot = mc.player.getInventory().selectedSlot;
-            
-            if (switchToAxe()) {
-                ((MinecraftClientAccessor) mc).invokeDoAttack();
-                slamExecuted = true;
-            }
+            slamTick = 1;
         }
         
-        if (slamExecuted) {
+        if (slamTick == 1) {
+            if (switchToAxe()) {
+                ((MinecraftClientAccessor) mc).invokeDoAttack();
+            }
+            slamTick = 2;
+        } else if (slamTick == 2) {
             switchToMace();
+            slamExecuted = true;
+            slamTick = 0;
         }
     }
 
@@ -114,6 +123,7 @@ public final class AutoMace extends Module {
 
         if (hasMace() && attackTimer.hasElapsedTime((long) attackDelay.getValue(), true)) {
             ((MinecraftClientAccessor) mc).invokeDoAttack();
+            maceHit = true;
         }
     }
 
@@ -168,6 +178,8 @@ public final class AutoMace extends Module {
         isFalling = false;
         fallStartY = -1;
         slamExecuted = false;
+        maceHit = false;
+        slamTick = 0;
     }
 
     @Override
@@ -176,6 +188,8 @@ public final class AutoMace extends Module {
         fallStartY = -1;
         isFalling = false;
         slamExecuted = false;
+        maceHit = false;
+        slamTick = 0;
         attackTimer.reset();
     }
 
@@ -192,6 +206,8 @@ public final class AutoMace extends Module {
         fallStartY = -1;
         isFalling = false;
         slamExecuted = false;
+        maceHit = false;
+        slamTick = 0;
         attackTimer.reset();
     }
 }
