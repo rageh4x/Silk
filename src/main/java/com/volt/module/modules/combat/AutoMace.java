@@ -1,6 +1,5 @@
 package com.volt.module.modules.combat;
 
-
 import com.volt.event.impl.player.TickEvent;
 import com.volt.mixin.MinecraftClientAccessor;
 import com.volt.module.Category;
@@ -24,199 +23,115 @@ import net.minecraft.item.Items;
 public final class AutoMace extends Module {
 
     private final NumberSetting minFallDistance = new NumberSetting("Min Fall Distance", 1.0, 10.0, 3.0, 0.5);
-    private final NumberSetting switchDelayMin = new NumberSetting("Switch Delay Min", 50, 500, 100, 10);
-    private final NumberSetting switchDelayMax = new NumberSetting("Switch Delay Max", 100, 1000, 200, 10);
-    private final NumberSetting attackDelayMin = new NumberSetting("Attack Delay Min", 50, 300, 80, 10);
-    private final NumberSetting attackDelayMax = new NumberSetting("Attack Delay Max", 100, 500, 150, 10);
+    private final NumberSetting attackDelay = new NumberSetting("Attack Delay", 50, 500, 100, 10);
     private final BooleanSetting targetPlayers = new BooleanSetting("Target Players", true);
     private final BooleanSetting targetMobs = new BooleanSetting("Target Mobs", false);
-    private final BooleanSetting autoSwitchBack = new BooleanSetting("Auto Switch Back", true);
-    private final BooleanSetting instantSwitchBack = new BooleanSetting("Instant Switch Back", true);
-    private final BooleanSetting ignorePassiveMobs = new BooleanSetting("No Passive Mobs", true);
-    private final BooleanSetting ignoreInvisible = new BooleanSetting("No Invisible", true);
-    private final BooleanSetting respectCooldown = new BooleanSetting("Respect Cooldown", true);
     private final BooleanSetting stunSlam = new BooleanSetting("Stun Slam", false);
-    private final TimerUtil switchTimer = new TimerUtil();
+    
     private final TimerUtil attackTimer = new TimerUtil();
-    private int previousSlot = -1;
-    private boolean hadMaceEquipped = false;
-    private Entity currentTarget = null;
+    private int savedSlot = -1;
     private double fallStartY = -1;
-    private boolean isInAir = false;
-    private boolean hasSwitchedToMace = false;
-    private boolean hasExecuted = false;
-    private int comboState = 0;
+    private boolean isFalling = false;
+    private int slamTicks = 0;
 
     public AutoMace() {
         super("Auto Mace", "Automatically attacks with mace", -1, Category.COMBAT);
-        this.addSettings(minFallDistance, switchDelayMin, switchDelayMax, attackDelayMin, attackDelayMax,
-                targetPlayers, targetMobs, autoSwitchBack, instantSwitchBack, ignorePassiveMobs, ignoreInvisible, respectCooldown, stunSlam);
+        this.addSettings(minFallDistance, attackDelay, targetPlayers, targetMobs, stunSlam);
     }
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
         if (isNull()) return;
 
-        if (switchDelayMin.getValueInt() >= switchDelayMax.getValueInt()) {
-            switchDelayMax.setValue(switchDelayMin.getValueInt() + 1);
-        }
-        if (attackDelayMin.getValue() >= attackDelayMax.getValue()) {
-            attackDelayMax.setValue(attackDelayMin.getValue() + 1);
-        }
-        updateFallTracking();
-
-        currentTarget = mc.targetedEntity;
-        if (currentTarget != null && FriendManager.isFriend(currentTarget.getUuid())) return;
-        boolean isAirborne = !mc.player.isOnGround();
-        boolean isFalling = mc.player.getVelocity().y < -0.1;
-        double currentFallDistance = getCurrentFallDistance();
-
-        if (isAirborne && isFalling && currentFallDistance >= minFallDistance.getValueFloat()) {
-            if (hasValidTarget(currentTarget)) {
-                if (!isMaceEquipped() && !hasSwitchedToMace) {
-                    if (canSwitchWeapon()) {
-                        storePreviousSlot();
-                        switchToMace();
-                        hasSwitchedToMace = true;
-                    }
-                }
-
-                if (isMaceEquipped() && shouldAttack()) {
-                    attackTarget();
-                }
-            } else {
-                handleNoTarget();
-            }
-        } else if (mc.player.isOnGround()) {
-            handleLanding();
-        } else if (isAirborne && !isFalling) {
-            handleNotFalling();
-        }
+        updateFall();
+        attack();
     }
 
-    private void updateFallTracking() {
-        boolean currentlyOnGround = mc.player.isOnGround();
-        boolean currentlyFalling = mc.player.getVelocity().y < -0.1;
+    private void updateFall() {
+        boolean onGround = mc.player.isOnGround();
+        boolean falling = mc.player.getVelocity().y < -0.1;
         double currentY = mc.player.getY();
 
-        if (currentlyOnGround) {
-            if (isInAir) {
-                isInAir = false;
-                fallStartY = -1;
-                hasExecuted = false;
-                comboState = 0;
+        if (onGround) {
+            if (isFalling) {
+                resetFall();
             }
-            if (autoSwitchBack.getValue() && previousSlot != -1) {
-                mc.player.getInventory().selectedSlot = previousSlot;
-                previousSlot = -1;
+            if (savedSlot != -1) {
+                switchToSlot(savedSlot);
+                savedSlot = -1;
             }
             return;
         }
 
-        if (!isInAir) {
-            isInAir = true;
+        if (!isFalling) {
+            isFalling = true;
             fallStartY = currentY;
-        } else if (currentlyFalling) {
-            if (fallStartY == -1 || currentY > fallStartY) {
-                fallStartY = currentY;
-            }
-        } else if (mc.player.getVelocity().y > 0.1) {
-            fallStartY = Math.max(fallStartY == -1 ? currentY : fallStartY, currentY);
+        } else if (falling && fallStartY != -1 && currentY > fallStartY) {
+            fallStartY = currentY;
         }
+    }
+
+    private void attack() {
+        if (!isFalling || mc.player.getVelocity().y >= -0.1) return;
+        
+        double fallDist = fallStartY == -1 ? 0 : Math.max(0, fallStartY - mc.player.getY());
+        if (fallDist < minFallDistance.getValueFloat()) return;
+
+        Entity target = mc.targetedEntity;
+        if (target == null || !isValidTarget(target) || FriendManager.isFriend(target.getUuid())) return;
 
         if (stunSlam.getValue()) {
-            double fallDist = fallStartY == -1 ? 0 : Math.max(0, fallStartY - currentY);
+            handleSlam(target);
+        }
+        
+        handleMaceAttack(target);
+    }
 
-            if (comboState == 1) {
-                comboState = 2;
-                hasExecuted = true;
-                return;
-            }
-
-            if (hasExecuted || !currentlyFalling || fallDist < minFallDistance.getValueFloat()) return;
-            if (!(mc.targetedEntity instanceof PlayerEntity target)) return;
-            if (!target.isAlive()) return;
-
-            if (previousSlot == -1) previousSlot = mc.player.getInventory().selectedSlot;
-
-            boolean hasShield = target.isHolding(Items.SHIELD) && target.isBlocking();
-
-            if (hasShield) {
+    private void handleSlam(Entity target) {
+        if (slamTicks > 0) {
+            if (slamTicks == 1) {
                 if (switchToAxe()) {
                     ((MinecraftClientAccessor) mc).invokeDoAttack();
-                    comboState = 1;
-                    return;
                 }
+                slamTicks = 2;
+            } else if (slamTicks == 2) {
+                switchToMace();
+                slamTicks = 0;
             }
+            return;
         }
-        hasExecuted = true;
+
+        if (target instanceof PlayerEntity player && player.isHolding(Items.SHIELD) && player.isBlocking()) {
+            if (savedSlot == -1) savedSlot = mc.player.getInventory().selectedSlot;
+            slamTicks = 1;
+        }
     }
 
-    private double getCurrentFallDistance() {
-        if (!isInAir || fallStartY == -1) {
-            return 0;
+    private void handleMaceAttack(Entity target) {
+        if (!hasMace()) {
+            if (savedSlot == -1) savedSlot = mc.player.getInventory().selectedSlot;
+            switchToMace();
         }
-        double currentY = mc.player.getY();
-        return Math.max(0, fallStartY - currentY);
+
+        if (hasMace() && attackTimer.hasElapsedTime((long) attackDelay.getValue(), true)) {
+            ((MinecraftClientAccessor) mc).invokeDoAttack();
+        }
     }
 
-    private boolean hasValidTarget(Entity entity) {
+    private boolean isValidTarget(Entity entity) {
         if (entity == null || entity == mc.player || entity == mc.cameraEntity) return false;
         if (!(entity instanceof LivingEntity livingEntity)) return false;
         if (!livingEntity.isAlive() || livingEntity.isDead()) return false;
         if (Teams.isTeammate(entity)) return false;
 
         if (entity instanceof PlayerEntity) {
-            if (!targetPlayers.getValue()) return false;
+            return targetPlayers.getValue();
         } else {
             if (!targetMobs.getValue()) return false;
-            if (ignorePassiveMobs.getValue() && entity instanceof PassiveEntity) return false;
-            if (entity instanceof Tameable) return false;
+            if (entity instanceof PassiveEntity || entity instanceof Tameable) return false;
         }
 
-        return !ignoreInvisible.getValue() || !entity.isInvisible();
-    }
-
-    private boolean canSwitchWeapon() {
-        long switchDelay = (long) MathUtils.randomDoubleBetween(switchDelayMin.getValueInt(), switchDelayMax.getValueInt() + 1);
-        return switchTimer.hasElapsedTime(switchDelay, true);
-    }
-
-    private boolean shouldAttack() {
-        if (currentTarget == null) return false;
-
-        if (respectCooldown.getValue()) {
-            float cooldown = mc.player.getAttackCooldownProgress(0.0f);
-            if (cooldown < 0.9f) return false;
-        }
-        double attackDelay = MathUtils.randomDoubleBetween(attackDelayMin.getValue(), attackDelayMax.getValue() + 1);
-        return attackTimer.hasElapsedTime((long) attackDelay, true);
-    }
-
-    private void attackTarget() {
-        if (currentTarget == null) return;
-        ((MinecraftClientAccessor) mc).invokeDoAttack();
-    }
-
-    private void handleLanding() {
-        isInAir = false;
-        fallStartY = -1;
-        hasSwitchedToMace = false;
-
-        if (autoSwitchBack.getValue() && previousSlot != -1 && !hadMaceEquipped) {
-            switchToSlot(previousSlot);
-            previousSlot = -1;
-        }
-
-        currentTarget = null;
-    }
-
-    private void handleNoTarget() {
-        if (autoSwitchBack.getValue() && instantSwitchBack.getValue() && previousSlot != -1 && !hadMaceEquipped && isMaceEquipped()) {
-            switchToSlot(previousSlot);
-            previousSlot = -1;
-            hasSwitchedToMace = false;
-        }
+        return true;
     }
 
     private boolean switchToAxe() {
@@ -230,26 +145,8 @@ public final class AutoMace extends Module {
         return false;
     }
 
-    private void handleNotFalling() {
-        if (autoSwitchBack.getValue() && instantSwitchBack.getValue() && previousSlot != -1 && !hadMaceEquipped && isMaceEquipped()) {
-            switchToSlot(previousSlot);
-            previousSlot = -1;
-            hasSwitchedToMace = false;
-        }
-    }
-
-    private boolean isMaceEquipped() {
-        ItemStack mainHand = mc.player.getMainHandStack();
-        return mainHand.getItem() == Items.MACE;
-    }
-
-    private void storePreviousSlot() {
-        if (!isMaceEquipped() && previousSlot == -1) {
-            previousSlot = mc.player.getInventory().selectedSlot;
-            hadMaceEquipped = false;
-        } else if (isMaceEquipped()) {
-            hadMaceEquipped = true;
-        }
+    private boolean hasMace() {
+        return mc.player.getMainHandStack().getItem() == Items.MACE;
     }
 
     private void switchToMace() {
@@ -268,33 +165,34 @@ public final class AutoMace extends Module {
         }
     }
 
+    private void resetFall() {
+        isFalling = false;
+        fallStartY = -1;
+        slamTicks = 0;
+    }
+
     @Override
     public void onEnable() {
-        previousSlot = -1;
-        hadMaceEquipped = false;
-        currentTarget = null;
+        savedSlot = -1;
         fallStartY = -1;
-        isInAir = false;
-        hasSwitchedToMace = false;
-        switchTimer.reset();
+        isFalling = false;
+        slamTicks = 0;
         attackTimer.reset();
-        super.onEnable();
     }
 
     @Override
     public void onDisable() {
-        if (autoSwitchBack.getValue() && previousSlot != -1 && !hadMaceEquipped) {
-            switchToSlot(previousSlot);
+        if (savedSlot != -1) {
+            switchToSlot(savedSlot);
         }
+        resetAll();
+    }
 
-        previousSlot = -1;
-        hadMaceEquipped = false;
-        currentTarget = null;
+    private void resetAll() {
+        savedSlot = -1;
         fallStartY = -1;
-        isInAir = false;
-        hasSwitchedToMace = false;
-        switchTimer.reset();
+        isFalling = false;
+        slamTicks = 0;
         attackTimer.reset();
-        super.onDisable();
     }
 }
