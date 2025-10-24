@@ -8,7 +8,6 @@ import com.volt.module.modules.misc.Teams;
 import com.volt.module.setting.BooleanSetting;
 import com.volt.module.setting.NumberSetting;
 import com.volt.utils.friend.FriendManager;
-import com.volt.utils.math.MathUtils;
 import com.volt.utils.math.TimerUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
@@ -32,7 +31,7 @@ public final class AutoMace extends Module {
     private int savedSlot = -1;
     private double fallStartY = -1;
     private boolean isFalling = false;
-    private int slamTicks = 0;
+    private boolean slamExecuted = false;
 
     public AutoMace() {
         super("Auto Mace", "Automatically attacks with mace", -1, Category.COMBAT);
@@ -66,6 +65,7 @@ public final class AutoMace extends Module {
         if (!isFalling) {
             isFalling = true;
             fallStartY = currentY;
+            slamExecuted = false;
         } else if (falling && fallStartY != -1 && currentY > fallStartY) {
             fallStartY = currentY;
         }
@@ -81,29 +81,28 @@ public final class AutoMace extends Module {
         if (target == null || !isValidTarget(target) || FriendManager.isFriend(target.getUuid())) return;
 
         if (stunSlam.getValue()) {
-            handleSlam(target);
+            handleSlam(target, fallDist);
         }
         
         handleMaceAttack(target);
     }
 
-    private void handleSlam(Entity target) {
-        if (slamTicks > 0) {
-            if (slamTicks == 1) {
-                if (switchToAxe()) {
-                    ((MinecraftClientAccessor) mc).invokeDoAttack();
-                }
-                slamTicks = 2;
-            } else if (slamTicks == 2) {
-                switchToMace();
-                slamTicks = 0;
-            }
-            return;
-        }
-
-        if (target instanceof PlayerEntity player && player.isHolding(Items.SHIELD) && player.isBlocking()) {
+    private void handleSlam(Entity target, double fallDist) {
+        boolean targetBlocking = target instanceof PlayerEntity player && 
+                                player.isHolding(Items.SHIELD) && 
+                                player.isBlocking();
+        
+        if (targetBlocking && fallDist > minFallDistance.getValueFloat() && !slamExecuted) {
             if (savedSlot == -1) savedSlot = mc.player.getInventory().selectedSlot;
-            slamTicks = 1;
+            
+            if (switchToAxe()) {
+                ((MinecraftClientAccessor) mc).invokeDoAttack();
+                slamExecuted = true;
+            }
+        }
+        
+        if (slamExecuted) {
+            switchToMace();
         }
     }
 
@@ -168,7 +167,7 @@ public final class AutoMace extends Module {
     private void resetFall() {
         isFalling = false;
         fallStartY = -1;
-        slamTicks = 0;
+        slamExecuted = false;
     }
 
     @Override
@@ -176,7 +175,7 @@ public final class AutoMace extends Module {
         savedSlot = -1;
         fallStartY = -1;
         isFalling = false;
-        slamTicks = 0;
+        slamExecuted = false;
         attackTimer.reset();
     }
 
@@ -192,7 +191,7 @@ public final class AutoMace extends Module {
         savedSlot = -1;
         fallStartY = -1;
         isFalling = false;
-        slamTicks = 0;
+        slamExecuted = false;
         attackTimer.reset();
     }
 }
