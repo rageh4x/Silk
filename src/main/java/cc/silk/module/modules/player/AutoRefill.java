@@ -32,6 +32,7 @@ public final class AutoRefill extends Module {
     private static final BooleanSetting regen = new BooleanSetting("Regen", true);
     private static final BooleanSetting strength = new BooleanSetting("Strength", false);
     private static final BooleanSetting speed = new BooleanSetting("Speed", false);
+    private static final BooleanSetting tntCarts = new BooleanSetting("TNT Carts", false);
     private static final BooleanSetting randomPick = new BooleanSetting("Random Pick", true);
     
     private final KeybindSetting keybind = new KeybindSetting("Key", GLFW.GLFW_KEY_R, false);
@@ -42,8 +43,8 @@ public final class AutoRefill extends Module {
     private boolean active = false;
 
     public AutoRefill() {
-        super("Auto Refill", "Refills hotbar with potions", -1, Category.PLAYER);
-        this.addSettings(keybind, delay, hoverDelay, minStack, hoverMode, health, regen, strength, speed, randomPick);
+        super("Auto Refill", "Refills hotbar with potions and TNT carts", -1, Category.PLAYER);
+        this.addSettings(keybind, delay, hoverDelay, minStack, hoverMode, health, regen, strength, speed, tntCarts, randomPick);
     }
 
     @EventHandler
@@ -139,7 +140,13 @@ public final class AutoRefill extends Module {
     }
     
     private boolean isPotion(ItemStack stack) {
-        if (stack.isEmpty() || !isPotionItem(stack.getItem())) return false;
+        if (stack.isEmpty()) return false;
+        
+        if (tntCarts.getValue() && stack.getItem() == Items.TNT_MINECART) {
+            return true;
+        }
+        
+        if (!isPotionItem(stack.getItem())) return false;
         
         PotionContentsComponent contents = stack.get(DataComponentTypes.POTION_CONTENTS);
         if (contents == null || !contents.potion().isPresent()) return false;
