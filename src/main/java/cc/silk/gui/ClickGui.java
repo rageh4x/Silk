@@ -143,14 +143,6 @@ public final class ClickGui extends Screen {
 
     }
 
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        int backgroundAlpha = (int) (animationManager.getGuiAnimation() * 160);
-        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
-        Color top = applyAlpha(theme.backgroundTop, backgroundAlpha);
-        Color bottom = applyAlpha(theme.backgroundBottom, (int) (backgroundAlpha * 0.67f));
-        RenderUtils.drawGradientRect(context, 0, 0, width, height, top.getRGB(), bottom.getRGB());
-    }
 
     private void renderHeader(DrawContext context, int x, int y, int width, int mouseX, int mouseY) {
         int headerAlpha = (int) (animationManager.getGuiAnimation() * 255);
@@ -296,7 +288,9 @@ public final class ClickGui extends Screen {
             animationManager.setDropdownAnimation(module, newDropdown);
 
             Color bgColor = isHovered ? applyAlpha(theme.panelAltBg, 220) : applyAlpha(theme.panelBg, 140);
-            context.fill(x + PADDING, moduleY, x + width - PADDING, moduleY + MODULE_HEIGHT, bgColor.getRGB());
+        context.fill(x + PADDING, moduleY, x + width - PADDING, moduleY + MODULE_HEIGHT, bgColor.getRGB());
+        // draw a subtle border so modules keep their box outline under themes
+        context.drawBorder(x + PADDING, moduleY, width - PADDING * 2, MODULE_HEIGHT, applyAlpha(theme.muted, 120).getRGB());
             int indicatorAlpha = isEnabled ? (int) (newAnimation * 255) : 0;
             if (indicatorAlpha > 0) {
                 Color indicator = applyAlpha(theme.accent, indicatorAlpha);
@@ -392,7 +386,17 @@ public final class ClickGui extends Screen {
 
     private void renderConfigButton(DrawContext context, int x, int y, int width, int height, String text, Color baseColor, int mouseX, int mouseY) {
         boolean isHovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
-        Color buttonColor = isHovered ? new Color(baseColor.getRed() + 20, baseColor.getGreen() + 20, baseColor.getBlue() + 20) : baseColor;
+        // clamp RGB so hovering doesn't produce values >255 which throws IllegalArgumentException
+        Color buttonColor;
+        if (isHovered) {
+            int r = Math.max(0, Math.min(255, baseColor.getRed() + 20));
+            int g = Math.max(0, Math.min(255, baseColor.getGreen() + 20));
+            int b = Math.max(0, Math.min(255, baseColor.getBlue() + 20));
+            int a = baseColor.getAlpha();
+            buttonColor = new Color(r, g, b, a);
+        } else {
+            buttonColor = baseColor;
+        }
         context.fill(x, y, x + width, y + height, buttonColor.getRGB());
 
         int textX = x + (width - (int) smallFont.getStringWidth(text)) / 2;
