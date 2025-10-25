@@ -1,6 +1,7 @@
 package com.volt.module.modules.combat;
 
 import com.volt.event.impl.player.TickEvent;
+import com.volt.mixin.MinecraftClientAccessor;
 import com.volt.module.Category;
 import com.volt.module.Module;
 import com.volt.module.modules.misc.Teams;
@@ -107,8 +108,7 @@ public final class AutoMace extends Module {
             int axeSlot = getAxeSlotId();
             if (axeSlot != -1) {
                 mc.player.getInventory().selectedSlot = axeSlot;
-                mc.player.swingHand(Hand.MAIN_HAND);
-                mc.interactionManager.attackEntity(mc.player, target);
+                ((MinecraftClientAccessor)mc).invokeDoAttack();
             }
             slamTick = 2;
         } else if (slamTick == 2) {
@@ -125,8 +125,7 @@ public final class AutoMace extends Module {
         }
 
         if (hasMace() && attackTimer.hasElapsedTime((long) attackDelay.getValue(), true)) {
-            mc.player.swingHand(Hand.MAIN_HAND);
-            mc.interactionManager.attackEntity(mc.player, target);
+            ((MinecraftClientAccessor)mc).invokeDoAttack();
             maceHit = true;
         }
     }

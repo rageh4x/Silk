@@ -1,5 +1,6 @@
 package com.volt.mixin;
 
+import com.volt.event.impl.network.EventDisconnect;
 import com.volt.utils.IMinecraft;
 import com.volt.Volt;
 import com.volt.event.impl.player.TickEvent;
@@ -88,5 +89,10 @@ public class MinecraftClientMixin implements IMinecraft {
         if (Volt.INSTANCE != null && Volt.mc != null) {
             Volt.INSTANCE.getVoltEventBus().post(new WorldChangeEvent(newWorld));
         }
+    }
+    @Inject(method = "onDisconnected", at = @At("HEAD"))
+    public final void onDisconnected(CallbackInfo ci) {
+        EventDisconnect event = new EventDisconnect();
+        Volt.INSTANCE.getVoltEventBus().post(event);
     }
 }
