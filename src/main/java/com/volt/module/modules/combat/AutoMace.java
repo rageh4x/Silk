@@ -1,7 +1,6 @@
 package com.volt.module.modules.combat;
 
 import com.volt.event.impl.player.TickEvent;
-import com.volt.mixin.MinecraftClientAccessor;
 import com.volt.module.Category;
 import com.volt.module.Module;
 import com.volt.module.modules.misc.Teams;
@@ -18,6 +17,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.AxeItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.Hand;
 
 public final class AutoMace extends Module {
 
@@ -26,7 +26,7 @@ public final class AutoMace extends Module {
     private final BooleanSetting targetPlayers = new BooleanSetting("Target Players", true);
     private final BooleanSetting targetMobs = new BooleanSetting("Target Mobs", false);
     private final BooleanSetting stunSlam = new BooleanSetting("Stun Slam", false);
-    
+
     private final TimerUtil attackTimer = new TimerUtil();
     private int savedSlot = -1;
     private double fallStartY = -1;
@@ -41,7 +41,7 @@ public final class AutoMace extends Module {
     }
 
     @EventHandler
-    private void onTickEvent(TickEvent event) {
+    private void preMotion(TickEvent event) {
         if (isNull()) return;
 
         updateFall();
@@ -77,35 +77,38 @@ public final class AutoMace extends Module {
 
     private void attack() {
         if (!isFalling || mc.player.getVelocity().y >= -0.1) return;
-        
+
         double fallDist = fallStartY == -1 ? 0 : Math.max(0, fallStartY - mc.player.getY());
         if (fallDist < minFallDistance.getValueFloat()) return;
 
         Entity target = mc.targetedEntity;
-        if (target == null || !isValidTarget(target) || FriendManager.isFriend(target.getUuid())) return;
+        if (!isValidTarget(target) || FriendManager.isFriend(target.getUuid())) return;
 
         if (stunSlam.getValue()) {
             handleSlam(target, fallDist);
         }
-        
+
         if (!stunSlam.getValue() || slamExecuted || slamTick == 0) {
             handleMaceAttack(target);
         }
     }
 
     private void handleSlam(Entity target, double fallDist) {
-        boolean targetBlocking = target instanceof PlayerEntity player && 
-                                player.isHolding(Items.SHIELD) && 
-                                player.isBlocking();
-        
+        boolean targetBlocking = target instanceof PlayerEntity player &&
+                player.isHolding(Items.SHIELD) &&
+                player.isBlocking();
+
         if (targetBlocking && fallDist > minFallDistance.getValueFloat() && !slamExecuted && slamTick == 0) {
             if (savedSlot == -1) savedSlot = mc.player.getInventory().selectedSlot;
             slamTick = 1;
         }
-        
+
         if (slamTick == 1) {
-            if (switchToAxe()) {
-                ((MinecraftClientAccessor) mc).invokeDoAttack();
+            int axeSlot = getAxeSlotId();
+            if (axeSlot != -1) {
+                mc.player.getInventory().selectedSlot = axeSlot;
+                mc.player.swingHand(Hand.MAIN_HAND);
+                mc.interactionManager.attackEntity(mc.player, target);
             }
             slamTick = 2;
         } else if (slamTick == 2) {
@@ -122,7 +125,8 @@ public final class AutoMace extends Module {
         }
 
         if (hasMace() && attackTimer.hasElapsedTime((long) attackDelay.getValue(), true)) {
-            ((MinecraftClientAccessor) mc).invokeDoAttack();
+            mc.player.swingHand(Hand.MAIN_HAND);
+            mc.interactionManager.attackEntity(mc.player, target);
             maceHit = true;
         }
     }
@@ -137,21 +141,20 @@ public final class AutoMace extends Module {
             return targetPlayers.getValue();
         } else {
             if (!targetMobs.getValue()) return false;
-            if (entity instanceof PassiveEntity || entity instanceof Tameable) return false;
+            return !(entity instanceof PassiveEntity) && !(entity instanceof Tameable);
         }
-
-        return true;
     }
 
-    private boolean switchToAxe() {
+    private int getAxeSlotId() {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
-            if (stack.getItem() instanceof AxeItem) {
-                mc.player.getInventory().selectedSlot = i;
-                return true;
-            }
+            if (isAxe(stack)) return i;
         }
-        return false;
+        return -1;
+    }
+
+    private boolean isAxe(ItemStack stack) {
+        return stack.getItem() instanceof AxeItem;
     }
 
     private boolean hasMace() {
