@@ -7,7 +7,6 @@ import com.volt.module.modules.misc.Teams;
 import com.volt.module.setting.BooleanSetting;
 import com.volt.module.setting.NumberSetting;
 import com.volt.utils.friend.FriendManager;
-import com.volt.utils.math.MathUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -43,10 +42,6 @@ public class AimAssist extends Module {
     private float currentBaseSpeed = 10f;
     private float nextBaseSpeed = 10f;
     private long lastSpeedChangeTime = 0;
-    private float yawVelocity = 0f;
-    private float pitchVelocity = 0f;
-    private float lastNoiseYaw = 0f;
-    private float lastNoisePitch = 0f;
 
     public AimAssist() {
         super("Aim Assist", "Gives you assistance on your aim", Category.COMBAT);
@@ -171,47 +166,14 @@ public class AimAssist extends Module {
         if (distance < 0.3f) return;
 
         float t = Math.min(distance / 10f, 1f);
-        float easedT = easeOutCubic(t);
+        float eased = easeOutCubic(t);
 
-        float indexOfDifficulty = (float) Math.log(distance / 0.5f + 1f);
-        float maxSpeed = indexOfDifficulty * currentBaseSpeed * (smoothing.getValueFloat() / 10f);
-
-        float targetYawChange = yawDiff * easedT;
-        float targetPitchChange = pitchDiff * easedT;
-
-        float noiseStrength = MathHelper.clamp(distance / 10f, 0.1f, 1.5f);
-        lastNoiseYaw = smoothNoise(lastNoiseYaw, noiseStrength);
-        lastNoisePitch = smoothNoise(lastNoisePitch, noiseStrength);
-
-        float freq = randomFloat(40f, 70f);
-        float oscillation = (float) Math.sin(currentTime / freq) * 0.3f;
-
-        yawVelocity += (targetYawChange + lastNoiseYaw + oscillation) * deltaTime;
-        pitchVelocity += (targetPitchChange + lastNoisePitch + oscillation) * deltaTime;
-
-        float friction = randomFloat(0.65f, 0.75f);
-        yawVelocity *= friction;
-        pitchVelocity *= friction;
-
-        float velocityMag = (float) Math.hypot(yawVelocity, pitchVelocity);
-        if (velocityMag > maxSpeed) {
-            float scale = maxSpeed / velocityMag;
-            yawVelocity *= scale;
-            pitchVelocity *= scale;
-        }
-
-        float jitterBreakYaw = randomFloat(-0.0025f, 0.0025f);
-        float jitterBreakPitch = randomFloat(-0.0025f, 0.0025f);
-
-        float yawDelta = (float) (yawVelocity * MathUtils.randomDoubleBetween(minYawSpeed.getValue(), maxYawSpeed.getValue()) + jitterBreakYaw);
-        float pitchDelta = (float) (pitchVelocity * MathUtils.randomDoubleBetween(minPitchSpeed.getValue(), maxPitchSpeed.getValue()) + jitterBreakPitch);
-
-        float newYaw = currentYaw + yawDelta;
-        float newPitch = currentPitch + pitchDelta;
+        float lerpFactor = eased * (smoothing.getValueFloat() / 10f) * deltaTime;
+        float newYaw = MathHelper.lerp(lerpFactor, currentYaw, currentYaw + yawDiff);
+        float newPitch = MathHelper.lerp(lerpFactor, currentPitch, currentPitch + pitchDiff);
 
         mc.player.setYaw(newYaw);
         mc.player.setPitch(MathHelper.clamp(newPitch, -89f, 89f));
-
     }
 
 
@@ -229,10 +191,6 @@ public class AimAssist extends Module {
         }
 
         currentBaseSpeed = (currentBaseSpeed * 0.9f) + (nextBaseSpeed * 0.1f);
-    }
-
-    private float smoothNoise(float previous, float strength) {
-        return previous * 0.8f + randomFloat(-strength, strength) * 0.2f;
     }
 
     private float randomFloat(float min, float max) {
