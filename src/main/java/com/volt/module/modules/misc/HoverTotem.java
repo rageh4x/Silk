@@ -18,8 +18,8 @@ import net.minecraft.screen.slot.SlotActionType;
 import java.util.Random;
 
 public final class HoverTotem extends Module {
-    public static final NumberSetting minMS = new NumberSetting("Min MS", 1, 1000, 200, 0.5);
     public static final NumberSetting maxMS = new NumberSetting("Max MS", 1, 1000, 400, 0.5);
+    public static final NumberSetting minMS = new NumberSetting("Min MS", 1, 1000, 200, 0.5);
     public static final BooleanSetting ignoreOffhand = new BooleanSetting("Ignore Offhand", false);
 
     private final TimerUtil timer = new TimerUtil();
@@ -27,7 +27,7 @@ public final class HoverTotem extends Module {
 
     public HoverTotem() {
         super("Hover Totem", "Puts a totem in your offhand and hotbar once hovered", -1, Category.MISC);
-        this.addSettings(minMS, maxMS, ignoreOffhand);
+        this.addSettings(maxMS, minMS, ignoreOffhand);
     }
 
     @EventHandler

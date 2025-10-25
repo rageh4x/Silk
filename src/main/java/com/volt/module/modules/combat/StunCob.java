@@ -31,7 +31,7 @@ public class StunCob extends Module {
     private long lastHitTime = 0;
     
     public StunCob() {
-        super("StunCob", "Predicts player movement and places cobweb", -1, Category.COMBAT);
+        super("Stun Cob", "Predicts player movement and places cobweb", -1, Category.COMBAT);
         this.addSettings(predictionTime, placeDelay, targetPlayers, targetMobs, requireCobweb);
     }
     
