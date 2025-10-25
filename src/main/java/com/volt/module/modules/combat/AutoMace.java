@@ -22,7 +22,7 @@ import net.minecraft.util.Hand;
 public final class AutoMace extends Module {
 
     private final NumberSetting minFallDistance = new NumberSetting("Min Fall Distance", 1.0, 10.0, 3.0, 0.5);
-    private final NumberSetting attackDelay = new NumberSetting("Attack Delay", 50, 500, 100, 10);
+    private final NumberSetting attackDelay = new NumberSetting("Attack Delay", 0, 500, 100, 10);
     private final BooleanSetting targetPlayers = new BooleanSetting("Target Players", true);
     private final BooleanSetting targetMobs = new BooleanSetting("Target Mobs", false);
     private final BooleanSetting stunSlam = new BooleanSetting("Stun Slam", false);
