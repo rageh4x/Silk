@@ -4,15 +4,18 @@ import cc.silk.gui.ClickGui;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.ModeSetting;
+import cc.silk.gui.theme.ThemeManager;
 import org.lwjgl.glfw.GLFW;
 
 public final class ClickGUIModule extends Module {
     private static final ModeSetting scale = new ModeSetting("Scale", "Small", "Small", "Medium", "Large");
+    // Theme setting; names are populated from ThemeManager so adding new themes is just a register call
+    public static final ModeSetting theme = new ModeSetting("Theme", ThemeManager.getDefaultName(), ThemeManager.getThemeNamesArray());
     int prevGuiScale;
 
     public ClickGUIModule() {
         super("Click Gui", "Toggles the Silk GUI", GLFW.GLFW_KEY_RIGHT_SHIFT, Category.CLIENT);
-        addSettings(scale);
+        addSettings(scale, theme);
     }
 
     @Override

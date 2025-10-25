@@ -13,6 +13,9 @@ import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.render.font.FontManager;
 import cc.silk.utils.render.font.fonts.FontRenderer;
 import cc.silk.utils.render.RenderUtils;
+import cc.silk.gui.theme.Theme;
+import cc.silk.gui.theme.ThemeManager;
+import cc.silk.module.modules.client.ClickGUIModule;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
@@ -86,6 +89,7 @@ public final class ClickGui extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
         animationManager.updateAnimations(delta);
         animationManager.updateGuiAnimations(delta);
 
@@ -119,11 +123,11 @@ public final class ClickGui extends Screen {
         int containerWidth = CONTAINER_WIDTH;
         int containerHeight = 500;
 
-        int alpha = (int) (animationManager.getGuiAnimation() * 240);
-        context.fill(containerX, containerY, containerX + containerWidth, containerY + containerHeight,
-                new Color(12, 12, 12, alpha).getRGB());
+    int alpha = (int) (animationManager.getGuiAnimation() * 240);
+    Color containerColor = applyAlpha(theme.containerBg, alpha);
+    context.fill(containerX, containerY, containerX + containerWidth, containerY + containerHeight, containerColor.getRGB());
 
-        renderSidebar(context, containerX, containerY, containerHeight, mouseX, mouseY);
+    renderSidebar(context, containerX, containerY, containerHeight, mouseX, mouseY);
 
         renderContent(context, containerX + SIDEBAR_WIDTH, containerY, CONTAINER_WIDTH - SIDEBAR_WIDTH, containerHeight, mouseX, mouseY);
 
@@ -142,14 +146,16 @@ public final class ClickGui extends Screen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         int backgroundAlpha = (int) (animationManager.getGuiAnimation() * 160);
-        RenderUtils.drawGradientRect(context, 0, 0, width, height,
-                new Color(0, 0, 0, backgroundAlpha).getRGB(), new Color(8, 8, 10, (int) (backgroundAlpha * 0.67f)).getRGB());
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        Color top = applyAlpha(theme.backgroundTop, backgroundAlpha);
+        Color bottom = applyAlpha(theme.backgroundBottom, (int) (backgroundAlpha * 0.67f));
+        RenderUtils.drawGradientRect(context, 0, 0, width, height, top.getRGB(), bottom.getRGB());
     }
 
     private void renderHeader(DrawContext context, int x, int y, int width, int mouseX, int mouseY) {
         int headerAlpha = (int) (animationManager.getGuiAnimation() * 255);
-        context.fill(x, y, x + width, y + HEADER_HEIGHT,
-                new Color(18, 18, 20, headerAlpha).getRGB());
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        context.fill(x, y, x + width, y + HEADER_HEIGHT, applyAlpha(theme.headerBg, headerAlpha).getRGB());
         MatrixStack matrices = context.getMatrices();
 
 
@@ -169,11 +175,13 @@ public final class ClickGui extends Screen {
     private void renderSearchBar(DrawContext context, int x, int y, int width) {
         MatrixStack matrices = context.getMatrices();
 
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+
         int searchX = x + width - SEARCH_BAR_WIDTH - PADDING;
         int searchY = y + (HEADER_HEIGHT - SEARCH_BAR_HEIGHT) / 2;
 
         String displayText = eventHandler.getSearchQuery().isEmpty() ? "Search modules..." : eventHandler.getSearchQuery();
-        Color textColor = eventHandler.getSearchQuery().isEmpty() ? new Color(100, 100, 100) : new Color(255, 255, 255);
+    Color textColor = eventHandler.getSearchQuery().isEmpty() ? applyAlpha(theme.muted, 180) : theme.text;
         int textX = searchX + 8;
         int textY = searchY + (SEARCH_BAR_HEIGHT - 12) / 2 + 2;
 
@@ -182,25 +190,25 @@ public final class ClickGui extends Screen {
         while (smallFont.getStringWidth(clippedText) > maxTextWidth && clippedText.length() > 0) {
             clippedText = clippedText.substring(0, clippedText.length() - 1);
         }
-        context.fill(searchX, searchY, searchX + SEARCH_BAR_WIDTH, (searchY + SEARCH_BAR_HEIGHT) - 2,
-                new Color(24, 24, 28, 220).getRGB());
-        smallFont.drawString(matrices, clippedText, textX, textY - 4, textColor);
+    context.fill(searchX, searchY, searchX + SEARCH_BAR_WIDTH, (searchY + SEARCH_BAR_HEIGHT) - 2,
+        applyAlpha(theme.panelBg, 220).getRGB());
+    smallFont.drawString(matrices, clippedText, textX, textY - 4, textColor);
 
         if (eventHandler.isSearchFocused() && !eventHandler.getSearchQuery().isEmpty()) {
             long currentTime = System.currentTimeMillis();
             if ((currentTime - lastCursorBlink) % 1000 < 500) {
                 int cursorX = textX + (int) smallFont.getStringWidth(clippedText);
-                context.fill(cursorX, textY - 1, cursorX + 1, textY + 11, new Color(255, 255, 255).getRGB());
+                context.fill(cursorX, textY - 1, cursorX + 1, textY + 11, theme.text.getRGB());
             }
         }
     }
 
     private void renderSidebar(DrawContext context, int x, int y, int height, int mouseX, int mouseY) {
         int sidebarAlpha = (int) (animationManager.getGuiAnimation() * 255);
-        context.fill(x, y + HEADER_HEIGHT, x + SIDEBAR_WIDTH, y + height - 12,
-                new Color(16, 16, 18, sidebarAlpha).getRGB());
-        context.fill(x + 12, y + height - 12, x + SIDEBAR_WIDTH, y + height,
-                new Color(16, 16, 18, sidebarAlpha).getRGB());
+    Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+    Color sb = applyAlpha(theme.sidebarBg, sidebarAlpha);
+    context.fill(x, y + HEADER_HEIGHT, x + SIDEBAR_WIDTH, y + height - 12, sb.getRGB());
+    context.fill(x + 12, y + height - 12, x + SIDEBAR_WIDTH, y + height, sb.getRGB());
 
         int sidebarX = x;
         int sidebarY = y + HEADER_HEIGHT;
@@ -225,11 +233,11 @@ public final class ClickGui extends Screen {
     }
 
     private void renderContent(DrawContext context, int x, int y, int width, int height, int mouseX, int mouseY) {
-        int contentAlpha = (int) (animationManager.getGuiAnimation() * animationManager.getCategorySwitch() * 255);
-        context.fill(x, y + HEADER_HEIGHT, x + width, y + height - 12,
-                new Color(12, 12, 12, contentAlpha).getRGB());
-        context.fill(x, y + height - 12, x + width - 12, y + height,
-                new Color(12, 12, 12, contentAlpha).getRGB());
+    Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+    int contentAlpha = (int) (animationManager.getGuiAnimation() * animationManager.getCategorySwitch() * 255);
+    Color panel = applyAlpha(theme.panelBg, contentAlpha);
+    context.fill(x, y + HEADER_HEIGHT, x + width, y + height - 12, panel.getRGB());
+    context.fill(x, y + height - 12, x + width - 12, y + height, panel.getRGB());
 
         context.enableScissor(x, y + HEADER_HEIGHT, x + width, y + height);
 
@@ -244,6 +252,7 @@ public final class ClickGui extends Screen {
 
     private void renderModuleContent(DrawContext context, int x, int y, int width, int height, int mouseX, int mouseY) {
         MatrixStack matrices = context.getMatrices();
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
 
         List<Module> allModules;
         if (eventHandler.getSearchQuery().isEmpty()) {
@@ -286,18 +295,18 @@ public final class ClickGui extends Screen {
             float newDropdown = MathHelper.lerp(0.15f, currentDropdown, targetDropdown);
             animationManager.setDropdownAnimation(module, newDropdown);
 
-            Color bgColor = isHovered ? new Color(28, 28, 32, 220) : new Color(18, 18, 20, 140);
+            Color bgColor = isHovered ? applyAlpha(theme.panelAltBg, 220) : applyAlpha(theme.panelBg, 140);
             context.fill(x + PADDING, moduleY, x + width - PADDING, moduleY + MODULE_HEIGHT, bgColor.getRGB());
             int indicatorAlpha = isEnabled ? (int) (newAnimation * 255) : 0;
             if (indicatorAlpha > 0) {
-                Color indicator = new Color(124, 77, 255, indicatorAlpha);
+                Color indicator = applyAlpha(theme.accent, indicatorAlpha);
                 context.fill(x + PADDING, moduleY, x + PADDING + 4, moduleY + MODULE_HEIGHT, indicator.getRGB());
             }
-            Color textColor = isEnabled ? Color.WHITE : new Color(160, 160, 160);
+            Color textColor = isEnabled ? theme.text : theme.muted;
             regularFont.drawString(matrices, module.getName(), x + PADDING + 10, moduleY + 8, textColor);
             if (hasSettings) {
                 UIRenderer.renderDropdownArrow(context, x + width - PADDING - 30, moduleY + MODULE_HEIGHT / 2,
-                        moduleExpanded.get(module), new Color(160, 160, 160));
+                        moduleExpanded.get(module), theme.muted);
             }
 
             if (module.getDescription() != null && !module.getDescription().isEmpty()) {
@@ -310,11 +319,11 @@ public final class ClickGui extends Screen {
                     }
                     truncated += "...";
                     descWidth = smallFont.getStringWidth(truncated);
-                    smallFont.drawString(matrices, truncated,
-                            x + width - PADDING - descWidth - (hasSettings ? 40 : 10), moduleY + 10, new Color(120, 120, 120));
+            smallFont.drawString(matrices, truncated,
+                x + width - PADDING - descWidth - (hasSettings ? 40 : 10), moduleY + 10, theme.muted);
                 } else {
-                    smallFont.drawString(matrices, module.getDescription(),
-                            x + width - PADDING - descWidth - (hasSettings ? 40 : 10), moduleY + 10, new Color(120, 120, 120));
+            smallFont.drawString(matrices, module.getDescription(),
+                x + width - PADDING - descWidth - (hasSettings ? 40 : 10), moduleY + 10, theme.muted);
                 }
             }
 
@@ -336,12 +345,13 @@ public final class ClickGui extends Screen {
         int startY = y + HEADER_HEIGHT + PADDING - eventHandler.getScrollOffset();
         int currentY = startY;
 
-        titleFont.drawString(matrices, "Config Manager", x + PADDING, currentY, Color.WHITE);
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+    titleFont.drawString(matrices, "Config Manager", x + PADDING, currentY, theme.text);
         currentY += 50;
 
-        context.fill(x + PADDING, currentY, x + width - PADDING, currentY + 30, new Color(40, 40, 50, 200).getRGB());
+        context.fill(x + PADDING, currentY, x + width - PADDING, currentY + 30, applyAlpha(theme.panelBg, 200).getRGB());
         String displayText = configName.isEmpty() ? "Enter config name..." : configName;
-        Color textColor = configName.isEmpty() ? new Color(100, 100, 100) : Color.WHITE;
+        Color textColor = configName.isEmpty() ? applyAlpha(theme.muted, 180) : theme.text;
         regularFont.drawString(matrices, displayText, x + PADDING + 8, currentY + 8, textColor);
 
         if (configNameFocused && !configName.isEmpty()) {
@@ -353,9 +363,9 @@ public final class ClickGui extends Screen {
         }
         currentY += 40;
 
-        renderConfigButton(context, x + PADDING, currentY, 80, 25, "Save", new Color(50, 100, 50), mouseX, mouseY);
-        renderConfigButton(context, x + PADDING + 90, currentY, 80, 25, "Load", new Color(50, 50, 100), mouseX, mouseY);
-        renderConfigButton(context, x + PADDING + 180, currentY, 80, 25, "Delete", new Color(100, 50, 50), mouseX, mouseY);
+    renderConfigButton(context, x + PADDING, currentY, 80, 25, "Save", theme.accent, mouseX, mouseY);
+    renderConfigButton(context, x + PADDING + 90, currentY, 80, 25, "Load", applyAlpha(theme.panelAltBg, 200), mouseX, mouseY);
+    renderConfigButton(context, x + PADDING + 180, currentY, 80, 25, "Delete", new Color(200, 80, 80), mouseX, mouseY);
         currentY += 40;
 
         regularFont.drawString(matrices, "Available Configs:", x + PADDING, currentY, new Color(180, 180, 180));
@@ -366,12 +376,11 @@ public final class ClickGui extends Screen {
                     mouseY >= currentY && mouseY <= currentY + 25;
             boolean isSelected = config.equals(selectedConfig);
 
-            Color bgColor = isSelected ? new Color(124, 77, 255, 170) :
-                    (isHovered ? new Color(40, 40, 48, 160) : new Color(24, 24, 28, 120));
-            context.fill(x + PADDING, currentY, x + width - PADDING, currentY + 25, bgColor.getRGB());
+        Color bgColor = isSelected ? applyAlpha(theme.accent, 170) : (isHovered ? applyAlpha(theme.panelAltBg, 160) : applyAlpha(theme.panelBg, 120));
+        context.fill(x + PADDING, currentY, x + width - PADDING, currentY + 25, bgColor.getRGB());
 
-            Color itemTextColor = isSelected ? Color.WHITE : new Color(200, 200, 200);
-            regularFont.drawString(matrices, config, x + PADDING + 8, currentY + 6, itemTextColor);
+        Color itemTextColor = isSelected ? theme.text : theme.muted;
+        regularFont.drawString(matrices, config, x + PADDING + 8, currentY + 6, itemTextColor);
 
             currentY += 30;
         }
@@ -388,7 +397,8 @@ public final class ClickGui extends Screen {
 
         int textX = x + (width - (int) smallFont.getStringWidth(text)) / 2;
         int textY = y + (height - 12) / 2;
-        smallFont.drawString(context.getMatrices(), text, textX, textY, Color.WHITE);
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        smallFont.drawString(context.getMatrices(), text, textX, textY, theme.text);
     }
 
     private List<Module> filterModulesBySearch(List<Module> modules) {
@@ -517,6 +527,11 @@ public final class ClickGui extends Screen {
                 }
             }
         }
+    }
+
+    private static Color applyAlpha(Color base, int alpha) {
+        int a = Math.max(0, Math.min(255, alpha));
+        return new Color(base.getRed(), base.getGreen(), base.getBlue(), a);
     }
 
     private boolean handleConfigClick(double mouseX, double mouseY, int button) {

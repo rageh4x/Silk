@@ -3,6 +3,9 @@ package cc.silk.gui;
 import cc.silk.gui.components.ColorPicker;
 import cc.silk.gui.events.GuiEventHandler;
 import cc.silk.module.setting.ColorSetting;
+import cc.silk.gui.theme.Theme;
+import cc.silk.gui.theme.ThemeManager;
+import cc.silk.module.modules.client.ClickGUIModule;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
@@ -11,6 +14,10 @@ import java.util.Map;
 public class ColorPickerManager {
     private final GuiEventHandler eventHandler;
 
+    private static Color applyAlpha(Color c, int alpha) {
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(255, alpha)));
+    }
+
     public ColorPickerManager(GuiEventHandler eventHandler) {
         this.eventHandler = eventHandler;
     }
@@ -18,10 +25,11 @@ public class ColorPickerManager {
     public void renderColorPickerPanel(DrawContext context, int x, int y, int width, int height, int mouseX, int mouseY) {
         if (!eventHandler.isAnyColorPickerExpanded()) return;
 
-        context.fill(x, y, x + width, y + height, new Color(25, 25, 35, 240).getRGB());
-        context.drawBorder(x, y, width, height, new Color(100, 100, 100).getRGB());
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        context.fill(x, y, x + width, y + height, applyAlpha(theme.panelBg, 240).getRGB());
+        context.drawBorder(x, y, width, height, applyAlpha(theme.muted, 200).getRGB());
 
-        context.drawTextWithShadow(net.minecraft.client.MinecraftClient.getInstance().textRenderer, "Color Pickers", x + 10, y + 10, new Color(255, 255, 255).getRGB());
+        context.drawTextWithShadow(net.minecraft.client.MinecraftClient.getInstance().textRenderer, "Color Pickers", x + 10, y + 10, theme.text.getRGB());
 
         int currentY = y + 35;
         int panelPadding = 10;
@@ -31,8 +39,8 @@ public class ColorPickerManager {
             ColorPicker colorPicker = entry.getValue();
 
             if (eventHandler.getColorPickerExpanded().getOrDefault(colorSetting, false)) {
-                context.drawTextWithShadow(net.minecraft.client.MinecraftClient.getInstance().textRenderer, colorSetting.getName(),
-                        x + panelPadding, currentY, new Color(200, 200, 200).getRGB());
+        context.drawTextWithShadow(net.minecraft.client.MinecraftClient.getInstance().textRenderer, colorSetting.getName(),
+            x + panelPadding, currentY, theme.text.getRGB());
                 currentY += 20;
 
                 int pickerHeight = Math.max(200, colorPicker.getTotalHeight());
@@ -54,8 +62,8 @@ public class ColorPickerManager {
                 currentY += pickerHeight + 15;
 
                 if (currentY < y + height - 50) {
-                    context.fill(x + panelPadding, currentY, x + width - panelPadding, currentY + 1,
-                            new Color(100, 100, 100).getRGB());
+            context.fill(x + panelPadding, currentY, x + width - panelPadding, currentY + 1,
+                applyAlpha(theme.muted, 160).getRGB());
                     currentY += 10;
                 }
             }

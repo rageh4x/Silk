@@ -2,6 +2,9 @@ package cc.silk.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import cc.silk.module.setting.ColorSetting;
+import cc.silk.gui.theme.Theme;
+import cc.silk.gui.theme.ThemeManager;
+import cc.silk.module.modules.client.ClickGUIModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
@@ -27,6 +30,10 @@ public class ColorPicker {
     private boolean expanded = false;
     private int posX, posY;
 
+    private static Color applyAlpha(Color c, int alpha) {
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(255, alpha)));
+    }
+
     private int hexX, hexY, hexW, hexH;
     private int rSliderX, rSliderY, rSliderW, rSliderH, rBoxX, rBoxY, rBoxW, rBoxH;
     private int gSliderX, gSliderY, gSliderW, gSliderH, gBoxX, gBoxY, gBoxW, gBoxH;
@@ -44,7 +51,7 @@ public class ColorPicker {
     public void render(DrawContext context, int x, int y, int mouseX, int mouseY) {
         this.posX = x;
         this.posY = y;
-
+        
         renderColorSquare(context, x, y);
 
         int brightnessX = x + SIZE + SPACING;
@@ -135,7 +142,8 @@ public class ColorPicker {
 
         Color color = colorSetting.getValue();
         context.fill(x, y, x + PREVIEW_SIZE, y + PREVIEW_SIZE, color.getRGB());
-        context.drawBorder(x, y, PREVIEW_SIZE, PREVIEW_SIZE, new Color(100, 100, 100).getRGB());
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        context.drawBorder(x, y, PREVIEW_SIZE, PREVIEW_SIZE, applyAlpha(theme.muted, 200).getRGB());
     }
 
     private void renderSelectionIndicators(DrawContext context, int x, int y) {
@@ -156,10 +164,13 @@ public class ColorPicker {
     }
 
     private void renderCheckerboard(DrawContext context, int x, int y, int width, int height) {
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        Color light = applyAlpha(theme.panelAltBg, 220);
+        Color dark = applyAlpha(theme.panelBg, 200);
         for (int i = 0; i < width; i += 8) {
             for (int j = 0; j < height; j += 8) {
-                boolean light = ((i / 8) + (j / 8)) % 2 == 0;
-                Color color = light ? new Color(200, 200, 200) : new Color(150, 150, 150);
+                boolean lightCell = ((i / 8) + (j / 8)) % 2 == 0;
+                Color color = lightCell ? light : dark;
                 context.fill(x + i, y + j, x + i + Math.min(8, width - i), y + j + Math.min(8, height - j), color.getRGB());
             }
         }
@@ -177,7 +188,8 @@ public class ColorPicker {
         BufferRenderer.drawWithGlobalProgram(buffer.end());
         RenderSystem.disableBlend();
         context.getMatrices().pop();
-        context.drawBorder(x, y, width, height, new Color(100, 100, 100).getRGB());
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        context.drawBorder(x, y, width, height, applyAlpha(theme.muted, 200).getRGB());
     }
 
     private void addQuad(BufferBuilder buffer, Matrix4f matrix, float[] xs, float[] ys, Color[] colors) {
@@ -195,15 +207,17 @@ public class ColorPicker {
     }
 
     private void drawCrosshair(DrawContext context, int x, int y) {
-        context.fill(x - 5, y - 1, x + 5, y + 1, Color.WHITE.getRGB());
-        context.fill(x - 1, y - 5, x + 1, y + 5, Color.WHITE.getRGB());
-        context.fill(x - 6, y - 2, x + 6, y + 2, Color.BLACK.getRGB());
-        context.fill(x - 2, y - 6, x + 2, y + 6, Color.BLACK.getRGB());
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        context.fill(x - 5, y - 1, x + 5, y + 1, theme.accent.getRGB());
+        context.fill(x - 1, y - 5, x + 1, y + 5, theme.accent.getRGB());
+        context.fill(x - 6, y - 2, x + 6, y + 2, applyAlpha(theme.muted, 200).getRGB());
+        context.fill(x - 2, y - 6, x + 2, y + 6, applyAlpha(theme.muted, 200).getRGB());
     }
 
     private void drawBarIndicator(DrawContext context, int x, int y, int width) {
-        context.fill(x - 2, y - 1, x + width + 2, y + 1, Color.WHITE.getRGB());
-        context.fill(x - 3, y - 2, x + width + 3, y + 2, Color.BLACK.getRGB());
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        context.fill(x - 2, y - 1, x + width + 2, y + 1, theme.accent.getRGB());
+        context.fill(x - 3, y - 2, x + width + 3, y + 2, applyAlpha(theme.muted, 200).getRGB());
     }
 
 
@@ -357,11 +371,13 @@ public class ColorPicker {
     }
 
     private void renderControls(DrawContext context, int x, int y, int mouseX, int mouseY) {
-        updateInputsFromColor();
+    updateInputsFromColor();
 
-        int totalW = getWidth();
-        int rowY = y;
-        int textColor = new Color(200, 200, 200).getRGB();
+    Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+
+    int totalW = getWidth();
+    int rowY = y;
+    int textColor = theme.text.getRGB();
 
 
         context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, "HEX", x, rowY + 3, textColor);
@@ -385,7 +401,7 @@ public class ColorPicker {
         rSliderY = rowY + (CONTROL_HEIGHT - sliderH) / 2;
         rSliderW = sliderW;
         rSliderH = sliderH;
-        UIRenderer.renderSlider(context, rSliderX, rSliderY, rSliderW, rSliderH, colorSetting.getRed() / 255.0, new Color(60, 60, 60), new Color(255, 80, 80));
+    UIRenderer.renderSlider(context, rSliderX, rSliderY, rSliderW, rSliderH, colorSetting.getRed() / 255.0, applyAlpha(theme.panelAltBg, 220), theme.accent);
         rBoxX = sliderX + sliderW + 6;
         rBoxY = rowY;
         rBoxW = boxW;
@@ -399,7 +415,7 @@ public class ColorPicker {
         gSliderY = rowY + (CONTROL_HEIGHT - sliderH) / 2;
         gSliderW = sliderW;
         gSliderH = sliderH;
-        UIRenderer.renderSlider(context, gSliderX, gSliderY, gSliderW, gSliderH, colorSetting.getGreen() / 255.0, new Color(60, 60, 60), new Color(80, 255, 80));
+    UIRenderer.renderSlider(context, gSliderX, gSliderY, gSliderW, gSliderH, colorSetting.getGreen() / 255.0, applyAlpha(theme.panelAltBg, 220), theme.accent);
         gBoxX = sliderX + sliderW + 6;
         gBoxY = rowY;
         gBoxW = boxW;
@@ -413,7 +429,7 @@ public class ColorPicker {
         bSliderY = rowY + (CONTROL_HEIGHT - sliderH) / 2;
         bSliderW = sliderW;
         bSliderH = sliderH;
-        UIRenderer.renderSlider(context, bSliderX, bSliderY, bSliderW, bSliderH, colorSetting.getBlue() / 255.0, new Color(60, 60, 60), new Color(80, 80, 255));
+    UIRenderer.renderSlider(context, bSliderX, bSliderY, bSliderW, bSliderH, colorSetting.getBlue() / 255.0, applyAlpha(theme.panelAltBg, 220), theme.accent);
         bBoxX = sliderX + sliderW + 6;
         bBoxY = rowY;
         bBoxW = boxW;
@@ -427,7 +443,7 @@ public class ColorPicker {
             aSliderY = rowY + (CONTROL_HEIGHT - sliderH) / 2;
             aSliderW = sliderW;
             aSliderH = sliderH;
-            UIRenderer.renderSlider(context, aSliderX, aSliderY, aSliderW, aSliderH, colorSetting.getAlpha() / 255.0, new Color(60, 60, 60), new Color(200, 200, 200));
+            UIRenderer.renderSlider(context, aSliderX, aSliderY, aSliderW, aSliderH, colorSetting.getAlpha() / 255.0, applyAlpha(theme.panelAltBg, 220), theme.accent);
             aBoxX = sliderX + sliderW + 6;
             aBoxY = rowY;
             aBoxW = boxW;
@@ -437,10 +453,11 @@ public class ColorPicker {
     }
 
     private void drawTextField(DrawContext ctx, int x, int y, int w, int h, String text, boolean focused) {
-        Color bg = focused ? new Color(45, 45, 65, 240) : new Color(40, 40, 55, 220);
+        Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
+        Color bg = focused ? applyAlpha(theme.panelAltBg, 240) : applyAlpha(theme.panelBg, 220);
         ctx.fill(x, y, x + w, y + h, bg.getRGB());
-        ctx.drawBorder(x, y, w, h, new Color(100, 100, 100).getRGB());
-        int color = new Color(220, 220, 220).getRGB();
+        ctx.drawBorder(x, y, w, h, applyAlpha(theme.muted, 200).getRGB());
+        int color = theme.text.getRGB();
         ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, text, x + 5, y + (h - 8) / 2, color);
     }
 
