@@ -53,15 +53,18 @@ public class OutlineESP extends Module {
 
     @EventHandler
     private void onTick(TickEvent event) {
-        if (isNull())
+        if (isNull() || mc.world == null)
             return;
 
-        for (Entity entity : mc.world.getEntities()) {
-            if (shouldRender(entity)) {
-                applyColor(entity);
-            } else {
-                removeGlow(entity);
+        try {
+            for (Entity entity : mc.world.getEntities()) {
+                if (shouldRender(entity)) {
+                    applyColor(entity);
+                } else {
+                    removeGlow(entity);
+                }
             }
+        } catch (Exception e) {
         }
     }
 
@@ -69,20 +72,27 @@ public class OutlineESP extends Module {
         if (!handledEntities.contains(entity.getId())) {
             return;
         }
-        
-        handledEntities.remove(entity.getId());
-        
-        String teamName = "outlineESP_" + entity.getId();
-        Team team = mc.world.getScoreboard().getTeam(teamName);
-        
-        if (team != null) {
-            mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), team);
-            mc.world.getScoreboard().removeTeam(team);
+
+        if (mc.world == null || mc.world.getScoreboard() == null) {
+            return;
         }
-        
-        Team currentTeam = entity.getScoreboardTeam();
-        if (currentTeam != null && currentTeam.getName().startsWith("outlineESP_")) {
-            mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), currentTeam);
+
+        handledEntities.remove(entity.getId());
+
+        try {
+            String teamName = "outlineESP_" + entity.getId();
+            Team team = mc.world.getScoreboard().getTeam(teamName);
+
+            if (team != null) {
+                mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), team);
+                mc.world.getScoreboard().removeTeam(team);
+            }
+
+            Team currentTeam = entity.getScoreboardTeam();
+            if (currentTeam != null && currentTeam.getName().startsWith("outlineESP_")) {
+                mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), currentTeam);
+            }
+        } catch (Exception e) {
         }
     }
 
@@ -117,26 +127,33 @@ public class OutlineESP extends Module {
     }
 
     private void applyColor(Entity entity) {
+        if (mc.world == null || mc.world.getScoreboard() == null) {
+            return;
+        }
+
         handledEntities.add(entity.getId());
 
-        String teamName = "outlineESP_" + entity.getId();
-        Team existingTeam = entity.getScoreboardTeam();
-        
-        if (existingTeam != null && !existingTeam.getName().startsWith("outlineESP_")) {
-            mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), existingTeam);
-        }
+        try {
+            String teamName = "outlineESP_" + entity.getId();
+            Team existingTeam = entity.getScoreboardTeam();
 
-        Team team = mc.world.getScoreboard().getTeam(teamName);
-        if (team == null) {
-            team = mc.world.getScoreboard().addTeam(teamName);
-        }
-        
-        if (entity.getScoreboardTeam() != team) {
-            mc.world.getScoreboard().addScoreHolderToTeam(entity.getNameForScoreboard(), team);
-        }
+            if (existingTeam != null && !existingTeam.getName().startsWith("outlineESP_")) {
+                mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), existingTeam);
+            }
 
-        Color color = getColorForEntity(entity);
-        team.setColor(getClosestMinecraftColor(color));
+            Team team = mc.world.getScoreboard().getTeam(teamName);
+            if (team == null) {
+                team = mc.world.getScoreboard().addTeam(teamName);
+            }
+
+            if (entity.getScoreboardTeam() != team) {
+                mc.world.getScoreboard().addScoreHolderToTeam(entity.getNameForScoreboard(), team);
+            }
+
+            Color color = getColorForEntity(entity);
+            team.setColor(getClosestMinecraftColor(color));
+        } catch (Exception e) {
+        }
     }
 
     private Color getColorForEntity(Entity entity) {
@@ -185,22 +202,31 @@ public class OutlineESP extends Module {
 
     @Override
     public void onDisable() {
-        if (!isNull() && mc.world != null) {
-            java.util.Set<Integer> entitiesToRemove = new java.util.HashSet<>(handledEntities);
-            
-            for (Entity entity : mc.world.getEntities()) {
-                if (entitiesToRemove.contains(entity.getId())) {
-                    removeGlow(entity);
+        if (!isNull() && mc.world != null && mc.world.getScoreboard() != null) {
+            try {
+                java.util.Set<Integer> entitiesToRemove = new java.util.HashSet<>(handledEntities);
+
+                for (Entity entity : mc.world.getEntities()) {
+                    if (entitiesToRemove.contains(entity.getId())) {
+                        removeGlow(entity);
+                    }
                 }
-            }
-            
-            for (Team team : mc.world.getScoreboard().getTeams()) {
-                if (team.getName().startsWith("outlineESP_")) {
+
+                java.util.List<Team> teamsToRemove = new java.util.ArrayList<>();
+                for (Team team : mc.world.getScoreboard().getTeams()) {
+                    if (team.getName().startsWith("outlineESP_")) {
+                        teamsToRemove.add(team);
+                    }
+                }
+
+                for (Team team : teamsToRemove) {
                     mc.world.getScoreboard().removeTeam(team);
                 }
+
+                handledEntities.clear();
+            } catch (Exception e) {
+                handledEntities.clear();
             }
-            
-            handledEntities.clear();
         }
         super.onDisable();
     }
