@@ -7,6 +7,7 @@
     "ClientPlayerInteractionManagerMixin",
     "EntityMixin",
     "ExampleMixin",
+    "GameRendererMixin",
     "HandledScreenMixin",
     "InGameHudMixin",
     "KeyboardMixin",
@@ -25,6 +26,7 @@
   },
   "client": [
     "HandledScreenAccessor",
-    "LightmapTextureManagerMixin"
+    "LightmapTextureManagerMixin",
+    "WorldRendererAccessor"
   ]
 }
