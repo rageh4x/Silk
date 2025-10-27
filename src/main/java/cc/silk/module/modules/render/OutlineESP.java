@@ -9,6 +9,8 @@ import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.friend.FriendManager;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.mob.HostileEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 
@@ -20,15 +22,19 @@ public class OutlineESP extends Module {
 
     private final BooleanSetting showSelf = new BooleanSetting("Show Self", false);
     private final BooleanSetting teamCheck = new BooleanSetting("Team Check", false);
+    private final BooleanSetting showPassives = new BooleanSetting("Show Passives", false);
+    private final BooleanSetting showHostiles = new BooleanSetting("Show Hostiles", false);
     private final NumberSetting range = new NumberSetting("Range", 10, 200, 100, 5);
     private final ColorSetting playerColor = new ColorSetting("Player Color", new Color(255, 255, 255));
+    private final ColorSetting passiveColor = new ColorSetting("Passive Color", new Color(0, 255, 0));
+    private final ColorSetting hostileColor = new ColorSetting("Hostile Color", new Color(255, 0, 0));
 
     private final java.util.Set<Integer> handledEntities = new java.util.HashSet<>();
 
     public OutlineESP() {
-        super("Outline ESP", "Uses Minecraft's glowing effect for player outlines", Category.RENDER);
+        super("Outline ESP", "Uses Minecraft's glowing effect for entity outlines", Category.RENDER);
         instance = this;
-        addSettings(showSelf, teamCheck, range, playerColor);
+        addSettings(showSelf, teamCheck, showPassives, showHostiles, range, playerColor, passiveColor, hostileColor);
     }
 
     public static OutlineESP getInstance() {
@@ -54,30 +60,53 @@ public class OutlineESP extends Module {
             if (shouldRender(entity)) {
                 applyColor(entity);
             } else {
-                if (handledEntities.contains(entity.getId())) {
-                    handledEntities.remove(entity.getId());
-                    Team team = entity.getScoreboardTeam();
-                    if (team != null && team.getName().startsWith("outlineESP_")) {
-                        mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), team);
-                        if (team.getPlayerList().isEmpty()) {
-                            mc.world.getScoreboard().removeTeam(team);
-                        }
-                    }
-                }
+                removeGlow(entity);
             }
         }
     }
 
+    private void removeGlow(Entity entity) {
+        if (!handledEntities.contains(entity.getId())) {
+            return;
+        }
+        
+        handledEntities.remove(entity.getId());
+        
+        String teamName = "outlineESP_" + entity.getId();
+        Team team = mc.world.getScoreboard().getTeam(teamName);
+        
+        if (team != null) {
+            mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), team);
+            mc.world.getScoreboard().removeTeam(team);
+        }
+        
+        Team currentTeam = entity.getScoreboardTeam();
+        if (currentTeam != null && currentTeam.getName().startsWith("outlineESP_")) {
+            mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), currentTeam);
+        }
+    }
+
     private boolean shouldRender(Entity entity) {
-        if (!(entity instanceof PlayerEntity player))
-            return false;
         if (mc.player.distanceTo(entity) > range.getValue())
             return false;
-        if (player == mc.player && !showSelf.getValue())
-            return false;
-        if (teamCheck.getValue() && isTeammate(player))
-            return false;
-        return true;
+
+        if (entity instanceof PlayerEntity player) {
+            if (player == mc.player && !showSelf.getValue())
+                return false;
+            if (teamCheck.getValue() && isTeammate(player))
+                return false;
+            return true;
+        }
+
+        if (entity instanceof PassiveEntity) {
+            return showPassives.getValue();
+        }
+
+        if (entity instanceof HostileEntity) {
+            return showHostiles.getValue();
+        }
+
+        return false;
     }
 
     private boolean isTeammate(PlayerEntity player) {
@@ -90,13 +119,19 @@ public class OutlineESP extends Module {
     private void applyColor(Entity entity) {
         handledEntities.add(entity.getId());
 
-        Team team = entity.getScoreboardTeam();
+        String teamName = "outlineESP_" + entity.getId();
+        Team existingTeam = entity.getScoreboardTeam();
+        
+        if (existingTeam != null && !existingTeam.getName().startsWith("outlineESP_")) {
+            mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), existingTeam);
+        }
+
+        Team team = mc.world.getScoreboard().getTeam(teamName);
         if (team == null) {
-            String teamName = "outlineESP_" + entity.getId();
-            team = mc.world.getScoreboard().getTeam(teamName);
-            if (team == null) {
-                team = mc.world.getScoreboard().addTeam(teamName);
-            }
+            team = mc.world.getScoreboard().addTeam(teamName);
+        }
+        
+        if (entity.getScoreboardTeam() != team) {
             mc.world.getScoreboard().addScoreHolderToTeam(entity.getNameForScoreboard(), team);
         }
 
@@ -109,7 +144,17 @@ public class OutlineESP extends Module {
             if (FriendManager.isFriend(player.getUuid())) {
                 return new Color(128, 0, 128);
             }
+            return playerColor.getValue();
         }
+
+        if (entity instanceof PassiveEntity) {
+            return passiveColor.getValue();
+        }
+
+        if (entity instanceof HostileEntity) {
+            return hostileColor.getValue();
+        }
+
         return playerColor.getValue();
     }
 
@@ -140,16 +185,21 @@ public class OutlineESP extends Module {
 
     @Override
     public void onDisable() {
-        if (!isNull()) {
+        if (!isNull() && mc.world != null) {
+            java.util.Set<Integer> entitiesToRemove = new java.util.HashSet<>(handledEntities);
+            
             for (Entity entity : mc.world.getEntities()) {
-                if (handledEntities.contains(entity.getId())) {
-                    Team team = entity.getScoreboardTeam();
-                    if (team != null && team.getName().startsWith("outlineESP_")) {
-                        mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), team);
-                        mc.world.getScoreboard().removeTeam(team);
-                    }
+                if (entitiesToRemove.contains(entity.getId())) {
+                    removeGlow(entity);
                 }
             }
+            
+            for (Team team : mc.world.getScoreboard().getTeams()) {
+                if (team.getName().startsWith("outlineESP_")) {
+                    mc.world.getScoreboard().removeTeam(team);
+                }
+            }
+            
             handledEntities.clear();
         }
         super.onDisable();
