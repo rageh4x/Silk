@@ -22,7 +22,7 @@ public class CoverUp extends Module {
     private boolean hasRotated = false;
 
     public CoverUp() {
-        super("Cover Up", "Rotates down, places 3 cobwebs, and rotates back", -1, Category.PLAYER);
+        super("Cover Up", "Rotates down, places 2 cobwebs, and rotates back", -1, Category.PLAYER);
         this.addSettings(placeDelay);
     }
 
@@ -80,7 +80,7 @@ public class CoverUp extends Module {
             return;
         }
 
-        if (placementStep < 3) {
+        if (placementStep < 2) {
             placeCobweb();
             placementStep++;
             lastPlaceTime = System.currentTimeMillis();
