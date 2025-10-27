@@ -5,6 +5,7 @@
   "mixins": [
     "ChatScreenMixin",
     "ClientPlayerInteractionManagerMixin",
+    "EntityMixin",
     "ExampleMixin",
     "HandledScreenMixin",
     "InGameHudMixin",
