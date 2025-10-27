@@ -40,9 +40,12 @@ public final class CircleESP extends Module {
         MatrixStack matrices = event.getMatrixStack();
         Matrix4f posMatrix = matrices.peek().getPositionMatrix();
         Vec3d cam = mc.gameRenderer.getCamera().getPos();
+        float tickDelta = mc.getRenderTickCounter().getTickDelta(true);
+        
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
         float r = color.getValue().getRed() / 255.0f;
@@ -67,12 +70,10 @@ public final class CircleESP extends Module {
         for (var entity : mc.world.getEntities()) {
             if (!should(entity)) continue;
             hasVertices = true;
-            Vec3d base = entity.getPos();
 
-            float tickDelta = mc.getRenderTickCounter().getTickDelta(true);
-            double cx = (entity.prevX + (base.getX() - entity.prevX) * tickDelta) - cam.x;
-            double cy = (entity.prevY + (base.getY() - entity.prevY) * tickDelta) - cam.y + y;
-            double cz = (entity.prevZ + (base.getZ() - entity.prevZ) * tickDelta) - cam.z;
+            double cx = entity.lastRenderX + (entity.getX() - entity.lastRenderX) * tickDelta - cam.x;
+            double cy = entity.lastRenderY + (entity.getY() - entity.lastRenderY) * tickDelta - cam.y + y;
+            double cz = entity.lastRenderZ + (entity.getZ() - entity.lastRenderZ) * tickDelta - cam.z;
 
             for (int i = 0; i < segments; i++) {
                 double a0 = (i / (double) segments) * Math.PI * 2.0;
@@ -83,7 +84,7 @@ public final class CircleESP extends Module {
                 double aMid = (a0 + a1) * 0.5;
                 float sideFactor = (float) Math.abs(Math.sin(aMid));
                 float aSeg = baseAlpha * (1.0f - (float) sideFade.getValue() * sideFactor);
-                float aOut = aSeg * 0.2f;
+                float aOut = aSeg * 0.3f;
 
                 float x0i = (float) (cx + x0 * radius);
                 float z0i = (float) (cz + z0 * radius);
@@ -108,6 +109,7 @@ public final class CircleESP extends Module {
             BufferRenderer.drawWithGlobalProgram(buffer.end());
         }
 
+        RenderSystem.enableCull();
         RenderSystem.enableDepthTest();
     }
 

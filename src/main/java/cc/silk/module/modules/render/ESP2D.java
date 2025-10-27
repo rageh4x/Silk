@@ -21,7 +21,8 @@ import java.awt.*;
 
 public class ESP2D extends Module {
 
-    //TODO: Fix the esp having the holy grail of microstutters :Sob: (walper if ur reading this im sorry)
+    // TODO: Fix the esp having the holy grail of microstutters :Sob: (walper if ur
+    // reading this im sorry)
 
     private final NumberSetting lineWidth = new NumberSetting("Line Width", 1.0, 8.0, 2.0, 0.5);
     private final ColorSetting color = new ColorSetting("Color", new Color(255, 100, 100, 200));
@@ -38,12 +39,13 @@ public class ESP2D extends Module {
 
     @EventHandler
     private void onRender2D(EventRender2D event) {
-        if (mc.player == null || mc.world == null) return;
+        if (mc.player == null || mc.world == null)
+            return;
 
         DrawContext context = event.getContext();
         final int fbWidth = mc.getWindow().getFramebufferWidth();
         final int fbHeight = mc.getWindow().getFramebufferHeight();
-        final int[] viewport = new int[]{0, 0, fbWidth, fbHeight};
+        final int[] viewport = new int[] { 0, 0, fbWidth, fbHeight };
         final int displayHeight = mc.getWindow().getHeight();
         final double scale = mc.getWindow().getScaleFactor();
 
@@ -52,11 +54,13 @@ public class ESP2D extends Module {
         final float partialTicks = mc.getRenderTickCounter().getTickDelta(true);
 
         for (PlayerEntity player : mc.world.getPlayers()) {
-            if (!shouldRender(player)) continue;
+            if (!shouldRender(player))
+                continue;
 
             Box box = getPlayerInterpolatedBox(player, partialTicks);
             int[] rect = projectBoxTo2D(box, viewport, displayHeight, scale, combined, cameraPos);
-            if (rect == null) continue;
+            if (rect == null)
+                continue;
 
             Color drawColor = FriendManager.isFriend(player.getUuid())
                     ? new Color(128, 0, 128, color.getValue().getAlpha())
@@ -67,7 +71,8 @@ public class ESP2D extends Module {
             int x2 = rect[2];
             int y2 = rect[3];
 
-            drawRectOutline(context, x1, y1, x2, y2, drawColor.getRGB(), (int) Math.max(1, Math.round(lineWidth.getValue())));
+            drawRectOutline(context, x1, y1, x2, y2, drawColor.getRGB(),
+                    (int) Math.max(1, Math.round(lineWidth.getValue())));
 
             if (healthBar.getValue()) {
                 drawHealthBar(context, player, x1, y1, y2);
@@ -76,8 +81,10 @@ public class ESP2D extends Module {
     }
 
     private boolean shouldRender(PlayerEntity player) {
-        if (player == mc.player && !showSelf.getValue()) return false;
-        if (mc.player.distanceTo(player) > range.getValue()) return false;
+        if (player == mc.player && !showSelf.getValue())
+            return false;
+        if (mc.player.distanceTo(player) > range.getValue())
+            return false;
         if (teamCheck.getValue()) {
             if (mc.player.getScoreboardTeam() != null && player.getScoreboardTeam() != null) {
                 return !mc.player.getScoreboardTeam().equals(player.getScoreboardTeam());
@@ -96,14 +103,14 @@ public class ESP2D extends Module {
 
         return new Box(
                 ix - halfWidth, iy, iz - halfWidth,
-                ix + halfWidth, iy + height, iz + halfWidth
-        );
+                ix + halfWidth, iy + height, iz + halfWidth);
     }
 
-    private int[] projectBoxTo2D(Box box, int[] viewport, int displayHeight, double scaleFactor, Matrix4f combined, Vec3d cameraPos) {
-        double[] xs = {box.minX, box.minX, box.minX, box.minX, box.maxX, box.maxX, box.maxX, box.maxX};
-        double[] ys = {box.minY, box.minY, box.maxY, box.maxY, box.minY, box.minY, box.maxY, box.maxY};
-        double[] zs = {box.minZ, box.maxZ, box.minZ, box.maxZ, box.minZ, box.maxZ, box.minZ, box.maxZ};
+    private int[] projectBoxTo2D(Box box, int[] viewport, int displayHeight, double scaleFactor, Matrix4f combined,
+            Vec3d cameraPos) {
+        double[] xs = { box.minX, box.minX, box.minX, box.minX, box.maxX, box.maxX, box.maxX, box.maxX };
+        double[] ys = { box.minY, box.minY, box.maxY, box.maxY, box.minY, box.minY, box.maxY, box.maxY };
+        double[] zs = { box.minZ, box.maxZ, box.minZ, box.maxZ, box.minZ, box.maxZ, box.minZ, box.maxZ };
 
         double minX = Double.POSITIVE_INFINITY;
         double minY = Double.POSITIVE_INFINITY;
@@ -125,20 +132,22 @@ public class ESP2D extends Module {
             }
         }
 
-        if (!anyVisible) return null;
+        if (!anyVisible)
+            return null;
 
         int x1 = (int) Math.floor(minX);
         int y1 = (int) Math.floor(minY);
         int x2 = (int) Math.ceil(maxX);
         int y2 = (int) Math.ceil(maxY);
-        if (x2 - x1 < 2 || y2 - y1 < 2) return null;
+        if (x2 - x1 < 2 || y2 - y1 < 2)
+            return null;
 
-        return new int[]{x1, y1, x2, y2};
+        return new int[] { x1, y1, x2, y2 };
     }
 
     private boolean projectWorldToScreen(double worldX, double worldY, double worldZ,
-                                         int[] viewport,
-                                         Matrix4f combined, Vec3d cameraPos, Vector3f outTarget, Vector4f reuseCoords) {
+            int[] viewport,
+            Matrix4f combined, Vec3d cameraPos, Vector3f outTarget, Vector4f reuseCoords) {
         double dx = worldX - cameraPos.x;
         double dy = worldY - cameraPos.y;
         double dz = worldZ - cameraPos.z;
@@ -172,7 +181,8 @@ public class ESP2D extends Module {
         float fraction = health / maxHealth;
 
         int filled = (int) Math.floor(height * fraction);
-        if (filled <= 0) return;
+        if (filled <= 0)
+            return;
 
         int fy1 = y2 - filled;
 
@@ -188,5 +198,3 @@ public class ESP2D extends Module {
         }
     }
 }
-
-
