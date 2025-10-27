@@ -49,10 +49,10 @@ public class FakePlayer extends Module {
         despawnFakePlayer();
     }
 
-
     @EventHandler
     private void onAttack(AttackEvent event) {
-        if (fakePlayer == null || isNull()) return;
+        if (fakePlayer == null || isNull())
+            return;
 
         if (event.getTarget() == fakePlayer) {
             handleFakePlayerHit(isPlayerCriticalHit());
@@ -60,7 +60,8 @@ public class FakePlayer extends Module {
     }
 
     private boolean isPlayerCriticalHit() {
-        if (mc.player == null) return false;
+        if (mc.player == null)
+            return false;
 
         boolean isFalling = mc.player.getVelocity().y < -0.08F;
         boolean isSneaking = mc.player.isSneaking();
@@ -74,7 +75,8 @@ public class FakePlayer extends Module {
     }
 
     private void handleFakePlayerHit(boolean isCritical) {
-        if (System.currentTimeMillis() - lastHitTime < 500) return;
+        if (System.currentTimeMillis() - lastHitTime < 500)
+            return;
         lastHitTime = System.currentTimeMillis();
         hitCount++;
         boolean shouldPopTotem = false;
@@ -107,7 +109,8 @@ public class FakePlayer extends Module {
     }
 
     private void addDamageEffects(boolean isCritical) {
-        if (fakePlayer == null || mc.world == null) return;
+        if (fakePlayer == null || mc.world == null)
+            return;
         int particleCount = isCritical ? 8 : 5;
         for (int i = 0; i < particleCount; i++) {
             double offsetX = (Math.random() - 0.5) * 0.5;
@@ -160,7 +163,8 @@ public class FakePlayer extends Module {
     }
 
     private void popTotem() {
-        if (fakePlayer == null || mc.world == null) return;
+        if (fakePlayer == null || mc.world == null)
+            return;
         fakePlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, 100, 1));
         fakePlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 800, 1));
         mc.world.playSound(fakePlayer.getX(), fakePlayer.getY(), fakePlayer.getZ(),
@@ -190,9 +194,12 @@ public class FakePlayer extends Module {
     }
 
     private void spawnFakePlayer() {
-        if (isNull()) return;
-        if (!mc.isInSingleplayer()) return;
-        if (fakePlayer != null) return;
+        if (isNull())
+            return;
+        if (!mc.isInSingleplayer())
+            return;
+        if (fakePlayer != null)
+            return;
         GameProfile original = mc.player.getGameProfile();
         GameProfile profile = new GameProfile(UUID.randomUUID(), original.getName());
         profile.getProperties().putAll(original.getProperties());
@@ -209,14 +216,14 @@ public class FakePlayer extends Module {
             }
         }
 
-
         mc.world.addEntity(other);
 
         fakePlayer = other;
     }
 
     private void despawnFakePlayer() {
-        if (fakePlayer == null) return;
+        if (fakePlayer == null)
+            return;
         if (!isNull()) {
             fakePlayer.discard();
         }
