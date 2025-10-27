@@ -7,6 +7,7 @@ import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.ColorSetting;
 import cc.silk.module.setting.ModeSetting;
+import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.render.DrawUtils;
 import cc.silk.utils.render.W2SUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -30,6 +31,7 @@ public class ESP2D extends Module {
 
     private final ModeSetting targets = new ModeSetting("Targets", "Players", "Players", "Passives", "Hostiles", "All");
     private final BooleanSetting showSelf = new BooleanSetting("Show Self", false);
+    private final NumberSetting range = new NumberSetting("Range", 10, 200, 64, 5);
     private final ModeSetting boxMode = new ModeSetting("Box Mode", "Full", "Full", "Corners");
     private final BooleanSetting boxSetting = new BooleanSetting("Box", true);
     private final BooleanSetting boxFill = new BooleanSetting("Box Fill", false);
@@ -43,7 +45,7 @@ public class ESP2D extends Module {
 
     public ESP2D() {
         super("2D ESP", "Draws 2D boxes around entities", -1, Category.RENDER);
-        addSettings(targets, showSelf, boxMode, boxSetting, boxFill, healthBar, nameTags, playerColor, passiveColor, hostileColor);
+        addSettings(targets, showSelf, range, boxMode, boxSetting, boxFill, healthBar, nameTags, playerColor, passiveColor, hostileColor);
     }
 
 
@@ -207,6 +209,9 @@ public class ESP2D extends Module {
 
     private boolean shouldRender(Entity entity) {
         if (entity == mc.player && !showSelf.getValue())
+            return false;
+
+        if (mc.player.distanceTo(entity) > range.getValue())
             return false;
 
         return switch (targets.getMode()) {
