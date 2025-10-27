@@ -1,5 +1,6 @@
 package cc.silk.module.modules.render;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import cc.silk.event.impl.render.EventRender3D;
 import cc.silk.module.Category;
@@ -12,97 +13,77 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 import java.awt.*;
 
 public final class CircleESP extends Module {
+
+    private static final Identifier CIRCLE_TEXTURE = Identifier.of("silk", "imgs/circle.png");
     private final ModeSetting targets = new ModeSetting("Targets", "Players", "Players", "Living");
     private final NumberSetting heightMin = new NumberSetting("Height Min", 0.1, 2.5, 0.2, 0.05);
     private final NumberSetting heightMax = new NumberSetting("Height Max", 0.2, 3.0, 1.4, 0.05);
     private final NumberSetting radius = new NumberSetting("Radius", 0.2, 2.0, 0.7, 0.05);
-    private final NumberSetting thickness = new NumberSetting("Thickness", 0.01, 0.3, 0.06, 0.005);
     private final NumberSetting speed = new NumberSetting("Speed", 0.1, 5.0, 1.6, 0.1);
-    private final NumberSetting segments = new NumberSetting("Segments", 16, 128, 64, 1);
-    private final NumberSetting sideFade = new NumberSetting("Side Fade", 0.0, 1.0, 0.5, 0.05);
     private final ColorSetting color = new ColorSetting("Color", new Color(100, 255, 255, 200));
 
     public CircleESP() {
         super("Circle ESP", "Animated ring around players", -1, Category.RENDER);
-        addSettings(targets, heightMin, heightMax, radius, thickness, speed, segments, sideFade, color);
+        addSettings(targets, heightMin, heightMax, radius, speed, color);
     }
 
     @EventHandler
     private void onRender3D(EventRender3D event) {
         if (isNull()) return;
 
-        MatrixStack matrices = event.getMatrixStack();
-        Matrix4f posMatrix = matrices.peek().getPositionMatrix();
         Vec3d cam = mc.gameRenderer.getCamera().getPos();
         float tickDelta = mc.getRenderTickCounter().getTickDelta(true);
-        
+
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+        RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE);
         RenderSystem.disableCull();
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-
-        float r = color.getValue().getRed() / 255.0f;
-        float g = color.getValue().getGreen() / 255.0f;
-        float b = color.getValue().getBlue() / 255.0f;
+        RenderSystem.setShaderTexture(0, CIRCLE_TEXTURE);
+        RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
 
         float minH = heightMin.getValueFloat();
         float maxH = heightMax.getValueFloat();
         float radius = this.radius.getValueFloat();
-        float thick = thickness.getValueFloat();
-        int segments = Math.max(8, this.segments.getValueInt());
+        Color c = color.getValue();
 
         double time = (System.currentTimeMillis() / 1000.0) * speed.getValue();
         double phase = (Math.sin(time) * 0.5) + 0.5;
         float y = (float) (minH + (maxH - minH) * phase);
-        float baseAlpha = color.getValue().getAlpha() / 255.0f;
 
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS,
+                VertexFormats.POSITION_TEXTURE_COLOR);
 
         boolean hasVertices = false;
 
         for (var entity : mc.world.getEntities()) {
             if (!should(entity)) continue;
+
             hasVertices = true;
 
             double cx = entity.lastRenderX + (entity.getX() - entity.lastRenderX) * tickDelta - cam.x;
             double cy = entity.lastRenderY + (entity.getY() - entity.lastRenderY) * tickDelta - cam.y + y;
             double cz = entity.lastRenderZ + (entity.getZ() - entity.lastRenderZ) * tickDelta - cam.z;
 
-            for (int i = 0; i < segments; i++) {
-                double a0 = (i / (double) segments) * Math.PI * 2.0;
-                double a1 = ((i + 1) / (double) segments) * Math.PI * 2.0;
-                double x0 = Math.cos(a0), z0 = Math.sin(a0);
-                double x1 = Math.cos(a1), z1 = Math.sin(a1);
+            int circleColor = c.getRGB();
 
-                double aMid = (a0 + a1) * 0.5;
-                float sideFactor = (float) Math.abs(Math.sin(aMid));
-                float aSeg = baseAlpha * (1.0f - (float) sideFade.getValue() * sideFactor);
-                float aOut = aSeg * 0.3f;
+            MatrixStack matrices = new MatrixStack();
+            matrices.translate(cx, cy, cz);
+            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90));
 
-                float x0i = (float) (cx + x0 * radius);
-                float z0i = (float) (cz + z0 * radius);
-                float x1i = (float) (cx + x1 * radius);
-                float z1i = (float) (cz + z1 * radius);
-                float x0o = (float) (cx + x0 * (radius + thick));
-                float z0o = (float) (cz + z0 * (radius + thick));
-                float x1o = (float) (cx + x1 * (radius + thick));
-                float z1o = (float) (cz + z1 * (radius + thick));
+            Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-                buffer.vertex(posMatrix, x0i, (float) cy, z0i).color(r, g, b, aSeg);
-                buffer.vertex(posMatrix, x1i, (float) cy, z1i).color(r, g, b, aSeg);
-                buffer.vertex(posMatrix, x1o, (float) cy, z1o).color(r, g, b, aOut);
-
-                buffer.vertex(posMatrix, x0i, (float) cy, z0i).color(r, g, b, aSeg);
-                buffer.vertex(posMatrix, x1o, (float) cy, z1o).color(r, g, b, aOut);
-                buffer.vertex(posMatrix, x0o, (float) cy, z0o).color(r, g, b, aOut);
-            }
+            buffer.vertex(matrix, -radius, -radius, 0).texture(0f, 0f).color(circleColor);
+            buffer.vertex(matrix, -radius, radius, 0).texture(0f, 1f).color(circleColor);
+            buffer.vertex(matrix, radius, radius, 0).texture(1f, 1f).color(circleColor);
+            buffer.vertex(matrix, radius, -radius, 0).texture(1f, 0f).color(circleColor);
         }
 
         if (hasVertices) {
@@ -111,6 +92,7 @@ public final class CircleESP extends Module {
 
         RenderSystem.enableCull();
         RenderSystem.enableDepthTest();
+        RenderSystem.disableBlend();
     }
 
     private boolean should(net.minecraft.entity.Entity entity) {
