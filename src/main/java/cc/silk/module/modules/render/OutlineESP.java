@@ -9,8 +9,6 @@ import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.friend.FriendManager;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 
@@ -20,20 +18,17 @@ public class OutlineESP extends Module {
 
     private static OutlineESP instance;
 
-    private final BooleanSetting players = new BooleanSetting("Players", true);
-    private final BooleanSetting mobs = new BooleanSetting("Mobs", false);
-    private final BooleanSetting animals = new BooleanSetting("Animals", false);
     private final BooleanSetting showSelf = new BooleanSetting("Show Self", false);
     private final BooleanSetting teamCheck = new BooleanSetting("Team Check", false);
     private final NumberSetting range = new NumberSetting("Range", 10, 200, 100, 5);
     private final ColorSetting playerColor = new ColorSetting("Player Color", new Color(255, 255, 255));
-    private final ColorSetting mobColor = new ColorSetting("Mob Color", new Color(255, 0, 0));
-    private final ColorSetting animalColor = new ColorSetting("Animal Color", new Color(0, 255, 0));
+
+    private final java.util.Set<Integer> handledEntities = new java.util.HashSet<>();
 
     public OutlineESP() {
-        super("Outline ESP", "Uses Minecraft's glowing effect for entity outlines", Category.RENDER);
+        super("Outline ESP", "Uses Minecraft's glowing effect for player outlines", Category.RENDER);
         instance = this;
-        addSettings(players, mobs, animals, showSelf, teamCheck, range, playerColor, mobColor, animalColor);
+        addSettings(showSelf, teamCheck, range, playerColor);
     }
 
     public static OutlineESP getInstance() {
@@ -41,40 +36,48 @@ public class OutlineESP extends Module {
     }
 
     public boolean shouldEntityGlow(Entity entity) {
-        if (!isEnabled() || isNull()) return false;
+        if (!isEnabled() || isNull())
+            return false;
         return shouldRender(entity);
+    }
+
+    public boolean wasHandledByModule(Entity entity) {
+        return handledEntities.contains(entity.getId());
     }
 
     @EventHandler
     private void onTick(TickEvent event) {
-        if (isNull()) return;
+        if (isNull())
+            return;
 
         for (Entity entity : mc.world.getEntities()) {
             if (shouldRender(entity)) {
                 applyColor(entity);
+            } else {
+                if (handledEntities.contains(entity.getId())) {
+                    handledEntities.remove(entity.getId());
+                    Team team = entity.getScoreboardTeam();
+                    if (team != null && team.getName().startsWith("outlineESP_")) {
+                        mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), team);
+                        if (team.getPlayerList().isEmpty()) {
+                            mc.world.getScoreboard().removeTeam(team);
+                        }
+                    }
+                }
             }
         }
     }
 
     private boolean shouldRender(Entity entity) {
-        if (mc.player.distanceTo(entity) > range.getValue()) return false;
-
-        if (entity instanceof PlayerEntity player) {
-            if (!players.getValue()) return false;
-            if (player == mc.player && !showSelf.getValue()) return false;
-            if (teamCheck.getValue() && isTeammate(player)) return false;
-            return true;
-        }
-
-        if (entity instanceof HostileEntity) {
-            return mobs.getValue();
-        }
-
-        if (entity instanceof PassiveEntity) {
-            return animals.getValue();
-        }
-
-        return false;
+        if (!(entity instanceof PlayerEntity player))
+            return false;
+        if (mc.player.distanceTo(entity) > range.getValue())
+            return false;
+        if (player == mc.player && !showSelf.getValue())
+            return false;
+        if (teamCheck.getValue() && isTeammate(player))
+            return false;
+        return true;
     }
 
     private boolean isTeammate(PlayerEntity player) {
@@ -85,6 +88,8 @@ public class OutlineESP extends Module {
     }
 
     private void applyColor(Entity entity) {
+        handledEntities.add(entity.getId());
+
         Team team = entity.getScoreboardTeam();
         if (team == null) {
             String teamName = "outlineESP_" + entity.getId();
@@ -104,17 +109,7 @@ public class OutlineESP extends Module {
             if (FriendManager.isFriend(player.getUuid())) {
                 return new Color(128, 0, 128);
             }
-            return playerColor.getValue();
         }
-
-        if (entity instanceof HostileEntity) {
-            return mobColor.getValue();
-        }
-
-        if (entity instanceof PassiveEntity) {
-            return animalColor.getValue();
-        }
-
         return playerColor.getValue();
     }
 
@@ -123,14 +118,22 @@ public class OutlineESP extends Module {
         int g = color.getGreen();
         int b = color.getBlue();
 
-        if (r > 200 && g < 100 && b < 100) return net.minecraft.util.Formatting.RED;
-        if (r < 100 && g > 200 && b < 100) return net.minecraft.util.Formatting.GREEN;
-        if (r < 100 && g < 100 && b > 200) return net.minecraft.util.Formatting.BLUE;
-        if (r > 200 && g > 200 && b < 100) return net.minecraft.util.Formatting.YELLOW;
-        if (r > 200 && g < 100 && b > 200) return net.minecraft.util.Formatting.LIGHT_PURPLE;
-        if (r < 100 && g > 200 && b > 200) return net.minecraft.util.Formatting.AQUA;
-        if (r > 200 && g > 200 && b > 200) return net.minecraft.util.Formatting.WHITE;
-        if (r < 100 && g < 100 && b < 100) return net.minecraft.util.Formatting.DARK_GRAY;
+        if (r > 200 && g < 100 && b < 100)
+            return net.minecraft.util.Formatting.RED;
+        if (r < 100 && g > 200 && b < 100)
+            return net.minecraft.util.Formatting.GREEN;
+        if (r < 100 && g < 100 && b > 200)
+            return net.minecraft.util.Formatting.BLUE;
+        if (r > 200 && g > 200 && b < 100)
+            return net.minecraft.util.Formatting.YELLOW;
+        if (r > 200 && g < 100 && b > 200)
+            return net.minecraft.util.Formatting.LIGHT_PURPLE;
+        if (r < 100 && g > 200 && b > 200)
+            return net.minecraft.util.Formatting.AQUA;
+        if (r > 200 && g > 200 && b > 200)
+            return net.minecraft.util.Formatting.WHITE;
+        if (r < 100 && g < 100 && b < 100)
+            return net.minecraft.util.Formatting.DARK_GRAY;
 
         return net.minecraft.util.Formatting.WHITE;
     }
@@ -139,11 +142,15 @@ public class OutlineESP extends Module {
     public void onDisable() {
         if (!isNull()) {
             for (Entity entity : mc.world.getEntities()) {
-                Team team = entity.getScoreboardTeam();
-                if (team != null && team.getName().startsWith("outlineESP_")) {
-                    mc.world.getScoreboard().removeTeam(team);
+                if (handledEntities.contains(entity.getId())) {
+                    Team team = entity.getScoreboardTeam();
+                    if (team != null && team.getName().startsWith("outlineESP_")) {
+                        mc.world.getScoreboard().removeScoreHolderFromTeam(entity.getNameForScoreboard(), team);
+                        mc.world.getScoreboard().removeTeam(team);
+                    }
                 }
             }
+            handledEntities.clear();
         }
         super.onDisable();
     }
