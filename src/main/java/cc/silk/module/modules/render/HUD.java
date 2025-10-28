@@ -22,18 +22,22 @@ public class HUD extends Module {
     public static final BooleanSetting watermark = new BooleanSetting("Watermark", true);
     public static final ModeSetting watermarkMode = new ModeSetting("Watermark Mode", "Simple", "Simple", "Gamesense");
     public static final StringSetting watermarkText = new StringSetting("Watermark Text", "Silk");
-    public static final ModeSetting watermarkSimpleFontMode = new ModeSetting("Watermark Font", "MC", "MC", "Inter", "JetbrainsMono", "Poppins");
+    public static final ModeSetting watermarkSimpleFontMode = new ModeSetting("Watermark Font", "MC", "MC", "Inter",
+            "JetbrainsMono", "Poppins");
     public static final NumberSetting watermarkScale = new NumberSetting("Watermark Scale", 0.5, 3.0, 1.0, 0.1);
     public static final BooleanSetting arrayList = new BooleanSetting("ArrayList", true);
     public static final NumberSetting arrayListScale = new NumberSetting("ArrayList Scale", 0.5, 3.0, 1.0, 0.1);
     public static final ModeSetting colorMode = new ModeSetting("Color Mode", "Astolfo", "Astolfo", "Theme", "Custom");
     public static final ColorSetting customColor = new ColorSetting("Custom Color", new Color(255, 255, 255));
-    public static final ModeSetting fontMode = new ModeSetting("ArrayList Font", "MC", "MC", "Inter", "JetbrainsMono", "Poppins");
+    public static final ModeSetting fontMode = new ModeSetting("ArrayList Font", "MC", "MC", "Inter", "JetbrainsMono",
+            "Poppins");
     public static final ModeSetting suffixMode = new ModeSetting("Suffix", "Space", "Space", "-", ">", "[ ]");
     public static final BooleanSetting hideVisuals = new BooleanSetting("Hide visuals", true);
     public static final BooleanSetting lowercase = new BooleanSetting("Lowercase", false);
     public static final ModeSetting backBarMode = new ModeSetting("Backbar Mode", "None", "None", "Full", "Rise");
+    public static final BooleanSetting outline = new BooleanSetting("Outline", true);
     public static final BooleanSetting waveAnimation = new BooleanSetting("Wave Animation", false);
+    public static final ModeSetting waveDirection = new ModeSetting("Wave Direction", "Down", "Down", "Up", "Sideways");
     public static final NumberSetting waveSpeed = new NumberSetting("Wave Speed", 0.1, 5.0, 1.5, 0.1);
     public static final NumberSetting waveSpread = new NumberSetting("Wave Spread", 0.1, 5.0, 0.6, 0.1);
     public static final BooleanSetting glow = new BooleanSetting("Glow", true);
@@ -49,7 +53,10 @@ public class HUD extends Module {
 
     public HUD() {
         super("HUD", "Renders information", -1, Category.RENDER);
-        addSettings(watermark, watermarkMode, watermarkText, watermarkSimpleFontMode, watermarkScale, arrayList, arrayListScale, colorMode, customColor, fontMode, suffixMode, hideVisuals, lowercase, backBarMode, waveAnimation, waveSpeed, waveSpread, glow, glowIntensity, padding, opacity, info, bpsCounter, fpsCounter, scale);
+        addSettings(watermark, watermarkMode, watermarkText, watermarkSimpleFontMode, watermarkScale, arrayList,
+                arrayListScale, colorMode, customColor, fontMode, suffixMode, hideVisuals, lowercase, backBarMode,
+                outline, waveAnimation, waveDirection, waveSpeed, waveSpread, glow, glowIntensity, padding, opacity,
+                info, bpsCounter, fpsCounter, scale);
     }
 
     public static int getAstolfo(int offset) {
@@ -89,21 +96,26 @@ public class HUD extends Module {
 
                         if (watermarkSimpleFontMode.getMode().equals("MC")) {
                             event.getContext().getMatrices().push();
-                            event.getContext().getMatrices().scale((float) watermarkScale.getValue(), (float) watermarkScale.getValue(), 1.0f);
+                            event.getContext().getMatrices().scale((float) watermarkScale.getValue(),
+                                    (float) watermarkScale.getValue(), 1.0f);
 
                             int adjustedX = (int) (scaledX / watermarkScale.getValue());
                             int adjustedY = (int) (scaledY / watermarkScale.getValue());
 
-                            event.getContext().drawText(mc.textRenderer, totalWatermarkText, adjustedX, adjustedY, watermarkColor.getRGB(), true);
+                            event.getContext().drawText(mc.textRenderer, totalWatermarkText, adjustedX, adjustedY,
+                                    watermarkColor.getRGB(), true);
                             event.getContext().getMatrices().pop();
                         } else {
-                            getWatermarkFontRenderer(watermarkSimpleFontMode.getMode()).drawString(event.getContext().getMatrices(), totalWatermarkText, scaledX, scaledY, watermarkColor);
+                            getWatermarkFontRenderer(watermarkSimpleFontMode.getMode()).drawString(
+                                    event.getContext().getMatrices(), totalWatermarkText, scaledX, scaledY,
+                                    watermarkColor);
                         }
                     }
                     break;
 
                 case "Gamesense":
-                    String text = "§f" + watermarkText.getValue() + "§rsense §8| §f " + ("free") + "§7 (" + ("0000") + ") §8 | §f " + getIP();
+                    String text = "§f" + watermarkText.getValue() + "§rsense §8| §f " + ("free") + "§7 (" + ("0000")
+                            + ") §8 | §f " + getIP();
 
                     int padding = (int) (2 * watermarkScale.getValue());
                     int offsetX = (int) (4 * watermarkScale.getValue());
@@ -120,16 +132,14 @@ public class HUD extends Module {
                             offsetY - padding - 1,
                             offsetX + backgroundWidth + 1,
                             offsetY + backgroundHeight + 1,
-                            new Color(96, 96, 96).getRGB()
-                    );
+                            new Color(96, 96, 96).getRGB());
 
                     event.getContext().fill(
                             offsetX - padding,
                             offsetY - padding,
                             offsetX + backgroundWidth,
                             offsetY + backgroundHeight,
-                            new Color(25, 25, 25).getRGB()
-                    );
+                            new Color(25, 25, 25).getRGB());
 
                     Color gamesenseColor = switch (colorMode.getMode()) {
                         case "Astolfo" -> new Color(getAstolfo(0));
@@ -142,8 +152,7 @@ public class HUD extends Module {
                             text,
                             offsetX,
                             offsetY,
-                            gamesenseColor
-                    );
+                            gamesenseColor);
                     break;
             }
         }
@@ -151,15 +160,18 @@ public class HUD extends Module {
         if (arrayList.getValue()) {
             List<Module> enabledModules = new ArrayList<>();
             for (Module module : SilkClient.INSTANCE.getModuleManager().getModules()) {
-                if (!module.isEnabled()) continue;
-                if (hideVisuals.getValue() && module.getModuleCategory() == Category.RENDER) continue;
+                if (!module.isEnabled())
+                    continue;
+                if (hideVisuals.getValue() && module.getModuleCategory() == Category.RENDER)
+                    continue;
                 enabledModules.add(module);
             }
 
             if (fontMode.getMode().equals("MC")) {
                 enabledModules.sort(Comparator.comparingDouble(ri -> -mc.textRenderer.getWidth(getFullName(ri))));
             } else {
-                enabledModules.sort(Comparator.comparingDouble(ri -> -getCustomFontRenderer(fontMode.getMode()).getStringWidth(getFullName(ri))));
+                enabledModules.sort(Comparator.comparingDouble(
+                        ri -> -getCustomFontRenderer(fontMode.getMode()).getStringWidth(getFullName(ri))));
             }
 
             int i = padding.getValueInt();
@@ -192,14 +204,6 @@ public class HUD extends Module {
                     default -> 0;
                 };
 
-                int textColor = color;
-                if (waveAnimation.getValue()) {
-                    double wavePhase = waveTime + moduleIndex * waveSpread.getValue();
-                    double waveValue = (Math.sin(wavePhase) + 1.0) * 0.5;
-                    double wave = Math.sin(waveValue * Math.PI * 0.5);
-                    textColor = applyWaveColor(color, wave);
-                }
-
                 int moduleWidth;
                 int moduleHeight;
                 FontRenderer customRenderer = null;
@@ -219,33 +223,51 @@ public class HUD extends Module {
                 int scaledPadding5 = (int) (5 * arrayListScale.getValue());
 
                 int backgroundLeft = totalWidth - moduleWidth - padding.getValueInt() - scaledPadding3;
+
+                int textColor = color;
+                if (waveAnimation.getValue()) {
+                    double wavePhase = switch (waveDirection.getMode()) {
+                        case "Up" -> waveTime - moduleIndex * waveSpread.getValue();
+                        case "Sideways" -> waveTime + (totalWidth - backgroundLeft) * 0.01 * waveSpread.getValue();
+                        default -> waveTime + moduleIndex * waveSpread.getValue();
+                    };
+                    double waveValue = (Math.sin(wavePhase) + 1.0) * 0.5;
+                    double wave = Math.sin(waveValue * Math.PI * 0.5);
+                    textColor = applyWaveColor(color, wave);
+                }
                 int backgroundTop = i - scaledPadding2;
                 int backgroundRight = totalWidth - padding.getValueInt() + scaledPadding5;
                 int backgroundBottom = i + moduleHeight + scaledPadding1;
 
                 if (opacity.getValueInt() > 0) {
                     int backgroundColor = new Color(0, 0, 0, opacity.getValueInt()).getRGB();
-                    event.getContext().fill(backgroundLeft, backgroundTop, backgroundRight, backgroundBottom, backgroundColor);
+                    event.getContext().fill(backgroundLeft, backgroundTop, backgroundRight, backgroundBottom,
+                            backgroundColor);
                 }
 
                 boolean isFirst = moduleIndex == 0;
                 boolean isLast = moduleIndex == enabledModules.size() - 1;
 
-                if (glow.getValue()) {
-                    renderBordersWithGlow(event, backgroundLeft, backgroundTop, backgroundRight, backgroundBottom,
-                            prevBackgroundLeft, isFirst, isLast, color);
-                } else {
-                    renderBorders(event, backgroundLeft, backgroundTop, backgroundRight, backgroundBottom,
-                            prevBackgroundLeft, isFirst, isLast, color);
+                if (outline.getValue()) {
+                    if (glow.getValue()) {
+                        renderBordersWithGlow(event, backgroundLeft, backgroundTop, backgroundRight, backgroundBottom,
+                                prevBackgroundLeft, isFirst, isLast, color);
+                    } else {
+                        renderBorders(event, backgroundLeft, backgroundTop, backgroundRight, backgroundBottom,
+                                prevBackgroundLeft, isFirst, isLast, color);
+                    }
                 }
 
                 prevBackgroundLeft = backgroundLeft - 1;
 
                 switch (backBarMode.getMode()) {
                     case "Full" ->
-                            event.getContext().fill(totalWidth - padding.getValueInt() + scaledPadding3, i - scaledPadding2, totalWidth - padding.getValueInt() + scaledPadding5, i + moduleHeight + scaledPadding1, color);
+                        event.getContext().fill(totalWidth - padding.getValueInt() + scaledPadding3, i - scaledPadding2,
+                                totalWidth - padding.getValueInt() + scaledPadding5, i + moduleHeight + scaledPadding1,
+                                color);
                     case "Rise" ->
-                            event.getContext().fill(totalWidth - padding.getValueInt() + scaledPadding3, i - scaledPadding1, totalWidth - padding.getValueInt() + scaledPadding5, i + moduleHeight, color);
+                        event.getContext().fill(totalWidth - padding.getValueInt() + scaledPadding3, i - scaledPadding1,
+                                totalWidth - padding.getValueInt() + scaledPadding5, i + moduleHeight, color);
                 }
 
                 int textX = totalWidth - moduleWidth - padding.getValueInt();
@@ -257,7 +279,8 @@ public class HUD extends Module {
                     if (fontMode.getMode().equals("MC")) {
                         event.getContext().drawText(mc.textRenderer, fullName, textX, textY, textColor, true);
                     } else {
-                        customRenderer.drawString(event.getContext().getMatrices(), fullName, textX, textY, new Color(textColor));
+                        customRenderer.drawString(event.getContext().getMatrices(), fullName, textX, textY,
+                                new Color(textColor));
                     }
                 }
 
@@ -267,14 +290,16 @@ public class HUD extends Module {
         }
 
         if (info.getValue()) {
-            String bps = String.valueOf(decimalFormat.format(Math.hypot(mc.player.getX() - mc.player.prevX, mc.player.getZ() - mc.player.prevZ) * 20.0F));
+            String bps = String.valueOf(decimalFormat.format(
+                    Math.hypot(mc.player.getX() - mc.player.prevX, mc.player.getZ() - mc.player.prevZ) * 20.0F));
             String fps = String.valueOf(MinecraftClient.getInstance().getCurrentFps());
 
             int x = (int) (10 * scale.getValue());
 
             int lineHeight = (int) (mc.textRenderer.fontHeight * scale.getValue());
 
-            int y = event.getHeight() - (fpsCounter.getValue() && bpsCounter.getValue() ? 2 * lineHeight : lineHeight) - (int) (10 * scale.getValue());
+            int y = event.getHeight() - (fpsCounter.getValue() && bpsCounter.getValue() ? 2 * lineHeight : lineHeight)
+                    - (int) (10 * scale.getValue());
 
             if (fpsCounter.getValue()) {
                 int color = switch (colorMode.getMode()) {
@@ -342,7 +367,8 @@ public class HUD extends Module {
                     case ">":
                         return (m.getName() + Formatting.GRAY + " > " + m.getSuffix()).toLowerCase();
                     case "[ ]":
-                        return (m.getName() + Formatting.DARK_GRAY + " [" + Formatting.GRAY + m.getSuffix() + Formatting.DARK_GRAY + "]").toLowerCase();
+                        return (m.getName() + Formatting.DARK_GRAY + " [" + Formatting.GRAY + m.getSuffix()
+                                + Formatting.DARK_GRAY + "]").toLowerCase();
                 }
             }
         } else {
@@ -357,7 +383,8 @@ public class HUD extends Module {
                     case ">":
                         return m.getName() + Formatting.GRAY + " > " + m.getSuffix();
                     case "[ ]":
-                        return m.getName() + Formatting.DARK_GRAY + " [" + Formatting.GRAY + m.getSuffix() + Formatting.DARK_GRAY + "]";
+                        return m.getName() + Formatting.DARK_GRAY + " [" + Formatting.GRAY + m.getSuffix()
+                                + Formatting.DARK_GRAY + "]";
                 }
             }
         }
@@ -365,8 +392,8 @@ public class HUD extends Module {
     }
 
     private void renderBorders(EventRender2D event, int backgroundLeft, int backgroundTop,
-                               int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
-                               boolean isFirst, boolean isLast, int color) {
+            int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
+            boolean isFirst, boolean isLast, int color) {
         if (isFirst) {
             event.getContext().fill(backgroundLeft - 1, backgroundTop - 1, backgroundRight + 1, backgroundTop, color);
         }
@@ -378,18 +405,20 @@ public class HUD extends Module {
             if (prevBackgroundLeft < backgroundLeft - 1) {
                 event.getContext().fill(prevBackgroundLeft, backgroundTop - 1, backgroundLeft, backgroundTop, color);
             } else {
-                event.getContext().fill(backgroundLeft - 1, backgroundTop - 1, prevBackgroundLeft + 1, backgroundTop, color);
+                event.getContext().fill(backgroundLeft - 1, backgroundTop - 1, prevBackgroundLeft + 1, backgroundTop,
+                        color);
             }
         }
 
         if (isLast) {
-            event.getContext().fill(backgroundLeft - 1, backgroundBottom, backgroundRight + 1, backgroundBottom + 1, color);
+            event.getContext().fill(backgroundLeft - 1, backgroundBottom, backgroundRight + 1, backgroundBottom + 1,
+                    color);
         }
     }
 
     private void renderBordersWithGlow(EventRender2D event, int backgroundLeft, int backgroundTop,
-                                       int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
-                                       boolean isFirst, boolean isLast, int color) {
+            int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
+            boolean isFirst, boolean isLast, int color) {
         float intensity = glowIntensity.getValueFloat();
 
         if (isFirst) {
@@ -418,13 +447,15 @@ public class HUD extends Module {
         }
     }
 
-    private void renderTextWithGlow(EventRender2D event, String text, int x, int y, int color, FontRenderer customRenderer) {
+    private void renderTextWithGlow(EventRender2D event, String text, int x, int y, int color,
+            FontRenderer customRenderer) {
         float intensity = glowIntensity.getValueFloat();
 
         if (fontMode.getMode().equals("MC")) {
             RenderUtils.drawTextWithGlow(event.getContext(), mc.textRenderer, text, x, y, color, intensity);
         } else {
-            RenderUtils.drawCustomTextWithGlow(event.getContext().getMatrices(), customRenderer, text, x, y, color, intensity);
+            RenderUtils.drawCustomTextWithGlow(event.getContext().getMatrices(), customRenderer, text, x, y, color,
+                    intensity);
         }
     }
 
