@@ -1,7 +1,10 @@
 package cc.silk.utils.render;
 
+import cc.silk.utils.render.font.fonts.FontRenderer;
+import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.math.MatrixStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
@@ -17,6 +20,7 @@ public class NanoVGRenderer {
     private static final NVGColor colorBuffer = NVGColor.create();
     private static final NVGColor colorBuffer2 = NVGColor.create();
     private static final NVGPaint paintBuffer = NVGPaint.create();
+    private static boolean inFrame = false;
 
     public static void init() {
         if (initialized)
@@ -34,16 +38,27 @@ public class NanoVGRenderer {
         if (!initialized)
             init();
 
+        if (inFrame)
+            return;
+
         MinecraftClient mc = MinecraftClient.getInstance();
         int width = mc.getWindow().getScaledWidth();
         int height = mc.getWindow().getScaledHeight();
         float scale = 1.0f;
 
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+
         nvgBeginFrame(vg, width, height, scale);
+        inFrame = true;
     }
 
     public static void endFrame() {
+        if (!inFrame)
+            return;
+
         nvgEndFrame(vg);
+        inFrame = false;
     }
 
     public static void drawRoundedRect(float x, float y, float width, float height, float radius, Color color) {
@@ -88,6 +103,21 @@ public class NanoVGRenderer {
         nvgCircle(vg, x, y, radius);
         nvgFillColor(vg, colorBuffer);
         nvgFill(vg);
+    }
+
+    public static void drawText(MatrixStack matrices, FontRenderer font, String text, float x, float y, Color color) {
+        boolean wasInFrame = inFrame;
+        if (inFrame) {
+            endFrame();
+        }
+        font.drawString(matrices, text, x, y, color);
+        if (wasInFrame) {
+            beginFrame();
+        }
+    }
+
+    public static float getTextWidth(FontRenderer font, String text) {
+        return font.getStringWidth(text);
     }
 
     public static void cleanup() {

@@ -39,6 +39,10 @@ public final class ModuleManager {
                 .toList();
     }
 
+    public List<Module> getModulesByCategory(Category category) {
+        return getModulesInCategory(category);
+    }
+
     public <T extends Module> Optional<T> getModule(Class<T> moduleClass) {
         return modules.stream()
                 .filter(module -> module.getClass().equals(moduleClass))
