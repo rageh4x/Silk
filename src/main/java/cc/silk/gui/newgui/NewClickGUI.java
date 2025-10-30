@@ -16,6 +16,10 @@ public class NewClickGUI extends Screen {
     private final List<CategoryPanel> panels = new ArrayList<>();
     private static final int PANEL_WIDTH = 110;
     private static final int PANEL_SPACING = 5;
+    
+    private float animationProgress = 0f;
+    private boolean closing = false;
+    private long lastFrameTime = System.currentTimeMillis();
 
     public NewClickGUI() {
         super(Text.literal("ClickGUI"));
@@ -23,7 +27,6 @@ public class NewClickGUI extends Screen {
     }
 
     private void initPanels() {
-        // Initialize font manager
         cc.silk.SilkClient.INSTANCE.getFontManager().initialize();
 
         int x = 20;
@@ -43,9 +46,56 @@ public class NewClickGUI extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        for (CategoryPanel panel : panels) {
-            panel.render(context, mouseX, mouseY);
+        long currentTime = System.currentTimeMillis();
+        float deltaTime = (currentTime - lastFrameTime) / 1000f;
+        lastFrameTime = currentTime;
+        
+        if (closing) {
+            animationProgress -= deltaTime * 4f;
+            if (animationProgress <= 0f) {
+                animationProgress = 0f;
+                if (client != null) {
+                    client.setScreen(null);
+                }
+                return;
+            }
+        } else {
+            animationProgress += deltaTime * 4f;
+            if (animationProgress > 1f) {
+                animationProgress = 1f;
+            }
         }
+        
+        float scale = easeOutCubic(animationProgress);
+        float alpha = animationProgress;
+        
+        context.getMatrices().push();
+        
+        int centerX = width / 2;
+        int centerY = height / 2;
+        context.getMatrices().translate(centerX, centerY, 0);
+        context.getMatrices().scale(scale, scale, 1f);
+        context.getMatrices().translate(-centerX, -centerY, 0);
+        
+        for (CategoryPanel panel : panels) {
+            panel.render(context, mouseX, mouseY, alpha);
+        }
+        
+        context.getMatrices().pop();
+    }
+    
+    private float easeOutCubic(float t) {
+        return 1f - (float)Math.pow(1f - t, 3);
+    }
+    
+    @Override
+    public void close() {
+        closing = true;
+    }
+    
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return true;
     }
 
     @Override

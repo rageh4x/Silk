@@ -20,7 +20,7 @@ public class ModuleButton {
         this.height = height;
     }
 
-    public void render(DrawContext context, float panelX, float panelY, int mouseX, int mouseY) {
+    public void render(DrawContext context, float panelX, float panelY, int mouseX, int mouseY, float alpha) {
         float x = panelX + relativeX;
         float y = panelY + relativeY;
         float buttonWidth = width;
@@ -29,21 +29,26 @@ public class ModuleButton {
         boolean hovered = isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY);
         
         if (module.isEnabled()) {
-            context.fill((int)x, (int)y, (int)(x + 2), (int)(y + buttonHeight), new Color(100, 120, 255, 255).getRGB());
+            Color accentColor = new Color(100, 120, 255, (int)(255 * alpha));
+            context.fill((int)x, (int)y, (int)(x + 2), (int)(y + buttonHeight), accentColor.getRGB());
         }
         
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager().getSize(11, cc.silk.utils.render.font.FontManager.Type.Inter);
         Color textColor;
         if (module.isEnabled()) {
-            textColor = Color.WHITE;
+            textColor = new Color(255, 255, 255, (int)(255 * alpha));
         } else if (hovered) {
-            textColor = new Color(200, 200, 200);
+            textColor = new Color(200, 200, 200, (int)(255 * alpha));
         } else {
-            textColor = new Color(140, 140, 145);
+            textColor = new Color(140, 140, 145, (int)(255 * alpha));
         }
         float textY = y + (buttonHeight - 8) / 2f;
         float textX = x + (module.isEnabled() ? 8 : 6);
         font.drawString(context.getMatrices(), module.getName(), textX, textY, textColor);
+    }
+    
+    public void render(DrawContext context, float panelX, float panelY, int mouseX, int mouseY) {
+        render(context, panelX, panelY, mouseX, mouseY, 1f);
     }
 
     public boolean mouseClicked(float panelX, float panelY, double mouseX, double mouseY, int button, float panelHeaderY, int visibleHeight) {

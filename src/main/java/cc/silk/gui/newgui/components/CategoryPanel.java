@@ -46,23 +46,29 @@ public class CategoryPanel {
         }
     }
 
-    public void render(DrawContext context, int mouseX, int mouseY) {
+    public void render(DrawContext context, int mouseX, int mouseY, float alpha) {
         int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
         int totalHeight = HEADER_HEIGHT + 1 + (visibleModules * MODULE_HEIGHT);
 
         maxScroll = Math.max(0, (moduleButtons.size() - MAX_VISIBLE_MODULES) * MODULE_HEIGHT);
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
 
-        context.fill((int) x, (int) y, (int) (x + width), (int) (y + totalHeight), PANEL_BG.getRGB());
-        context.fill((int) x, (int) y, (int) (x + width), (int) (y + HEADER_HEIGHT), HEADER_COLOR.getRGB());
+        int panelAlpha = (int)(255 * alpha);
+        Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
+        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(), panelAlpha);
+        Color separatorColor = new Color(50, 50, 55, panelAlpha);
+
+        context.fill((int) x, (int) y, (int) (x + width), (int) (y + totalHeight), panelBg.getRGB());
+        context.fill((int) x, (int) y, (int) (x + width), (int) (y + HEADER_HEIGHT), headerColor.getRGB());
         context.fill((int) x, (int) (y + HEADER_HEIGHT), (int) (x + width), (int) (y + HEADER_HEIGHT + 1),
-                new Color(50, 50, 55, 255).getRGB());
+                separatorColor.getRGB());
 
         String categoryName = category.getName();
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager().getSize(12,
                 cc.silk.utils.render.font.FontManager.Type.Inter);
         float textY = y + (HEADER_HEIGHT - 9) / 2f;
-        font.drawString(context.getMatrices(), categoryName, x + 6, textY, Color.WHITE);
+        Color textColor = new Color(255, 255, 255, (int)(255 * alpha));
+        font.drawString(context.getMatrices(), categoryName, x + 6, textY, textColor);
 
         int scissorX = (int) x;
         int scissorY = (int) (y + HEADER_HEIGHT + 1);
@@ -73,25 +79,30 @@ public class CategoryPanel {
 
         float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
         for (ModuleButton button : moduleButtons) {
-            button.render(context, x, moduleY, mouseX, mouseY);
+            button.render(context, x, moduleY, mouseX, mouseY, alpha);
             moduleY += MODULE_HEIGHT;
         }
 
         context.disableScissor();
 
         if (moduleButtons.size() > MAX_VISIBLE_MODULES) {
-            drawScrollbar(context, totalHeight);
+            drawScrollbar(context, totalHeight, alpha);
         }
     }
+    
+    public void render(DrawContext context, int mouseX, int mouseY) {
+        render(context, mouseX, mouseY, 1f);
+    }
 
-    private void drawScrollbar(DrawContext context, int totalHeight) {
+    private void drawScrollbar(DrawContext context, int totalHeight, float alpha) {
         int scrollbarHeight = (int) ((float) MAX_VISIBLE_MODULES / moduleButtons.size()
                 * (MAX_VISIBLE_MODULES * MODULE_HEIGHT));
         int scrollbarY = (int) (y + HEADER_HEIGHT + 1
                 + (scrollOffset / maxScroll) * ((MAX_VISIBLE_MODULES * MODULE_HEIGHT) - scrollbarHeight));
 
+        Color scrollbarColor = new Color(80, 80, 80, (int)(255 * alpha));
         context.fill((int) (x + width - 2), scrollbarY, (int) (x + width), scrollbarY + scrollbarHeight,
-                new Color(80, 80, 80, 255).getRGB());
+                scrollbarColor.getRGB());
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
