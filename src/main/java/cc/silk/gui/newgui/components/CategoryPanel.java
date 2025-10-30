@@ -31,9 +31,13 @@ public class CategoryPanel {
     private boolean dragging = false;
     private float dragOffsetX, dragOffsetY;
     
+    public boolean isDragging() {
+        return dragging;
+    }
+
     private SettingsPanel settingsPanel = null;
     private float settingsPanelSourceY = 0;
-    
+
     private String searchQuery = "";
 
     public CategoryPanel(Category category, float x, float y, int width) {
@@ -59,12 +63,12 @@ public class CategoryPanel {
         if (settingsPanel != null) {
             settingsPanel.update(deltaTime);
         }
-        
+
         for (ModuleButton button : moduleButtons) {
             button.updateSearch(searchQuery, deltaTime);
         }
     }
-    
+
     public void setSearchQuery(String query) {
         this.searchQuery = query.toLowerCase();
     }
@@ -83,18 +87,18 @@ public class CategoryPanel {
         Color borderColor = new Color(40, 40, 46, panelAlpha);
 
         NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, panelBg);
-        NanoVGRenderer.drawRoundedRectOutlineWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
-        
+        NanoVGRenderer.drawRoundedRectOutlineWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, 1f,
+                borderColor);
+
         NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
-        
-        // Render NanoVG shapes for module buttons
+
         float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
         for (ModuleButton button : moduleButtons) {
             button.renderNanoVG(context, x, moduleY, mouseX, mouseY, alpha);
             moduleY += MODULE_HEIGHT;
         }
     }
-    
+
     public void renderMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
         int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
         int totalHeight = HEADER_HEIGHT + 1 + (visibleModules * MODULE_HEIGHT);
@@ -102,11 +106,13 @@ public class CategoryPanel {
         int panelAlpha = (int) (255 * alpha);
         Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
                 panelAlpha);
-        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(), SEPARATOR_COLOR.getBlue(), 
-                (int)(SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
+        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(),
+                SEPARATOR_COLOR.getBlue(),
+                (int) (SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
 
-        context.fill((int) x, (int) (y + HEADER_HEIGHT - CORNER_RADIUS), (int) (x + width), (int) (y + HEADER_HEIGHT), headerColor.getRGB());
-        
+        context.fill((int) x, (int) (y + HEADER_HEIGHT - CORNER_RADIUS), (int) (x + width), (int) (y + HEADER_HEIGHT),
+                headerColor.getRGB());
+
         context.fill((int) x, (int) (y + HEADER_HEIGHT), (int) (x + width), (int) (y + HEADER_HEIGHT + 1),
                 separatorColor.getRGB());
 
@@ -118,7 +124,8 @@ public class CategoryPanel {
         float textY = y + (HEADER_HEIGHT - 9) / 2f;
         float iconY = y + (HEADER_HEIGHT - CategoryIcon.getIconSize()) / 2f;
 
-        Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int) (255 * alpha));
+        Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+                (int) (255 * alpha));
         CategoryIcon.drawIcon(context, category, iconX, iconY, iconColor);
 
         float textX = iconX + CategoryIcon.getIconSize() + 4;
@@ -144,32 +151,35 @@ public class CategoryPanel {
             drawScrollbar(context, totalHeight, alpha);
         }
     }
-    
+
     public void renderSettingsPanelNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             settingsPanel.renderNanoVG(context, mouseX, mouseY, alpha);
         }
     }
-    
+
     public void renderSettingsPanelMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             float lineAlpha = alpha * settingsPanel.getAnimationProgress();
-            Color lineColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int)(150 * lineAlpha));
-            
+            Color lineColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+                    (int) (150 * lineAlpha));
+
             float lineStartX = x + width;
             float lineStartY = settingsPanelSourceY + (MODULE_HEIGHT / 2f);
             float lineEndX = settingsPanel.getCurrentX();
             float lineEndY = settingsPanel.getY() + 11;
-            
-            context.fill((int)lineStartX, (int)lineStartY, (int)lineEndX, (int)(lineStartY + 1), lineColor.getRGB());
-            
+
+            context.fill((int) lineStartX, (int) lineStartY, (int) lineEndX, (int) (lineStartY + 1),
+                    lineColor.getRGB());
+
             if (lineEndY != lineStartY) {
                 float verticalLineX = lineEndX;
                 float minY = Math.min(lineStartY, lineEndY);
                 float maxY = Math.max(lineStartY, lineEndY);
-                context.fill((int)verticalLineX, (int)minY, (int)(verticalLineX + 1), (int)maxY, lineColor.getRGB());
+                context.fill((int) verticalLineX, (int) minY, (int) (verticalLineX + 1), (int) maxY,
+                        lineColor.getRGB());
             }
-            
+
             settingsPanel.renderMinecraft(context, mouseX, mouseY, alpha);
         }
     }
@@ -181,11 +191,12 @@ public class CategoryPanel {
                 + (scrollOffset / maxScroll) * ((MAX_VISIBLE_MODULES * MODULE_HEIGHT) - scrollbarHeight));
 
         Color scrollbarBg = new Color(35, 35, 40, (int) (180 * alpha));
-        Color scrollbarColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int) (200 * alpha));
-        
-        context.fill((int) (x + width - 3), (int)(y + HEADER_HEIGHT + 1), (int) (x + width - 1), 
-                (int)(y + HEADER_HEIGHT + 1 + MAX_VISIBLE_MODULES * MODULE_HEIGHT), scrollbarBg.getRGB());
-        
+        Color scrollbarColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+                (int) (200 * alpha));
+
+        context.fill((int) (x + width - 3), (int) (y + HEADER_HEIGHT + 1), (int) (x + width - 1),
+                (int) (y + HEADER_HEIGHT + 1 + MAX_VISIBLE_MODULES * MODULE_HEIGHT), scrollbarBg.getRGB());
+
         context.fill((int) (x + width - 3), scrollbarY, (int) (x + width - 1), scrollbarY + scrollbarHeight,
                 scrollbarColor.getRGB());
     }
@@ -222,7 +233,7 @@ public class CategoryPanel {
                 return true;
             }
         }
-        
+
         float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
         for (ModuleButton moduleButton : moduleButtons) {
             if (moduleButton.mouseClicked(x, moduleY, mouseX, mouseY, button, panelHeaderY, visibleHeight)) {
@@ -230,7 +241,7 @@ public class CategoryPanel {
                     float settingsX = x + width + 5;
                     float settingsY = moduleButton.getAbsoluteY(y + HEADER_HEIGHT + 1 - scrollOffset);
                     settingsPanelSourceY = moduleY;
-                    
+
                     if (settingsPanel != null && settingsPanel.isVisible()) {
                         settingsPanel.hide();
                     } else {
