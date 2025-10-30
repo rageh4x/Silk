@@ -4,6 +4,7 @@ import cc.silk.utils.render.font.fonts.FontRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.util.math.MatrixStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -118,6 +119,30 @@ public class NanoVGRenderer {
 
     public static float getTextWidth(FontRenderer font, String text) {
         return font.getStringWidth(text);
+    }
+
+    public static void drawRoundedRectWithContext(DrawContext context, float x, float y, float width, float height,
+            float radius, Color color) {
+        boolean wasInFrame = inFrame;
+        if (!wasInFrame) {
+            beginFrame();
+        }
+        drawRoundedRect(x, y, width, height, radius, color);
+        if (!wasInFrame) {
+            endFrame();
+        }
+    }
+
+    public static void drawRoundedRectOutlineWithContext(DrawContext context, float x, float y, float width,
+            float height, float radius, float strokeWidth, Color color) {
+        boolean wasInFrame = inFrame;
+        if (!wasInFrame) {
+            beginFrame();
+        }
+        drawRoundedRectOutline(x, y, width, height, radius, strokeWidth, color);
+        if (!wasInFrame) {
+            endFrame();
+        }
     }
 
     public static void cleanup() {

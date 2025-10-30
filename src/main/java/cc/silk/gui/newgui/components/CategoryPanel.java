@@ -2,6 +2,7 @@ package cc.silk.gui.newgui.components;
 
 import cc.silk.module.Category;
 import cc.silk.module.Module;
+import cc.silk.utils.render.NanoVGRenderer;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
@@ -22,6 +23,7 @@ public class CategoryPanel {
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
     private static final Color ACCENT_COLOR = new Color(88, 101, 242, 255);
     private static final Color SEPARATOR_COLOR = new Color(88, 101, 242, 80);
+    private static final float CORNER_RADIUS = 4f;
 
     private float scrollOffset = 0;
     private float maxScroll = 0;
@@ -82,16 +84,12 @@ public class CategoryPanel {
                 (int)(SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
         Color borderColor = new Color(40, 40, 46, panelAlpha);
 
-        context.fill((int) x, (int) y, (int) (x + width), (int) (y + totalHeight), panelBg.getRGB());
+        NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, panelBg);
+        NanoVGRenderer.drawRoundedRectOutlineWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
         
-        context.fill((int) x, (int) y, (int) (x + width), (int) (y + 1), borderColor.getRGB());
-        context.fill((int) x, (int) (y + totalHeight - 1), (int) (x + width), (int) (y + totalHeight), borderColor.getRGB());
-        context.fill((int) x, (int) y, (int) (x + 1), (int) (y + totalHeight), borderColor.getRGB());
-        context.fill((int) (x + width - 1), (int) y, (int) (x + width), (int) (y + totalHeight), borderColor.getRGB());
+        NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
         
-        context.fill((int) x, (int) y, (int) (x + width), (int) (y + HEADER_HEIGHT), headerColor.getRGB());
-        context.fill((int) x, (int) y, (int) (x + width), (int) (y + 2), 
-                new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), panelAlpha).getRGB());
+        context.fill((int) x, (int) (y + HEADER_HEIGHT - CORNER_RADIUS), (int) (x + width), (int) (y + HEADER_HEIGHT), headerColor.getRGB());
         
         context.fill((int) x, (int) (y + HEADER_HEIGHT), (int) (x + width), (int) (y + HEADER_HEIGHT + 1),
                 separatorColor.getRGB());

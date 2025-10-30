@@ -6,7 +6,6 @@ import cc.silk.gui.newgui.components.CategoryPanel;
 import cc.silk.utils.render.NanoVGRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -114,13 +113,11 @@ public class NewClickGUI extends Screen {
         java.awt.Color borderColor = new java.awt.Color(SEARCH_BORDER.getRed(), SEARCH_BORDER.getGreen(), SEARCH_BORDER.getBlue(), 
                 searchFocused ? bgAlpha : (int)(100 * alpha));
         
-        context.fill((int)searchBarX, (int)searchBarY, (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + SEARCH_BAR_HEIGHT), bgColor.getRGB());
+        float cornerRadius = 6f;
+        NanoVGRenderer.drawRoundedRectWithContext(context, searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT, cornerRadius, bgColor);
         
-        int borderThickness = searchFocused ? 2 : 1;
-        context.fill((int)searchBarX, (int)searchBarY, (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + borderThickness), borderColor.getRGB());
-        context.fill((int)searchBarX, (int)(searchBarY + SEARCH_BAR_HEIGHT - borderThickness), (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + SEARCH_BAR_HEIGHT), borderColor.getRGB());
-        context.fill((int)searchBarX, (int)searchBarY, (int)(searchBarX + borderThickness), (int)(searchBarY + SEARCH_BAR_HEIGHT), borderColor.getRGB());
-        context.fill((int)(searchBarX + SEARCH_BAR_WIDTH - borderThickness), (int)searchBarY, (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + SEARCH_BAR_HEIGHT), borderColor.getRGB());
+        float borderThickness = searchFocused ? 2f : 1f;
+        NanoVGRenderer.drawRoundedRectOutlineWithContext(context, searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT, cornerRadius, borderThickness, borderColor);
         
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager()
                 .getSize(12, cc.silk.utils.render.font.FontManager.Type.Inter);

@@ -2,6 +2,7 @@ package cc.silk.gui.newgui.components;
 
 import cc.silk.module.Module;
 import cc.silk.module.setting.*;
+import cc.silk.utils.render.NanoVGRenderer;
 import net.minecraft.client.gui.DrawContext;
 import java.awt.*;
 import java.util.List;
@@ -16,6 +17,7 @@ public class SettingsPanel {
     private static final Color ACCENT_COLOR = new Color(88, 101, 242, 255);
     private static final Color BORDER_COLOR = new Color(40, 40, 46, 255);
     private static final int HEADER_HEIGHT = 22;
+    private static final float CORNER_RADIUS = 4f;
     private static final int SETTING_HEIGHT = 20;
     private static final int NUMBER_SETTING_HEIGHT = 26;
     private static final int PADDING = 5;
@@ -76,25 +78,22 @@ public class SettingsPanel {
         float renderAlpha = alpha * animationProgress;
         int panelAlpha = (int) (255 * renderAlpha);
 
-        context.fill((int) currentX, (int) y, (int) (currentX + width), (int) (y + height),
-                new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha).getRGB());
-
+        Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
         Color borderColor = new Color(BORDER_COLOR.getRed(), BORDER_COLOR.getGreen(), BORDER_COLOR.getBlue(),
                 panelAlpha);
-        context.fill((int) currentX, (int) y, (int) (currentX + width), (int) (y + 1), borderColor.getRGB());
-        context.fill((int) currentX, (int) (y + height - 1), (int) (currentX + width), (int) (y + height),
-                borderColor.getRGB());
-        context.fill((int) currentX, (int) y, (int) (currentX + 1), (int) (y + height), borderColor.getRGB());
-        context.fill((int) (currentX + width - 1), (int) y, (int) (currentX + width), (int) (y + height),
-                borderColor.getRGB());
-
-        context.fill((int) currentX, (int) y, (int) (currentX + width), (int) (y + HEADER_HEIGHT),
-                new Color(HEADER_BG.getRed(), HEADER_BG.getGreen(), HEADER_BG.getBlue(), panelAlpha).getRGB());
-        context.fill((int) currentX, (int) y, (int) (currentX + width), (int) (y + 2),
-                new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), panelAlpha).getRGB());
-
+        Color headerBg = new Color(HEADER_BG.getRed(), HEADER_BG.getGreen(), HEADER_BG.getBlue(), panelAlpha);
         Color separatorColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (80 * renderAlpha));
+
+        NanoVGRenderer.drawRoundedRectWithContext(context, currentX, y, width, height, CORNER_RADIUS, panelBg);
+        NanoVGRenderer.drawRoundedRectOutlineWithContext(context, currentX, y, width, height, CORNER_RADIUS, 1f,
+                borderColor);
+
+        NanoVGRenderer.drawRoundedRectWithContext(context, currentX, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerBg);
+
+        context.fill((int) currentX, (int) (y + HEADER_HEIGHT - CORNER_RADIUS), (int) (currentX + width),
+                (int) (y + HEADER_HEIGHT), headerBg.getRGB());
+
         context.fill((int) currentX, (int) (y + HEADER_HEIGHT), (int) (currentX + width), (int) (y + HEADER_HEIGHT + 1),
                 separatorColor.getRGB());
 
