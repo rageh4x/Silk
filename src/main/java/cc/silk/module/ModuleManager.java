@@ -72,7 +72,7 @@ public final class ModuleManager {
                 new SkeletonESP(), new EntityESP(), new ShaderESP(), new Trail(),
                 new JumpCircles(), new TargetESP(), new HitParticles(), new CircleESP(),
                 new Breadcrumbs(), new Notifications(), new ArrowESP(), new OutlineESP(),
-                new SquareESP(), new ESP2D());
+                new SquareESP(), new ESP2D(), new NanoVGTest());
 
         // Misc
         add(
