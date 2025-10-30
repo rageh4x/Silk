@@ -53,9 +53,10 @@ public class CategoryPanel {
         maxScroll = Math.max(0, (moduleButtons.size() - MAX_VISIBLE_MODULES) * MODULE_HEIGHT);
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
 
-        int panelAlpha = (int)(255 * alpha);
+        int panelAlpha = (int) (255 * alpha);
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
-        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(), panelAlpha);
+        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
+                panelAlpha);
         Color separatorColor = new Color(50, 50, 55, panelAlpha);
 
         context.fill((int) x, (int) y, (int) (x + width), (int) (y + totalHeight), panelBg.getRGB());
@@ -66,9 +67,17 @@ public class CategoryPanel {
         String categoryName = category.getName();
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager().getSize(12,
                 cc.silk.utils.render.font.FontManager.Type.Inter);
+
+        float iconX = x + 5;
         float textY = y + (HEADER_HEIGHT - 9) / 2f;
-        Color textColor = new Color(255, 255, 255, (int)(255 * alpha));
-        font.drawString(context.getMatrices(), categoryName, x + 6, textY, textColor);
+        float iconY = y + (HEADER_HEIGHT - CategoryIcon.getIconSize()) / 2f;
+
+        Color iconColor = new Color(255, 255, 255, (int) (255 * alpha));
+        CategoryIcon.drawIcon(context, category, iconX, iconY, iconColor);
+
+        float textX = iconX + CategoryIcon.getIconSize() + 4;
+        Color textColor = new Color(255, 255, 255, (int) (255 * alpha));
+        font.drawString(context.getMatrices(), categoryName, textX, textY, textColor);
 
         int scissorX = (int) x;
         int scissorY = (int) (y + HEADER_HEIGHT + 1);
@@ -89,7 +98,7 @@ public class CategoryPanel {
             drawScrollbar(context, totalHeight, alpha);
         }
     }
-    
+
     public void render(DrawContext context, int mouseX, int mouseY) {
         render(context, mouseX, mouseY, 1f);
     }
@@ -100,7 +109,7 @@ public class CategoryPanel {
         int scrollbarY = (int) (y + HEADER_HEIGHT + 1
                 + (scrollOffset / maxScroll) * ((MAX_VISIBLE_MODULES * MODULE_HEIGHT) - scrollbarHeight));
 
-        Color scrollbarColor = new Color(80, 80, 80, (int)(255 * alpha));
+        Color scrollbarColor = new Color(80, 80, 80, (int) (255 * alpha));
         context.fill((int) (x + width - 2), scrollbarY, (int) (x + width), scrollbarY + scrollbarHeight,
                 scrollbarColor.getRGB());
     }
