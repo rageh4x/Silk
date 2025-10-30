@@ -23,6 +23,10 @@ public class SettingsPanel {
     private boolean visible = false;
     private float animationProgress = 0f;
     private Setting draggingSlider = null;
+    
+    public boolean isDraggingSlider() {
+        return draggingSlider != null;
+    }
 
     public SettingsPanel(Module module, float x, float y) {
         this.module = module;

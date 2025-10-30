@@ -183,6 +183,14 @@ public class CategoryPanel {
             settingsPanel.renderMinecraft(context, mouseX, mouseY, alpha);
         }
     }
+    
+    public SettingsPanel getSettingsPanel() {
+        return settingsPanel;
+    }
+    
+    public boolean hasActiveSettingsPanel() {
+        return settingsPanel != null && settingsPanel.isAnimating();
+    }
 
     private void drawScrollbar(DrawContext context, int totalHeight, float alpha) {
         int scrollbarHeight = (int) ((float) MAX_VISIBLE_MODULES / moduleButtons.size()

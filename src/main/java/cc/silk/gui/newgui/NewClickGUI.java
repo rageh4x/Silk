@@ -111,12 +111,6 @@ public class NewClickGUI extends Screen {
 
         context.getMatrices().pop();
 
-        for (CategoryPanel panel : panels) {
-            if (panel != draggedPanel) {
-                panel.renderSettingsPanelNanoVG(context, mouseX, mouseY, alpha);
-            }
-        }
-
         renderSearchBarNanoVG(context, mouseX, mouseY, alpha);
 
         NanoVGRenderer.endFrame();
@@ -134,12 +128,6 @@ public class NewClickGUI extends Screen {
 
         context.getMatrices().pop();
 
-        for (CategoryPanel panel : panels) {
-            if (panel != draggedPanel) {
-                panel.renderSettingsPanelMinecraft(context, mouseX, mouseY, alpha);
-            }
-        }
-
         renderSearchBarMinecraft(context, mouseX, mouseY, alpha);
 
         if (draggedPanel != null) {
@@ -154,8 +142,6 @@ public class NewClickGUI extends Screen {
 
             context.getMatrices().pop();
 
-            draggedPanel.renderSettingsPanelNanoVG(context, mouseX, mouseY, alpha);
-
             NanoVGRenderer.endFrame();
 
             context.getMatrices().push();
@@ -166,8 +152,18 @@ public class NewClickGUI extends Screen {
             draggedPanel.renderMinecraft(context, mouseX, mouseY, alpha);
 
             context.getMatrices().pop();
+        }
 
-            draggedPanel.renderSettingsPanelMinecraft(context, mouseX, mouseY, alpha);
+        NanoVGRenderer.beginFrame();
+
+        for (CategoryPanel panel : panels) {
+            panel.renderSettingsPanelNanoVG(context, mouseX, mouseY, alpha);
+        }
+
+        NanoVGRenderer.endFrame();
+
+        for (CategoryPanel panel : panels) {
+            panel.renderSettingsPanelMinecraft(context, mouseX, mouseY, alpha);
         }
     }
 
