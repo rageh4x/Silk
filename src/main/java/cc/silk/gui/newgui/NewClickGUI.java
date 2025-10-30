@@ -16,10 +16,20 @@ public class NewClickGUI extends Screen {
     private final List<CategoryPanel> panels = new ArrayList<>();
     private static final int PANEL_WIDTH = 110;
     private static final int PANEL_SPACING = 5;
-    
+
     private float animationProgress = 0f;
     private boolean closing = false;
     private long lastFrameTime = System.currentTimeMillis();
+    
+    private String searchQuery = "";
+    private boolean searchFocused = false;
+    private float searchBarY = 0;
+    private static final int SEARCH_BAR_HEIGHT = 30;
+    private static final int SEARCH_BAR_WIDTH = 300;
+    private static final java.awt.Color SEARCH_BG = new java.awt.Color(28, 28, 32, 255);
+    private static final java.awt.Color SEARCH_BORDER = new java.awt.Color(88, 101, 242, 255);
+    private static final java.awt.Color SEARCH_TEXT = new java.awt.Color(240, 240, 245, 255);
+    private static final java.awt.Color SEARCH_PLACEHOLDER = new java.awt.Color(130, 130, 140, 255);
 
     public NewClickGUI() {
         super(Text.literal("ClickGUI"));
@@ -49,7 +59,7 @@ public class NewClickGUI extends Screen {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastFrameTime) / 1000f;
         lastFrameTime = currentTime;
-        
+
         if (closing) {
             animationProgress -= deltaTime * 4f;
             if (animationProgress <= 0f) {
@@ -65,34 +75,80 @@ public class NewClickGUI extends Screen {
                 animationProgress = 1f;
             }
         }
-        
+
         float scale = easeOutCubic(animationProgress);
         float alpha = animationProgress;
-        
+
+        for (CategoryPanel panel : panels) {
+            panel.update(deltaTime);
+            panel.setSearchQuery(searchQuery);
+        }
+
         context.getMatrices().push();
-        
+
         int centerX = width / 2;
         int centerY = height / 2;
         context.getMatrices().translate(centerX, centerY, 0);
         context.getMatrices().scale(scale, scale, 1f);
         context.getMatrices().translate(-centerX, -centerY, 0);
-        
+
         for (CategoryPanel panel : panels) {
             panel.render(context, mouseX, mouseY, alpha);
         }
-        
+
         context.getMatrices().pop();
+
+        for (CategoryPanel panel : panels) {
+            panel.renderSettingsPanel(context, mouseX, mouseY, alpha);
+        }
+        
+        renderSearchBar(context, mouseX, mouseY, alpha);
     }
     
+    private void renderSearchBar(DrawContext context, int mouseX, int mouseY, float alpha) {
+        searchBarY = height - SEARCH_BAR_HEIGHT - 20;
+        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
+        
+        int bgAlpha = (int)(255 * alpha);
+        java.awt.Color bgColor = new java.awt.Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(), bgAlpha);
+        java.awt.Color borderColor = new java.awt.Color(SEARCH_BORDER.getRed(), SEARCH_BORDER.getGreen(), SEARCH_BORDER.getBlue(), 
+                searchFocused ? bgAlpha : (int)(100 * alpha));
+        
+        context.fill((int)searchBarX, (int)searchBarY, (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + SEARCH_BAR_HEIGHT), bgColor.getRGB());
+        
+        int borderThickness = searchFocused ? 2 : 1;
+        context.fill((int)searchBarX, (int)searchBarY, (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + borderThickness), borderColor.getRGB());
+        context.fill((int)searchBarX, (int)(searchBarY + SEARCH_BAR_HEIGHT - borderThickness), (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + SEARCH_BAR_HEIGHT), borderColor.getRGB());
+        context.fill((int)searchBarX, (int)searchBarY, (int)(searchBarX + borderThickness), (int)(searchBarY + SEARCH_BAR_HEIGHT), borderColor.getRGB());
+        context.fill((int)(searchBarX + SEARCH_BAR_WIDTH - borderThickness), (int)searchBarY, (int)(searchBarX + SEARCH_BAR_WIDTH), (int)(searchBarY + SEARCH_BAR_HEIGHT), borderColor.getRGB());
+        
+        cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager()
+                .getSize(12, cc.silk.utils.render.font.FontManager.Type.Inter);
+        
+        String displayText = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
+        java.awt.Color textColor = searchQuery.isEmpty() ? 
+                new java.awt.Color(SEARCH_PLACEHOLDER.getRed(), SEARCH_PLACEHOLDER.getGreen(), SEARCH_PLACEHOLDER.getBlue(), bgAlpha) :
+                new java.awt.Color(SEARCH_TEXT.getRed(), SEARCH_TEXT.getGreen(), SEARCH_TEXT.getBlue(), bgAlpha);
+        
+        float textX = searchBarX + 10;
+        float textY = searchBarY + (SEARCH_BAR_HEIGHT - 9) / 2f;
+        font.drawString(context.getMatrices(), displayText, textX, textY, textColor);
+        
+        if (searchFocused && System.currentTimeMillis() % 1000 < 500) {
+            float cursorX = textX + font.getStringWidth(searchQuery);
+            context.fill((int)cursorX, (int)(textY - 1), (int)(cursorX + 1), (int)(textY + 10), textColor.getRGB());
+        }
+    }
+
     private float easeOutCubic(float t) {
-        return 1f - (float)Math.pow(1f - t, 3);
+        return 1f - (float) Math.pow(1f - t, 3);
     }
-    
+
     @Override
     public void close() {
         closing = true;
     }
-    
+
     @Override
     public boolean shouldCloseOnEsc() {
         return true;
@@ -100,12 +156,46 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
+        if (mouseX >= searchBarX && mouseX <= searchBarX + SEARCH_BAR_WIDTH &&
+            mouseY >= searchBarY && mouseY <= searchBarY + SEARCH_BAR_HEIGHT) {
+            searchFocused = true;
+            return true;
+        } else {
+            searchFocused = false;
+        }
+        
         for (CategoryPanel panel : panels) {
             if (panel.mouseClicked(mouseX, mouseY, button)) {
                 return true;
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+    
+    @Override
+    public boolean charTyped(char chr, int modifiers) {
+        if (searchFocused) {
+            searchQuery += chr;
+            return true;
+        }
+        return super.charTyped(chr, modifiers);
+    }
+    
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (searchFocused) {
+            if (keyCode == 259) {
+                if (!searchQuery.isEmpty()) {
+                    searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
+                }
+                return true;
+            } else if (keyCode == 257 || keyCode == 335) {
+                searchFocused = false;
+                return true;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
