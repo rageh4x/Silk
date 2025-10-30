@@ -60,6 +60,15 @@ public class NanoVGRenderer {
 
         nvgEndFrame(vg);
         inFrame = false;
+
+        restoreMinecraftState();
+    }
+    
+    public static void restoreMinecraftState() {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableDepthTest();
+        RenderSystem.enableCull();
     }
 
     public static void drawRoundedRect(float x, float y, float width, float height, float radius, Color color) {
@@ -123,26 +132,22 @@ public class NanoVGRenderer {
 
     public static void drawRoundedRectWithContext(DrawContext context, float x, float y, float width, float height,
             float radius, Color color) {
-        boolean wasInFrame = inFrame;
-        if (!wasInFrame) {
-            beginFrame();
+        if (!inFrame) {
+            throw new IllegalStateException("Must call beginFrame() before drawing with NanoVG");
         }
         drawRoundedRect(x, y, width, height, radius, color);
-        if (!wasInFrame) {
-            endFrame();
-        }
     }
 
     public static void drawRoundedRectOutlineWithContext(DrawContext context, float x, float y, float width,
             float height, float radius, float strokeWidth, Color color) {
-        boolean wasInFrame = inFrame;
-        if (!wasInFrame) {
-            beginFrame();
+        if (!inFrame) {
+            throw new IllegalStateException("Must call beginFrame() before drawing with NanoVG");
         }
         drawRoundedRectOutline(x, y, width, height, radius, strokeWidth, color);
-        if (!wasInFrame) {
-            endFrame();
-        }
+    }
+    
+    public static boolean isInFrame() {
+        return inFrame;
     }
 
     public static void cleanup() {

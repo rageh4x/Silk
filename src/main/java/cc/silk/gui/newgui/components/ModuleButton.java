@@ -45,36 +45,48 @@ public class ModuleButton {
         }
     }
 
-    public void render(DrawContext context, float panelX, float panelY, int mouseX, int mouseY, float alpha) {
+    public void renderNanoVG(DrawContext context, float panelX, float panelY, int mouseX, int mouseY, float alpha) {
         if (searchAlpha <= 0.01f)
             return;
 
         float combinedAlpha = alpha * searchAlpha;
 
-        float x = panelX + relativeX;
-        float y = panelY + relativeY;
-        float buttonWidth = width;
-        float buttonHeight = height;
+        float x = panelX + relativeX + 2;
+        float y = panelY + relativeY + 1;
+        float buttonWidth = width - 4;
+        float buttonHeight = height - 2;
+        float cornerRadius = 3f;
 
         boolean hovered = isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY);
 
         if (hovered && searchAlpha > 0.5f) {
             Color hoverBg = new Color(30, 30, 35, (int) (180 * combinedAlpha));
-            context.fill((int) x, (int) y, (int) (x + buttonWidth), (int) (y + buttonHeight), hoverBg.getRGB());
+            cc.silk.utils.render.NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, hoverBg);
+        }
+
+        if (matchesSearch && searchAlpha > 0.9f && !searchQuery.isEmpty()) {
+            Color highlightBg = new Color(88, 101, 242, (int) (50 * combinedAlpha));
+            cc.silk.utils.render.NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, highlightBg);
         }
 
         if (module.isEnabled()) {
             Color accentColor = new Color(88, 101, 242, (int) (255 * combinedAlpha));
-            context.fill((int) x, (int) y, (int) (x + 2), (int) (y + buttonHeight), accentColor.getRGB());
-
-            Color glowColor = new Color(88, 101, 242, (int) (40 * combinedAlpha));
-            context.fill((int) (x + 2), (int) y, (int) (x + 4), (int) (y + buttonHeight), glowColor.getRGB());
+            cc.silk.utils.render.NanoVGRenderer.drawRoundedRect(x, y, 2, buttonHeight, 1f, accentColor);
         }
+    }
+    
+    public void renderMinecraft(DrawContext context, float panelX, float panelY, int mouseX, int mouseY, float alpha) {
+        if (searchAlpha <= 0.01f)
+            return;
 
-        if (matchesSearch && searchAlpha > 0.9f && !searchQuery.isEmpty()) {
-            Color highlightBg = new Color(88, 101, 242, (int) (30 * combinedAlpha));
-            context.fill((int) x, (int) y, (int) (x + buttonWidth), (int) (y + buttonHeight), highlightBg.getRGB());
-        }
+        float combinedAlpha = alpha * searchAlpha;
+
+        float x = panelX + relativeX + 2;
+        float y = panelY + relativeY + 1;
+        float buttonWidth = width - 4;
+        float buttonHeight = height - 2;
+
+        boolean hovered = isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY);
 
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager().getSize(11,
                 cc.silk.utils.render.font.FontManager.Type.Inter);
@@ -87,25 +99,21 @@ public class ModuleButton {
             textColor = new Color(130, 130, 140, (int) (255 * combinedAlpha));
         }
         float textY = y + (buttonHeight - 8) / 2f;
-        float textX = x + (module.isEnabled() ? 10 : 6);
+        float textX = x + (module.isEnabled() ? 8 : 6);
         font.drawString(context.getMatrices(), module.getName(), textX, textY, textColor);
     }
 
     private String searchQuery = "";
-
-    public void render(DrawContext context, float panelX, float panelY, int mouseX, int mouseY) {
-        render(context, panelX, panelY, mouseX, mouseY, 1f);
-    }
 
     public boolean mouseClicked(float panelX, float panelY, double mouseX, double mouseY, int button,
             float panelHeaderY, int visibleHeight) {
         if (searchAlpha <= 0.01f)
             return false;
 
-        float x = panelX + relativeX;
-        float y = panelY + relativeY;
-        float buttonWidth = width;
-        float buttonHeight = height;
+        float x = panelX + relativeX + 2;
+        float y = panelY + relativeY + 1;
+        float buttonWidth = width - 4;
+        float buttonHeight = height - 2;
 
         if (y < panelHeaderY || y + buttonHeight > panelHeaderY + visibleHeight) {
             return false;

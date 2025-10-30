@@ -69,7 +69,7 @@ public class CategoryPanel {
         this.searchQuery = query.toLowerCase();
     }
 
-    public void render(DrawContext context, int mouseX, int mouseY, float alpha) {
+    public void renderNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
         int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
         int totalHeight = HEADER_HEIGHT + 1 + (visibleModules * MODULE_HEIGHT);
 
@@ -80,8 +80,6 @@ public class CategoryPanel {
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
         Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
                 panelAlpha);
-        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(), SEPARATOR_COLOR.getBlue(), 
-                (int)(SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
         Color borderColor = new Color(40, 40, 46, panelAlpha);
 
         NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, panelBg);
@@ -89,6 +87,24 @@ public class CategoryPanel {
         
         NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
         
+        // Render NanoVG shapes for module buttons
+        float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
+        for (ModuleButton button : moduleButtons) {
+            button.renderNanoVG(context, x, moduleY, mouseX, mouseY, alpha);
+            moduleY += MODULE_HEIGHT;
+        }
+    }
+    
+    public void renderMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
+        int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
+        int totalHeight = HEADER_HEIGHT + 1 + (visibleModules * MODULE_HEIGHT);
+
+        int panelAlpha = (int) (255 * alpha);
+        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
+                panelAlpha);
+        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(), SEPARATOR_COLOR.getBlue(), 
+                (int)(SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
+
         context.fill((int) x, (int) (y + HEADER_HEIGHT - CORNER_RADIUS), (int) (x + width), (int) (y + HEADER_HEIGHT), headerColor.getRGB());
         
         context.fill((int) x, (int) (y + HEADER_HEIGHT), (int) (x + width), (int) (y + HEADER_HEIGHT + 1),
@@ -118,7 +134,7 @@ public class CategoryPanel {
 
         float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
         for (ModuleButton button : moduleButtons) {
-            button.render(context, x, moduleY, mouseX, mouseY, alpha);
+            button.renderMinecraft(context, x, moduleY, mouseX, mouseY, alpha);
             moduleY += MODULE_HEIGHT;
         }
 
@@ -128,12 +144,14 @@ public class CategoryPanel {
             drawScrollbar(context, totalHeight, alpha);
         }
     }
-
-    public void render(DrawContext context, int mouseX, int mouseY) {
-        render(context, mouseX, mouseY, 1f);
+    
+    public void renderSettingsPanelNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
+        if (settingsPanel != null && settingsPanel.isAnimating()) {
+            settingsPanel.renderNanoVG(context, mouseX, mouseY, alpha);
+        }
     }
     
-    public void renderSettingsPanel(DrawContext context, int mouseX, int mouseY, float alpha) {
+    public void renderSettingsPanelMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             float lineAlpha = alpha * settingsPanel.getAnimationProgress();
             Color lineColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int)(150 * lineAlpha));
@@ -152,7 +170,7 @@ public class CategoryPanel {
                 context.fill((int)verticalLineX, (int)minY, (int)(verticalLineX + 1), (int)maxY, lineColor.getRGB());
             }
             
-            settingsPanel.render(context, mouseX, mouseY, alpha);
+            settingsPanel.renderMinecraft(context, mouseX, mouseY, alpha);
         }
     }
 

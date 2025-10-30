@@ -5,7 +5,6 @@ import cc.silk.module.setting.*;
 import cc.silk.utils.render.NanoVGRenderer;
 import net.minecraft.client.gui.DrawContext;
 import java.awt.*;
-import java.util.List;
 
 public class SettingsPanel {
     private final Module module;
@@ -71,7 +70,7 @@ public class SettingsPanel {
         currentX = (targetX - width) + (width * easedProgress);
     }
 
-    public void render(DrawContext context, int mouseX, int mouseY, float alpha) {
+    public void renderNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
         if (animationProgress <= 0f)
             return;
 
@@ -82,14 +81,37 @@ public class SettingsPanel {
         Color borderColor = new Color(BORDER_COLOR.getRed(), BORDER_COLOR.getGreen(), BORDER_COLOR.getBlue(),
                 panelAlpha);
         Color headerBg = new Color(HEADER_BG.getRed(), HEADER_BG.getGreen(), HEADER_BG.getBlue(), panelAlpha);
-        Color separatorColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
-                (int) (80 * renderAlpha));
 
         NanoVGRenderer.drawRoundedRectWithContext(context, currentX, y, width, height, CORNER_RADIUS, panelBg);
         NanoVGRenderer.drawRoundedRectOutlineWithContext(context, currentX, y, width, height, CORNER_RADIUS, 1f,
                 borderColor);
-
         NanoVGRenderer.drawRoundedRectWithContext(context, currentX, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerBg);
+
+        // Render NanoVG shapes for settings
+        float settingY = y + HEADER_HEIGHT + PADDING;
+        for (Setting setting : module.getSettings()) {
+            if (setting instanceof KeybindSetting)
+                continue;
+
+            renderSettingNanoVG(context, setting, settingY, mouseX, mouseY, renderAlpha);
+            if (setting instanceof NumberSetting) {
+                settingY += NUMBER_SETTING_HEIGHT;
+            } else {
+                settingY += SETTING_HEIGHT;
+            }
+        }
+    }
+
+    public void renderMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
+        if (animationProgress <= 0f)
+            return;
+
+        float renderAlpha = alpha * animationProgress;
+        int panelAlpha = (int) (255 * renderAlpha);
+
+        Color headerBg = new Color(HEADER_BG.getRed(), HEADER_BG.getGreen(), HEADER_BG.getBlue(), panelAlpha);
+        Color separatorColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+                (int) (80 * renderAlpha));
 
         context.fill((int) currentX, (int) (y + HEADER_HEIGHT - CORNER_RADIUS), (int) (currentX + width),
                 (int) (y + HEADER_HEIGHT), headerBg.getRGB());
@@ -108,7 +130,7 @@ public class SettingsPanel {
             if (setting instanceof KeybindSetting)
                 continue;
 
-            renderSetting(context, setting, settingY, mouseX, mouseY, renderAlpha);
+            renderSettingMinecraft(context, setting, settingY, mouseX, mouseY, renderAlpha);
             if (setting instanceof NumberSetting) {
                 settingY += NUMBER_SETTING_HEIGHT;
             } else {
@@ -117,7 +139,7 @@ public class SettingsPanel {
         }
     }
 
-    private void renderSetting(DrawContext context, Setting setting, float settingY, int mouseX, int mouseY,
+    private void renderSettingNanoVG(DrawContext context, Setting setting, float settingY, int mouseX, int mouseY,
             float alpha) {
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager()
                 .getSize(10, cc.silk.utils.render.font.FontManager.Type.Inter);
@@ -135,6 +157,11 @@ public class SettingsPanel {
         }
     }
 
+    private void renderSettingMinecraft(DrawContext context, Setting setting, float settingY, int mouseX, int mouseY,
+            float alpha) {
+        // Text rendering is handled in the individual setting render methods
+    }
+
     private void renderBooleanSetting(DrawContext context, BooleanSetting setting, float settingY,
             int mouseX, int mouseY, float alpha,
             cc.silk.utils.render.font.fonts.FontRenderer font, Color textColor) {
@@ -150,21 +177,13 @@ public class SettingsPanel {
                 (int) (100 * alpha));
         Color checkColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
 
-        context.fill((int) checkboxX, (int) checkboxY, (int) (checkboxX + checkboxSize),
-                (int) (checkboxY + checkboxSize), checkboxBg.getRGB());
-
-        context.fill((int) checkboxX, (int) checkboxY, (int) (checkboxX + checkboxSize), (int) (checkboxY + 1),
-                checkboxBorder.getRGB());
-        context.fill((int) checkboxX, (int) (checkboxY + checkboxSize - 1), (int) (checkboxX + checkboxSize),
-                (int) (checkboxY + checkboxSize), checkboxBorder.getRGB());
-        context.fill((int) checkboxX, (int) checkboxY, (int) (checkboxX + 1), (int) (checkboxY + checkboxSize),
-                checkboxBorder.getRGB());
-        context.fill((int) (checkboxX + checkboxSize - 1), (int) checkboxY, (int) (checkboxX + checkboxSize),
-                (int) (checkboxY + checkboxSize), checkboxBorder.getRGB());
+        // Rounded checkbox background
+        NanoVGRenderer.drawRoundedRect(checkboxX, checkboxY, checkboxSize, checkboxSize, 2f, checkboxBg);
+        NanoVGRenderer.drawRoundedRectOutline(checkboxX, checkboxY, checkboxSize, checkboxSize, 2f, 1f, checkboxBorder);
 
         if (setting.getValue()) {
-            context.fill((int) (checkboxX + 2), (int) (checkboxY + 2), (int) (checkboxX + checkboxSize - 2),
-                    (int) (checkboxY + checkboxSize - 2), checkColor.getRGB());
+            NanoVGRenderer.drawRoundedRect(checkboxX + 2, checkboxY + 2, checkboxSize - 4, checkboxSize - 4, 1f,
+                    checkColor);
         }
     }
 
@@ -183,26 +202,22 @@ public class SettingsPanel {
         Color sliderFill = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
         Color sliderHandle = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (255 * alpha));
-        Color sliderGlow = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
-                (int) (60 * alpha));
 
-        context.fill((int) (currentX + PADDING), (int) sliderY, (int) (currentX + PADDING + sliderWidth),
-                (int) (sliderY + sliderHeight), sliderBg.getRGB());
+        // Rounded slider background
+        NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, sliderWidth, sliderHeight, 2f, sliderBg);
 
         double percentage = (setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
         float fillWidth = (float) (sliderWidth * percentage);
-        context.fill((int) (currentX + PADDING), (int) sliderY, (int) (currentX + PADDING + fillWidth),
-                (int) (sliderY + sliderHeight), sliderFill.getRGB());
 
-        if (fillWidth > 2) {
-            context.fill((int) (currentX + PADDING + fillWidth - 2), (int) (sliderY - 1),
-                    (int) (currentX + PADDING + fillWidth), (int) (sliderY + sliderHeight + 1), sliderGlow.getRGB());
+        if (fillWidth > 0) {
+            NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, fillWidth, sliderHeight, 2f, sliderFill);
         }
 
+        // Rounded slider handle
         float handleX = currentX + PADDING + fillWidth - 3;
         float handleWidth = 6;
-        context.fill((int) handleX, (int) (sliderY - 3), (int) (handleX + handleWidth),
-                (int) (sliderY + sliderHeight + 3), sliderHandle.getRGB());
+        float handleHeight = 10;
+        NanoVGRenderer.drawRoundedRect(handleX, sliderY - 3, handleWidth, handleHeight, 2f, sliderHandle);
     }
 
     private void renderModeSetting(DrawContext context, ModeSetting setting, float settingY,
@@ -221,17 +236,12 @@ public class SettingsPanel {
 
         float modeX = currentX + width - PADDING - modeWidth - 6;
         float modeY = settingY + 10;
+        float modeBoxWidth = modeWidth + 6;
+        float modeBoxHeight = 12;
 
-        context.fill((int) (modeX - 3), (int) (modeY - 2), (int) (modeX + modeWidth + 3), (int) (modeY + 10),
-                modeBg.getRGB());
-
-        context.fill((int) (modeX - 3), (int) (modeY - 2), (int) (modeX + modeWidth + 3), (int) (modeY - 1),
-                modeBorder.getRGB());
-        context.fill((int) (modeX - 3), (int) (modeY + 9), (int) (modeX + modeWidth + 3), (int) (modeY + 10),
-                modeBorder.getRGB());
-        context.fill((int) (modeX - 3), (int) (modeY - 2), (int) (modeX - 2), (int) (modeY + 10), modeBorder.getRGB());
-        context.fill((int) (modeX + modeWidth + 2), (int) (modeY - 2), (int) (modeX + modeWidth + 3),
-                (int) (modeY + 10), modeBorder.getRGB());
+        // Rounded mode selector
+        NanoVGRenderer.drawRoundedRect(modeX - 3, modeY - 2, modeBoxWidth, modeBoxHeight, 3f, modeBg);
+        NanoVGRenderer.drawRoundedRectOutline(modeX - 3, modeY - 2, modeBoxWidth, modeBoxHeight, 3f, 1f, modeBorder);
 
         font.drawString(context.getMatrices(), mode, modeX, modeY, modeText);
     }
@@ -249,19 +259,12 @@ public class SettingsPanel {
         int colorAlpha = (int) (color.getAlpha() * alpha);
         Color displayColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), colorAlpha);
 
-        context.fill((int) previewX, (int) previewY, (int) (previewX + previewSize), (int) (previewY + previewSize),
-                displayColor.getRGB());
-
         Color border = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (150 * alpha));
-        context.fill((int) previewX, (int) previewY, (int) (previewX + previewSize), (int) (previewY + 1),
-                border.getRGB());
-        context.fill((int) previewX, (int) (previewY + previewSize - 1), (int) (previewX + previewSize),
-                (int) (previewY + previewSize), border.getRGB());
-        context.fill((int) previewX, (int) previewY, (int) (previewX + 1), (int) (previewY + previewSize),
-                border.getRGB());
-        context.fill((int) (previewX + previewSize - 1), (int) previewY, (int) (previewX + previewSize),
-                (int) (previewY + previewSize), border.getRGB());
+
+        // Rounded color preview
+        NanoVGRenderer.drawRoundedRect(previewX, previewY, previewSize, previewSize, 3f, displayColor);
+        NanoVGRenderer.drawRoundedRectOutline(previewX, previewY, previewSize, previewSize, 3f, 1f, border);
     }
 
     private String formatNumber(double value) {

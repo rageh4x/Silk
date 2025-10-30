@@ -83,6 +83,9 @@ public class NewClickGUI extends Screen {
             panel.setSearchQuery(searchQuery);
         }
 
+        // Begin NanoVG frame for all NanoVG rendering
+        NanoVGRenderer.beginFrame();
+        
         context.getMatrices().push();
 
         int centerX = width / 2;
@@ -91,20 +94,44 @@ public class NewClickGUI extends Screen {
         context.getMatrices().scale(scale, scale, 1f);
         context.getMatrices().translate(-centerX, -centerY, 0);
 
+        // Render all NanoVG shapes for panels
         for (CategoryPanel panel : panels) {
-            panel.render(context, mouseX, mouseY, alpha);
+            panel.renderNanoVG(context, mouseX, mouseY, alpha);
+        }
+
+        context.getMatrices().pop();
+
+        // Render NanoVG shapes for settings panels
+        for (CategoryPanel panel : panels) {
+            panel.renderSettingsPanelNanoVG(context, mouseX, mouseY, alpha);
+        }
+        
+        // Render search bar NanoVG shapes
+        renderSearchBarNanoVG(context, mouseX, mouseY, alpha);
+        
+        // End NanoVG frame and restore MC state
+        NanoVGRenderer.endFrame();
+        
+        // Now render all Minecraft elements (text, fills, etc.)
+        context.getMatrices().push();
+        context.getMatrices().translate(centerX, centerY, 0);
+        context.getMatrices().scale(scale, scale, 1f);
+        context.getMatrices().translate(-centerX, -centerY, 0);
+
+        for (CategoryPanel panel : panels) {
+            panel.renderMinecraft(context, mouseX, mouseY, alpha);
         }
 
         context.getMatrices().pop();
 
         for (CategoryPanel panel : panels) {
-            panel.renderSettingsPanel(context, mouseX, mouseY, alpha);
+            panel.renderSettingsPanelMinecraft(context, mouseX, mouseY, alpha);
         }
         
-        renderSearchBar(context, mouseX, mouseY, alpha);
+        renderSearchBarMinecraft(context, mouseX, mouseY, alpha);
     }
     
-    private void renderSearchBar(DrawContext context, int mouseX, int mouseY, float alpha) {
+    private void renderSearchBarNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
         searchBarY = height - SEARCH_BAR_HEIGHT - 20;
         float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
         
@@ -118,7 +145,13 @@ public class NewClickGUI extends Screen {
         
         float borderThickness = searchFocused ? 2f : 1f;
         NanoVGRenderer.drawRoundedRectOutlineWithContext(context, searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT, cornerRadius, borderThickness, borderColor);
+    }
+    
+    private void renderSearchBarMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
+        searchBarY = height - SEARCH_BAR_HEIGHT - 20;
+        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
         
+        int bgAlpha = (int)(255 * alpha);
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager()
                 .getSize(12, cc.silk.utils.render.font.FontManager.Type.Inter);
         
