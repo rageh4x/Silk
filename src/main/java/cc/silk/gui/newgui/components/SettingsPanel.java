@@ -87,7 +87,6 @@ public class SettingsPanel {
                 borderColor);
         NanoVGRenderer.drawRoundedRectWithContext(context, currentX, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerBg);
 
-        // Render NanoVG shapes for settings
         float settingY = y + HEADER_HEIGHT + PADDING;
         for (Setting setting : module.getSettings()) {
             if (setting instanceof KeybindSetting)
@@ -141,32 +140,37 @@ public class SettingsPanel {
 
     private void renderSettingNanoVG(DrawContext context, Setting setting, float settingY, int mouseX, int mouseY,
             float alpha) {
+        if (setting instanceof BooleanSetting) {
+            renderBooleanSettingNanoVG(context, (BooleanSetting) setting, settingY, mouseX, mouseY, alpha);
+        } else if (setting instanceof NumberSetting) {
+            renderNumberSettingNanoVG(context, (NumberSetting) setting, settingY, mouseX, mouseY, alpha);
+        } else if (setting instanceof ModeSetting) {
+            renderModeSettingNanoVG(context, (ModeSetting) setting, settingY, mouseX, mouseY, alpha);
+        } else if (setting instanceof ColorSetting) {
+            renderColorSettingNanoVG(context, (ColorSetting) setting, settingY, mouseX, mouseY, alpha);
+        }
+    }
+
+    private void renderSettingMinecraft(DrawContext context, Setting setting, float settingY, int mouseX, int mouseY,
+            float alpha) {
         cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager()
                 .getSize(10, cc.silk.utils.render.font.FontManager.Type.Inter);
         int textAlpha = (int) (255 * alpha);
         Color textColor = new Color(200, 200, 200, textAlpha);
 
         if (setting instanceof BooleanSetting) {
-            renderBooleanSetting(context, (BooleanSetting) setting, settingY, mouseX, mouseY, alpha, font, textColor);
+            renderBooleanSettingText(context, (BooleanSetting) setting, settingY, font, textColor);
         } else if (setting instanceof NumberSetting) {
-            renderNumberSetting(context, (NumberSetting) setting, settingY, mouseX, mouseY, alpha, font, textColor);
+            renderNumberSettingText(context, (NumberSetting) setting, settingY, font, textColor);
         } else if (setting instanceof ModeSetting) {
-            renderModeSetting(context, (ModeSetting) setting, settingY, mouseX, mouseY, alpha, font, textColor);
+            renderModeSettingText(context, (ModeSetting) setting, settingY, font, textColor);
         } else if (setting instanceof ColorSetting) {
-            renderColorSetting(context, (ColorSetting) setting, settingY, mouseX, mouseY, alpha, font, textColor);
+            renderColorSettingText(context, (ColorSetting) setting, settingY, font, textColor);
         }
     }
 
-    private void renderSettingMinecraft(DrawContext context, Setting setting, float settingY, int mouseX, int mouseY,
-            float alpha) {
-        // Text rendering is handled in the individual setting render methods
-    }
-
-    private void renderBooleanSetting(DrawContext context, BooleanSetting setting, float settingY,
-            int mouseX, int mouseY, float alpha,
-            cc.silk.utils.render.font.fonts.FontRenderer font, Color textColor) {
-        font.drawString(context.getMatrices(), setting.getName(), currentX + PADDING, settingY + 5, textColor);
-
+    private void renderBooleanSettingNanoVG(DrawContext context, BooleanSetting setting, float settingY,
+            int mouseX, int mouseY, float alpha) {
         int checkboxSize = 10;
         float checkboxX = currentX + width - PADDING - checkboxSize;
         float checkboxY = settingY + 5;
@@ -177,7 +181,6 @@ public class SettingsPanel {
                 (int) (100 * alpha));
         Color checkColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
 
-        // Rounded checkbox background
         NanoVGRenderer.drawRoundedRect(checkboxX, checkboxY, checkboxSize, checkboxSize, 2f, checkboxBg);
         NanoVGRenderer.drawRoundedRectOutline(checkboxX, checkboxY, checkboxSize, checkboxSize, 2f, 1f, checkboxBorder);
 
@@ -186,13 +189,14 @@ public class SettingsPanel {
                     checkColor);
         }
     }
-
-    private void renderNumberSetting(DrawContext context, NumberSetting setting, float settingY,
-            int mouseX, int mouseY, float alpha,
+    
+    private void renderBooleanSettingText(DrawContext context, BooleanSetting setting, float settingY,
             cc.silk.utils.render.font.fonts.FontRenderer font, Color textColor) {
-        String displayText = setting.getName() + ": " + formatNumber(setting.getValue());
-        font.drawString(context.getMatrices(), displayText, currentX + PADDING, settingY + 3, textColor);
+        font.drawString(context.getMatrices(), setting.getName(), currentX + PADDING, settingY + 5, textColor);
+    }
 
+    private void renderNumberSettingNanoVG(DrawContext context, NumberSetting setting, float settingY,
+            int mouseX, int mouseY, float alpha) {
         float sliderY = settingY + 15;
         float sliderWidth = width - PADDING * 2;
         float sliderHeight = 4;
@@ -203,7 +207,6 @@ public class SettingsPanel {
         Color sliderHandle = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (255 * alpha));
 
-        // Rounded slider background
         NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, sliderWidth, sliderHeight, 2f, sliderBg);
 
         double percentage = (setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
@@ -213,18 +216,22 @@ public class SettingsPanel {
             NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, fillWidth, sliderHeight, 2f, sliderFill);
         }
 
-        // Rounded slider handle
         float handleX = currentX + PADDING + fillWidth - 3;
         float handleWidth = 6;
         float handleHeight = 10;
         NanoVGRenderer.drawRoundedRect(handleX, sliderY - 3, handleWidth, handleHeight, 2f, sliderHandle);
     }
-
-    private void renderModeSetting(DrawContext context, ModeSetting setting, float settingY,
-            int mouseX, int mouseY, float alpha,
+    
+    private void renderNumberSettingText(DrawContext context, NumberSetting setting, float settingY,
             cc.silk.utils.render.font.fonts.FontRenderer font, Color textColor) {
-        font.drawString(context.getMatrices(), setting.getName(), currentX + PADDING, settingY + 2, textColor);
+        String displayText = setting.getName() + ": " + formatNumber(setting.getValue());
+        font.drawString(context.getMatrices(), displayText, currentX + PADDING, settingY + 3, textColor);
+    }
 
+    private void renderModeSettingNanoVG(DrawContext context, ModeSetting setting, float settingY,
+            int mouseX, int mouseY, float alpha) {
+        cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager()
+                .getSize(10, cc.silk.utils.render.font.FontManager.Type.Inter);
         String mode = setting.getMode();
         float modeWidth = font.getStringWidth(mode);
 
@@ -232,25 +239,33 @@ public class SettingsPanel {
         Color modeBg = new Color(30, 30, 35, bgAlpha);
         Color modeBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (100 * alpha));
-        Color modeText = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
 
         float modeX = currentX + width - PADDING - modeWidth - 6;
         float modeY = settingY + 10;
         float modeBoxWidth = modeWidth + 6;
         float modeBoxHeight = 12;
 
-        // Rounded mode selector
         NanoVGRenderer.drawRoundedRect(modeX - 3, modeY - 2, modeBoxWidth, modeBoxHeight, 3f, modeBg);
         NanoVGRenderer.drawRoundedRectOutline(modeX - 3, modeY - 2, modeBoxWidth, modeBoxHeight, 3f, 1f, modeBorder);
+    }
+    
+    private void renderModeSettingText(DrawContext context, ModeSetting setting, float settingY,
+            cc.silk.utils.render.font.fonts.FontRenderer font, Color textColor) {
+        font.drawString(context.getMatrices(), setting.getName(), currentX + PADDING, settingY + 2, textColor);
+
+        String mode = setting.getMode();
+        float modeWidth = font.getStringWidth(mode);
+        int bgAlpha = textColor.getAlpha();
+        Color modeText = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
+
+        float modeX = currentX + width - PADDING - modeWidth - 6;
+        float modeY = settingY + 10;
 
         font.drawString(context.getMatrices(), mode, modeX, modeY, modeText);
     }
 
-    private void renderColorSetting(DrawContext context, ColorSetting setting, float settingY,
-            int mouseX, int mouseY, float alpha,
-            cc.silk.utils.render.font.fonts.FontRenderer font, Color textColor) {
-        font.drawString(context.getMatrices(), setting.getName(), currentX + PADDING, settingY + 5, textColor);
-
+    private void renderColorSettingNanoVG(DrawContext context, ColorSetting setting, float settingY,
+            int mouseX, int mouseY, float alpha) {
         int previewSize = 12;
         float previewX = currentX + width - PADDING - previewSize;
         float previewY = settingY + 4;
@@ -262,9 +277,13 @@ public class SettingsPanel {
         Color border = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (150 * alpha));
 
-        // Rounded color preview
         NanoVGRenderer.drawRoundedRect(previewX, previewY, previewSize, previewSize, 3f, displayColor);
         NanoVGRenderer.drawRoundedRectOutline(previewX, previewY, previewSize, previewSize, 3f, 1f, border);
+    }
+    
+    private void renderColorSettingText(DrawContext context, ColorSetting setting, float settingY,
+            cc.silk.utils.render.font.fonts.FontRenderer font, Color textColor) {
+        font.drawString(context.getMatrices(), setting.getName(), currentX + PADDING, settingY + 5, textColor);
     }
 
     private String formatNumber(double value) {
