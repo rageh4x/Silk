@@ -34,14 +34,17 @@ public class ESP2D extends Module {
     private final BooleanSetting boxSetting = new BooleanSetting("Box", true);
     private final BooleanSetting boxFill = new BooleanSetting("Box Fill", false);
     private final NumberSetting fillOpacity = new NumberSetting("Fill Opacity", 0, 255, 80, 5);
+    private final BooleanSetting gradientFill = new BooleanSetting("Gradient Fill", false);
+    private final ColorSetting fillColor1 = new ColorSetting("Fill Color 1", new Color(255, 0, 0, 80));
+    private final ColorSetting fillColor2 = new ColorSetting("Fill Color 2", new Color(0, 0, 255, 80));
     private final ColorSetting playerColor = new ColorSetting("Player Color", new Color(255, 255, 255));
     private final ColorSetting passiveColor = new ColorSetting("Passive Color", new Color(0, 255, 0));
     private final ColorSetting hostileColor = new ColorSetting("Hostile Color", new Color(255, 0, 0));
 
     public ESP2D() {
         super("2D ESP", "Draws 2D boxes around entities", -1, Category.RENDER);
-        addSettings(targets, showSelf, range, boxMode, boxSetting, boxFill, fillOpacity, playerColor, passiveColor,
-                hostileColor);
+        addSettings(targets, showSelf, range, boxMode, boxSetting, boxFill, fillOpacity, gradientFill, fillColor1, 
+                fillColor2, playerColor, passiveColor, hostileColor);
     }
 
     @EventHandler
@@ -180,8 +183,21 @@ public class ESP2D extends Module {
                     }
 
                     if (boxFill.getValue()) {
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX, endPosY, posX, posY,
-                                new Color(0, 0, 0, fillOpacity.getValueInt()));
+                        if (gradientFill.getValue()) {
+                            Color topColor = new Color(fillColor1.getValue().getRed(), 
+                                    fillColor1.getValue().getGreen(), 
+                                    fillColor1.getValue().getBlue(), 
+                                    fillOpacity.getValueInt());
+                            Color bottomColor = new Color(fillColor2.getValue().getRed(), 
+                                    fillColor2.getValue().getGreen(), 
+                                    fillColor2.getValue().getBlue(), 
+                                    fillOpacity.getValueInt());
+                            DrawUtils.rectPoint4VerticalGradient(bufferBuilder, matrix, posX, posY, endPosX, endPosY,
+                                    topColor, bottomColor);
+                        } else {
+                            DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX, endPosY, posX, posY,
+                                    new Color(0, 0, 0, fillOpacity.getValueInt()));
+                        }
                     }
                 }
             }
