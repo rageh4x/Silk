@@ -30,11 +30,15 @@ public final class TargetESP extends Module {
     private final NumberSetting orbSize = new NumberSetting("Orb Size", 0.1, 0.8, 0.3, 0.05);
     private final NumberSetting speed = new NumberSetting("Speed", 0.5, 5.0, 2.5, 0.1);
     private final NumberSetting heightOffset = new NumberSetting("Height Offset", 0.0, 2.0, 1.0, 0.1);
+    private final ModeSetting colorMode = new ModeSetting("Color Mode", "Single", "Single", "Gradient");
     private final ColorSetting color = new ColorSetting("Color", new Color(120, 240, 255, 220));
+    private final ColorSetting gradientColor1 = new ColorSetting("Gradient Color 1", new Color(255, 0, 0, 220));
+    private final ColorSetting gradientColor2 = new ColorSetting("Gradient Color 2", new Color(0, 0, 255, 220));
 
     public TargetESP() {
         super("Target ESP", "Ghost-like spiral orbs around players", -1, Category.RENDER);
-        addSettings(targets, layers, orbsPerLayer, orbSize, speed, heightOffset, color);
+        addSettings(targets, layers, orbsPerLayer, orbSize, speed, heightOffset, colorMode, color,
+                gradientColor1, gradientColor2);
     }
 
     @EventHandler
@@ -55,6 +59,7 @@ public final class TargetESP extends Module {
         Color c = color.getValue();
         int numLayers = layers.getValueInt();
         int orbs = orbsPerLayer.getValueInt();
+        boolean useGradient = colorMode.isMode("Gradient");
 
         float iAge = (System.currentTimeMillis() % 100000) / 50.0f;
 
@@ -89,7 +94,13 @@ public final class TargetESP extends Module {
                     double sinQuad = Math.sin(Math.toRadians(ageMultiplier + i * jMultiplier) * 3f) / 1.8f;
                     float offset = iFloat / orbs;
 
-                    int orbColor = applyOpacity(c.getRGB(), offset);
+                    int orbColor;
+                    if (useGradient) {
+                        Color blendedColor = blendColors(gradientColor1.getValue(), gradientColor2.getValue(), offset);
+                        orbColor = applyOpacity(blendedColor.getRGB(), offset);
+                    } else {
+                        orbColor = applyOpacity(c.getRGB(), offset);
+                    }
 
                     double ghostX = Math.cos(radians) * entity.getWidth();
                     double ghostY = sinQuad;
@@ -118,6 +129,15 @@ public final class TargetESP extends Module {
 
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
+    }
+
+    private Color blendColors(Color color1, Color color2, float ratio) {
+        ratio = Math.min(1, Math.max(0, ratio));
+        int r = (int) (color1.getRed() * (1 - ratio) + color2.getRed() * ratio);
+        int g = (int) (color1.getGreen() * (1 - ratio) + color2.getGreen() * ratio);
+        int b = (int) (color1.getBlue() * (1 - ratio) + color2.getBlue() * ratio);
+        int a = (int) (color1.getAlpha() * (1 - ratio) + color2.getAlpha() * ratio);
+        return new Color(r, g, b, a);
     }
 
     private int applyOpacity(int colorInt, float opacity) {
