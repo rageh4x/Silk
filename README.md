@@ -64,8 +64,11 @@ OpenVolt wouldn't exist without these amazing individuals:
 | **Etho**       | 1383737664645369926 | Moral support & Walmart Solutions              |
 | **3000IQPlay** | 1193266310977691760 | Strategic guidance & Walmart Solutions creator |
 | **Walper**     | 957343617272414230  | Code contributions and auth, yo.               |
+| **Pathos**     | 1126202321550975078 | Inspired and gave advice on NanoVG             |
+| **Meta**       | 297075664530440192  | FontAwesome and good guy                       |
 
-A special shoutout to **Koi** for being an invaluable part of the Volt journey and for their deep knowledge of 1.9+ combat mechanics.
+
+A special shoutout to **Koi** for being an invaluable part of the Silk journey and for their deep knowledge of 1.9+ combat mechanics.
 
 ---
 
@@ -152,7 +155,7 @@ docs/readme-update
 
 ## 📜 License
 
-OpenVolt is licensed under the **GNU General Public License v3.0** (GPL-3.0).
+Silk.cc is licensed under the **GNU General Public License v3.0** (GPL-3.0).
 
 ### What This Means
 
@@ -170,7 +173,7 @@ OpenVolt is licensed under the **GNU General Public License v3.0** (GPL-3.0).
 
 ### ⚠️ Important Notice
 
-**Do not sell this software.** If you use or distribute code from OpenVolt, you **must** credit:
+**Do not sell this software.** If you use or distribute code from Silk.cc, you **must** credit:
 - **The OpenVolt Team**
 
 For the full license text, see the [LICENSE](LICENSE) file.
