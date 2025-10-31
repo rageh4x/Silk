@@ -46,11 +46,9 @@ public class CategoryPanel {
 
     private void initModules() {
         List<Module> modules = cc.silk.SilkClient.INSTANCE.getModuleManager().getModulesByCategory(category);
-        float moduleY = 0;
 
         for (Module module : modules) {
-            moduleButtons.add(new ModuleButton(module, 0, moduleY, width, MODULE_HEIGHT));
-            moduleY += MODULE_HEIGHT;
+            moduleButtons.add(new ModuleButton(module, 0, 0, width, MODULE_HEIGHT));
         }
     }
 
