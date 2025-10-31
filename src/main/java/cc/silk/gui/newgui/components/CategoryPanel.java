@@ -15,7 +15,7 @@ public class CategoryPanel {
     private final List<ModuleButton> moduleButtons = new ArrayList<>();
 
     private static final int HEADER_HEIGHT = 16;
-    private static final int MODULE_HEIGHT = 8;
+    private static final int MODULE_HEIGHT = 14;
 
     private static final Color HEADER_COLOR = new Color(28, 28, 32, 255);
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
@@ -73,7 +73,7 @@ public class CategoryPanel {
                 visibleCount++;
             }
         }
-        
+
         int totalHeight = HEADER_HEIGHT + (visibleCount * MODULE_HEIGHT);
 
         int panelAlpha = (int) (255 * alpha);
