@@ -48,6 +48,9 @@ dependencies {
     implementation platform("org.lwjgl:lwjgl-bom:3.3.3")
     implementation "org.lwjgl:lwjgl-nanovg"
     runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-macos"
+    runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-macos-arm64"
+    runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-linux"
 }
 
 processResources {
