@@ -12,8 +12,12 @@ public class SettingsPanel {
     private int height;
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
     private static final Color HEADER_BG = new Color(28, 28, 32, 255);
-    private static final Color ACCENT_COLOR = new Color(88, 101, 242, 255);
     private static final Color BORDER_COLOR = new Color(40, 40, 46, 255);
+
+    private static Color getAccentColor() {
+        return cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+    }
+
     private static final int HEADER_HEIGHT = 22;
     private static final float CORNER_RADIUS = 4f;
     private static final int SETTING_HEIGHT = 16;
@@ -98,7 +102,8 @@ public class SettingsPanel {
         Color borderColor = new Color(BORDER_COLOR.getRed(), BORDER_COLOR.getGreen(), BORDER_COLOR.getBlue(),
                 panelAlpha);
         Color headerBg = new Color(HEADER_BG.getRed(), HEADER_BG.getGreen(), HEADER_BG.getBlue(), panelAlpha);
-        Color separatorColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+        Color accentColor = getAccentColor();
+        Color separatorColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 (int) (80 * renderAlpha));
 
         NanoVGRenderer.drawRoundedRect(currentX, y, width, height, CORNER_RADIUS, panelBg);
@@ -166,8 +171,9 @@ public class SettingsPanel {
         int bgAlpha = (int) (255 * alpha);
         boolean isOn = setting.getValue();
 
+        Color accentColor = getAccentColor();
         Color toggleBg = isOn
-                ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha)
+                ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
                 : new Color(40, 40, 46, bgAlpha);
 
         NanoVGRenderer.drawRoundedRect(toggleX, toggleY, toggleWidth, toggleHeight, toggleHeight / 2f, toggleBg);
@@ -193,10 +199,11 @@ public class SettingsPanel {
         float sliderRadius = sliderHeight / 2f;
 
         int bgAlpha = (int) (255 * alpha);
+        Color accentColor = getAccentColor();
         Color sliderBg = new Color(30, 30, 35, bgAlpha);
-        Color sliderFill = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
+        Color sliderFill = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
         Color textColor = new Color(200, 200, 200, bgAlpha);
-        Color valueColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
+        Color valueColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
 
         NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, sliderWidth, sliderHeight, sliderRadius, sliderBg);
 
@@ -212,7 +219,7 @@ public class SettingsPanel {
         float handleX = currentX + PADDING + fillWidth;
         float handleY = sliderY + sliderHeight / 2f;
 
-        Color handleGlow = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+        Color handleGlow = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 (int) (60 * alpha));
         NanoVGRenderer.drawCircle(handleX, handleY, handleRadius + 1.5f, handleGlow);
 
@@ -234,11 +241,12 @@ public class SettingsPanel {
         float fontSize = 9f;
 
         int bgAlpha = (int) (255 * alpha);
+        Color accentColor = getAccentColor();
         Color dropdownBg = new Color(30, 30, 35, bgAlpha);
-        Color dropdownBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+        Color dropdownBorder = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 (int) (100 * alpha));
         Color textColor = new Color(200, 200, 200, bgAlpha);
-        Color modeText = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
+        Color modeText = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
 
         float dropdownWidth = 60;
         float dropdownHeight = 14;
@@ -267,7 +275,7 @@ public class SettingsPanel {
 
             Color menuBg = new Color(25, 25, 30, bgAlpha);
             Color hoverBg = new Color(40, 40, 46, bgAlpha);
-            Color menuBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+            Color menuBorder = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                     (int) (150 * alpha));
 
             NanoVGRenderer.drawRoundedRect(dropdownX, menuY, dropdownWidth, menuHeight, 3f, menuBg);
@@ -298,7 +306,8 @@ public class SettingsPanel {
         Color color = setting.getValue();
         int colorAlpha = (int) (color.getAlpha() * alpha);
         Color displayColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), colorAlpha);
-        Color border = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+        Color accentColor = getAccentColor();
+        Color border = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 (int) (150 * alpha));
         Color textColor = new Color(200, 200, 200, (int) (255 * alpha));
 
@@ -322,14 +331,15 @@ public class SettingsPanel {
         float buttonX = currentX + width - PADDING - buttonWidth;
         float buttonY = settingY + 1;
 
+        Color accentColor = getAccentColor();
         Color buttonBg = isListening
-                ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int) (100 * alpha))
+                ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (100 * alpha))
                 : new Color(30, 30, 35, bgAlpha);
-        Color buttonBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+        Color buttonBorder = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 isListening ? (int) (200 * alpha) : (int) (100 * alpha));
         Color textColor = new Color(200, 200, 200, bgAlpha);
         Color keyColor = isListening
-                ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha)
+                ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
                 : new Color(200, 200, 200, bgAlpha);
 
         NanoVGRenderer.drawRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 3f, buttonBg);

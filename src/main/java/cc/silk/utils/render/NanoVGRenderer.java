@@ -3,7 +3,6 @@ package cc.silk.utils.render;
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.system.MemoryStack;
@@ -29,6 +28,8 @@ public class NanoVGRenderer {
     private static int regularFont = -1;
     private static int boldFont = -1;
     private static int iconFont = -1;
+    private static int jetbrainsFont = -1;
+    private static int poppinsFont = -1;
 
     public static void init() {
         if (initialized)
@@ -46,8 +47,10 @@ public class NanoVGRenderer {
     private static void loadFonts() {
         try {
             System.out.println("[NanoVG] Attempting to load fonts...");
-            regularFont = loadFont("inter", "silk/fonts/inter.ttf");
-            boldFont = loadFont("inter-bold", "silk/fonts/inter.ttf");
+            regularFont = loadFont("inter", "silk/fonts/Inter.ttf");
+            boldFont = loadFont("inter-bold", "silk/fonts/Inter.ttf");
+            jetbrainsFont = loadFont("jetbrains", "silk/fonts/jetbrainsmono.ttf");
+            poppinsFont = loadFont("poppins", "silk/fonts/poppins-medium.ttf");
 
             try {
                 iconFont = loadFont("fa-solid", "silk/fonts/font awesome 7 freesolid900.otf");
@@ -66,8 +69,10 @@ public class NanoVGRenderer {
 
             System.out.println("[NanoVG] Regular font ID: " + regularFont);
             System.out.println("[NanoVG] Bold font ID: " + boldFont);
+            System.out.println("[NanoVG] JetBrains font ID: " + jetbrainsFont);
+            System.out.println("[NanoVG] Poppins font ID: " + poppinsFont);
 
-            if (regularFont == -1 || boldFont == -1) {
+            if (regularFont == -1) {
                 System.err.println("[NanoVG] Warning: Failed to load custom fonts, trying fallback...");
                 loadFallbackFonts();
             } else {
@@ -251,15 +256,7 @@ public class NanoVGRenderer {
         if (!initialized)
             init();
 
-        int fontId = bold ? boldFont : regularFont;
-
-        if (fontId <= 0) {
-            fontId = regularFont > 0 ? regularFont : boldFont;
-        }
-
-        if (fontId <= 0) {
-            fontId = 1;
-        }
+        int fontId = getFontId(bold);
 
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
@@ -278,6 +275,34 @@ public class NanoVGRenderer {
 
     public static void drawText(String text, float x, float y, float size, Color color) {
         drawText(text, x, y, size, color, false);
+    }
+
+    private static int getFontId(boolean bold) {
+        try {
+            String fontStyle = cc.silk.module.modules.client.ClientSettingsModule.getFontStyle();
+
+            if ("jetbrainsmono.ttf".equals(fontStyle)) {
+                return jetbrainsFont > 0 ? jetbrainsFont : regularFont;
+            } else if ("poppins-medium.ttf".equals(fontStyle)) {
+                return poppinsFont > 0 ? poppinsFont : regularFont;
+            } else if ("Inter.ttf".equals(fontStyle)) {
+                return regularFont > 0 ? regularFont : 0;
+            }
+        } catch (Exception e) {
+
+        }
+
+        int fontId = bold ? boldFont : regularFont;
+
+        if (fontId <= 0) {
+            fontId = regularFont > 0 ? regularFont : boldFont;
+        }
+
+        if (fontId <= 0) {
+            fontId = 1;
+        }
+
+        return fontId;
     }
 
     public static void drawIcon(String icon, float x, float y, float size, Color color) {
@@ -310,7 +335,7 @@ public class NanoVGRenderer {
 
         try (MemoryStack stack = stackPush()) {
             float[] bounds = new float[4];
-            nvgFontFaceId(vg, bold ? boldFont : regularFont);
+            nvgFontFaceId(vg, getFontId(bold));
             nvgFontSize(vg, size);
             nvgTextBounds(vg, 0, 0, text, bounds);
             return bounds[2] - bounds[0];

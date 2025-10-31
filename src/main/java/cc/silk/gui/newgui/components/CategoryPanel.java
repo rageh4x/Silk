@@ -19,8 +19,10 @@ public class CategoryPanel {
 
     private static final Color HEADER_COLOR = new Color(28, 28, 32, 255);
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
-    private static final Color ACCENT_COLOR = new Color(88, 101, 242, 255);
-    private static final Color SEPARATOR_COLOR = new Color(88, 101, 242, 80);
+    
+    private static Color getAccentColor() {
+        return cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+    }
     private static final float CORNER_RADIUS = 4f;
 
     private boolean dragging = false;
@@ -95,7 +97,8 @@ public class CategoryPanel {
         float textX = x + 6 + iconSize + 4;
         float textY = y + (HEADER_HEIGHT - fontSize) / 2f;
 
-        Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+        Color accentColor = getAccentColor();
+        Color iconColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 (int) (255 * alpha));
         Color textColor = new Color(240, 240, 245, (int) (255 * alpha));
 
@@ -116,7 +119,8 @@ public class CategoryPanel {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             settingsPanel.setScreenDimensions(screenWidth, screenHeight);
             float lineAlpha = alpha * settingsPanel.getAnimationProgress();
-            Color lineColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+            Color accentColor = getAccentColor();
+            Color lineColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                     (int) (150 * lineAlpha));
 
             float lineStartX = x + width;

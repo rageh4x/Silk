@@ -27,7 +27,6 @@ public class NewClickGUI extends Screen {
     private static final int SEARCH_BAR_HEIGHT = 30;
     private static final int SEARCH_BAR_WIDTH = 300;
     private static final java.awt.Color SEARCH_BG = new java.awt.Color(28, 28, 32, 255);
-    private static final java.awt.Color SEARCH_BORDER = new java.awt.Color(88, 101, 242, 255);
     private static final java.awt.Color SEARCH_TEXT = new java.awt.Color(240, 240, 245, 255);
     private static final java.awt.Color SEARCH_PLACEHOLDER = new java.awt.Color(130, 130, 140, 255);
 
@@ -131,7 +130,9 @@ public class NewClickGUI extends Screen {
 
         int bgAlpha = (int) (255 * alpha);
         Color bgColor = new Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(), bgAlpha);
-        Color borderColor = new Color(SEARCH_BORDER.getRed(), SEARCH_BORDER.getGreen(), SEARCH_BORDER.getBlue(),
+        
+        Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+        Color borderColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 searchFocused ? bgAlpha : (int) (100 * alpha));
 
         float cornerRadius = 6f;

@@ -72,17 +72,19 @@ public class ModuleButton {
         boolean hovered = isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY);
         targetHoverAlpha = hovered ? 1f : 0f;
 
+        Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+        
         if (module.isEnabled()) {
-            Color enabledBg = new Color(88, 101, 242, (int) (255 * combinedAlpha));
+            Color enabledBg = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (255 * combinedAlpha));
             NanoVGRenderer.drawRect(x, y, buttonWidth, buttonHeight, enabledBg);
         } else if (hoverAlpha > 0.01f) {
             float expandedHeight = buttonHeight * hoverAlpha;
-            Color hoverBg = new Color(88, 101, 242, (int) (60 * combinedAlpha));
+            Color hoverBg = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (60 * combinedAlpha));
             NanoVGRenderer.drawRect(x, y, buttonWidth, expandedHeight, hoverBg);
         }
 
         if (matchesSearch && searchAlpha > 0.9f && !searchQuery.isEmpty()) {
-            Color highlightBorder = new Color(88, 101, 242, (int) (150 * combinedAlpha));
+            Color highlightBorder = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (150 * combinedAlpha));
             NanoVGRenderer.drawRect(x, y, 2, buttonHeight, highlightBorder);
         }
 
