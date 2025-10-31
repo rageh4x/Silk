@@ -134,22 +134,6 @@ public class CategoryPanel {
     public void renderSettingsPanel(int mouseX, int mouseY, float alpha, int screenWidth, int screenHeight) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             settingsPanel.setScreenDimensions(screenWidth, screenHeight);
-            float lineAlpha = alpha * settingsPanel.getAnimationProgress();
-            Color accentColor = getAccentColor();
-            Color lineColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
-                    (int) (150 * lineAlpha));
-
-            float lineStartX = x + width;
-            float lineStartY = settingsPanelSourceY + (MODULE_HEIGHT / 2f);
-            float lineEndX = settingsPanel.getCurrentX();
-            float lineEndY = settingsPanel.getY() + 11;
-
-            NanoVGRenderer.drawLine(lineStartX, lineStartY, lineEndX, lineStartY, 1f, lineColor);
-
-            if (lineEndY != lineStartY) {
-                NanoVGRenderer.drawLine(lineEndX, lineStartY, lineEndX, lineEndY, 1f, lineColor);
-            }
-
             settingsPanel.render(mouseX, mouseY, alpha);
         }
     }
@@ -238,8 +222,17 @@ public class CategoryPanel {
             return true;
         }
         if (dragging) {
+            float oldY = y;
             x = (float) (mouseX - dragOffsetX);
             y = (float) (mouseY - dragOffsetY);
+            
+            if (settingsPanel != null && settingsPanel.isVisible()) {
+                float deltaYMove = y - oldY;
+                float newSettingsX = x + width + 5;
+                settingsPanelSourceY += deltaYMove;
+                settingsPanel.show(newSettingsX, settingsPanelSourceY);
+            }
+            
             return true;
         }
         return false;
