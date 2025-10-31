@@ -13,6 +13,8 @@ public class ModuleButton {
     private float searchAlpha = 1f;
     private float targetSearchAlpha = 1f;
     private boolean matchesSearch = true;
+    private float hoverAlpha = 0f;
+    private float targetHoverAlpha = 0f;
 
     public ModuleButton(Module module, float relativeX, float relativeY, int width, int height) {
         this.module = module;
@@ -43,6 +45,17 @@ public class ModuleButton {
             if (searchAlpha < targetSearchAlpha)
                 searchAlpha = targetSearchAlpha;
         }
+
+        float hoverSpeed = 10f;
+        if (hoverAlpha < targetHoverAlpha) {
+            hoverAlpha += deltaTime * hoverSpeed;
+            if (hoverAlpha > targetHoverAlpha)
+                hoverAlpha = targetHoverAlpha;
+        } else if (hoverAlpha > targetHoverAlpha) {
+            hoverAlpha -= deltaTime * hoverSpeed;
+            if (hoverAlpha < targetHoverAlpha)
+                hoverAlpha = targetHoverAlpha;
+        }
     }
 
     public void render(float panelX, float panelY, int mouseX, int mouseY, float alpha) {
@@ -51,45 +64,42 @@ public class ModuleButton {
 
         float combinedAlpha = alpha * searchAlpha;
 
-        float x = panelX + relativeX + 2;
-        float y = panelY + relativeY + 1;
-        float buttonWidth = width - 4;
-        float buttonHeight = height - 2;
-        float cornerRadius = 3f;
+        float x = panelX + relativeX;
+        float y = panelY + relativeY;
+        float buttonWidth = width;
+        float buttonHeight = height;
 
         boolean hovered = isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY);
+        targetHoverAlpha = hovered ? 1f : 0f;
 
-        // Draw hover background
-        if (hovered && searchAlpha > 0.5f) {
-            Color hoverBg = new Color(30, 30, 35, (int) (180 * combinedAlpha));
-            NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, hoverBg);
-        }
-
-        // Draw search highlight
-        if (matchesSearch && searchAlpha > 0.9f && !searchQuery.isEmpty()) {
-            Color highlightBg = new Color(88, 101, 242, (int) (50 * combinedAlpha));
-            NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, highlightBg);
-        }
-
-        // Draw enabled indicator
         if (module.isEnabled()) {
-            Color accentColor = new Color(88, 101, 242, (int) (255 * combinedAlpha));
-            NanoVGRenderer.drawRoundedRect(x, y, 2, buttonHeight, 1f, accentColor);
+            Color enabledBg = new Color(88, 101, 242, (int) (255 * combinedAlpha));
+            NanoVGRenderer.drawRect(x, y, buttonWidth, buttonHeight, enabledBg);
+        } else if (hoverAlpha > 0.01f) {
+            float expandedHeight = buttonHeight * hoverAlpha;
+            Color hoverBg = new Color(88, 101, 242, (int) (60 * combinedAlpha));
+            NanoVGRenderer.drawRect(x, y, buttonWidth, expandedHeight, hoverBg);
         }
 
-        // Draw text
+        if (matchesSearch && searchAlpha > 0.9f && !searchQuery.isEmpty()) {
+            Color highlightBorder = new Color(88, 101, 242, (int) (150 * combinedAlpha));
+            NanoVGRenderer.drawRect(x, y, 2, buttonHeight, highlightBorder);
+        }
+
         Color textColor;
         if (module.isEnabled()) {
-            textColor = new Color(240, 240, 245, (int) (255 * combinedAlpha));
-        } else if (hovered) {
-            textColor = new Color(200, 200, 210, (int) (255 * combinedAlpha));
+            textColor = new Color(255, 255, 255, (int) (255 * combinedAlpha));
+        } else if (hoverAlpha > 0.01f) {
+            int baseAlpha = 130;
+            int hoverBoost = (int) (110 * hoverAlpha);
+            textColor = new Color(200, 200, 210, (int) ((baseAlpha + hoverBoost) * combinedAlpha));
         } else {
             textColor = new Color(130, 130, 140, (int) (255 * combinedAlpha));
         }
-        
+
         float fontSize = 9.5f;
         float textY = y + (buttonHeight - fontSize) / 2f;
-        float textX = x + (module.isEnabled() ? 7 : 5);
+        float textX = x + 5;
         NanoVGRenderer.drawText(module.getName(), textX, textY, fontSize, textColor);
     }
 
@@ -99,10 +109,10 @@ public class ModuleButton {
         if (searchAlpha <= 0.01f)
             return false;
 
-        float x = panelX + relativeX + 2;
-        float y = panelY + relativeY + 1;
-        float buttonWidth = width - 4;
-        float buttonHeight = height - 2;
+        float x = panelX + relativeX;
+        float y = panelY + relativeY;
+        float buttonWidth = width;
+        float buttonHeight = height;
 
         if (isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY)) {
             if (button == 0) {

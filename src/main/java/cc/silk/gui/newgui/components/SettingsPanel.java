@@ -38,7 +38,7 @@ public class SettingsPanel {
     }
 
     private KeybindSetting listeningKeybind = null;
-    
+
     private void calculateHeight() {
         int totalHeight = HEADER_HEIGHT + PADDING * 2;
         for (Setting setting : module.getSettings()) {
@@ -300,36 +300,36 @@ public class SettingsPanel {
         float fontSize = 9f;
         NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 3, fontSize, textColor);
     }
-    
+
     private void renderKeybindSetting(KeybindSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
         int bgAlpha = (int) (255 * alpha);
         boolean isListening = listeningKeybind == setting;
-        
+
         String keyText = isListening ? "..." : getKeyName(setting.getKeyCode());
         float fontSize = 9f;
         float keyWidth = NanoVGRenderer.getTextWidth(keyText, fontSize);
-        
+
         float buttonWidth = Math.max(keyWidth + 12, 40);
         float buttonHeight = 14;
         float buttonX = currentX + width - PADDING - buttonWidth;
         float buttonY = settingY + 1;
-        
-        Color buttonBg = isListening 
-            ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int) (100 * alpha))
-            : new Color(30, 30, 35, bgAlpha);
+
+        Color buttonBg = isListening
+                ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int) (100 * alpha))
+                : new Color(30, 30, 35, bgAlpha);
         Color buttonBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 isListening ? (int) (200 * alpha) : (int) (100 * alpha));
         Color textColor = new Color(200, 200, 200, bgAlpha);
-        Color keyColor = isListening 
-            ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha)
-            : new Color(200, 200, 200, bgAlpha);
-        
+        Color keyColor = isListening
+                ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha)
+                : new Color(200, 200, 200, bgAlpha);
+
         NanoVGRenderer.drawRoundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 3f, buttonBg);
         NanoVGRenderer.drawRoundedRectOutline(buttonX, buttonY, buttonWidth, buttonHeight, 3f, 1f, buttonBorder);
-        
+
         float textX = buttonX + (buttonWidth - keyWidth) / 2f;
         NanoVGRenderer.drawText(keyText, textX, buttonY + 2, fontSize, keyColor);
-        
+
         NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 3, fontSize, textColor);
     }
 
@@ -344,11 +344,11 @@ public class SettingsPanel {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (animationProgress <= 0f)
             return false;
-        
+
         if (mouseClickedForKeybind(mouseX, mouseY, button)) {
             return true;
         }
-        
+
         if (button != 0)
             return false;
 
@@ -363,9 +363,6 @@ public class SettingsPanel {
         if (expandedDropdown != null) {
             float settingY = y + HEADER_HEIGHT + PADDING;
             for (Setting setting : module.getSettings()) {
-                if (setting instanceof KeybindSetting)
-                    continue;
-
                 if (setting == expandedDropdown) {
                     float dropdownWidth = 60;
                     float dropdownX = currentX + width - PADDING - dropdownWidth;
@@ -521,7 +518,7 @@ public class SettingsPanel {
     public float getY() {
         return y;
     }
-    
+
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (listeningKeybind != null) {
             if (keyCode == 256) {
@@ -534,7 +531,7 @@ public class SettingsPanel {
         }
         return false;
     }
-    
+
     public boolean mouseClickedForKeybind(double mouseX, double mouseY, int button) {
         if (listeningKeybind != null) {
             int mouseKeyCode = -100 - button;
@@ -544,55 +541,98 @@ public class SettingsPanel {
         }
         return false;
     }
-    
+
     public boolean isListeningForKey() {
         return listeningKeybind != null;
     }
-    
+
     private String getKeyName(int keyCode) {
-        if (keyCode == 0) return "NONE";
-        
+        if (keyCode == 0)
+            return "NONE";
+
         switch (keyCode) {
-            case 256: return "ESC";
-            case 257: return "ENTER";
-            case 258: return "TAB";
-            case 259: return "BACKSPACE";
-            case 260: return "INSERT";
-            case 261: return "DELETE";
-            case 262: return "RIGHT";
-            case 263: return "LEFT";
-            case 264: return "DOWN";
-            case 265: return "UP";
-            case 266: return "PAGE UP";
-            case 267: return "PAGE DOWN";
-            case 268: return "HOME";
-            case 269: return "END";
-            case 280: return "CAPS LOCK";
-            case 281: return "SCROLL LOCK";
-            case 282: return "NUM LOCK";
-            case 283: return "PRINT SCREEN";
-            case 284: return "PAUSE";
-            case 290: return "F1";
-            case 291: return "F2";
-            case 292: return "F3";
-            case 293: return "F4";
-            case 294: return "F5";
-            case 295: return "F6";
-            case 296: return "F7";
-            case 297: return "F8";
-            case 298: return "F9";
-            case 299: return "F10";
-            case 300: return "F11";
-            case 301: return "F12";
-            case 340: return "LSHIFT";
-            case 341: return "LCTRL";
-            case 342: return "LALT";
-            case 343: return "LSUPER";
-            case 344: return "RSHIFT";
-            case 345: return "RCTRL";
-            case 346: return "RALT";
-            case 347: return "RSUPER";
-            case 348: return "MENU";
+            case 32:
+                return "SPACE";
+            case 256:
+                return "ESC";
+            case 257:
+                return "ENTER";
+            case 258:
+                return "TAB";
+            case 259:
+                return "BACKSPACE";
+            case 260:
+                return "INSERT";
+            case 261:
+                return "DELETE";
+            case 262:
+                return "RIGHT";
+            case 263:
+                return "LEFT";
+            case 264:
+                return "DOWN";
+            case 265:
+                return "UP";
+            case 266:
+                return "PAGE UP";
+            case 267:
+                return "PAGE DOWN";
+            case 268:
+                return "HOME";
+            case 269:
+                return "END";
+            case 280:
+                return "CAPS LOCK";
+            case 281:
+                return "SCROLL LOCK";
+            case 282:
+                return "NUM LOCK";
+            case 283:
+                return "PRINT SCREEN";
+            case 284:
+                return "PAUSE";
+            case 290:
+                return "F1";
+            case 291:
+                return "F2";
+            case 292:
+                return "F3";
+            case 293:
+                return "F4";
+            case 294:
+                return "F5";
+            case 295:
+                return "F6";
+            case 296:
+                return "F7";
+            case 297:
+                return "F8";
+            case 298:
+                return "F9";
+            case 299:
+                return "F10";
+            case 300:
+                return "F11";
+            case 301:
+                return "F12";
+            case 340:
+                return "LSHIFT";
+            case 341:
+                return "LCTRL";
+            case 342:
+                return "LALT";
+            case 343:
+                return "LSUPER";
+            case 344:
+                return "RSHIFT";
+            case 345:
+                return "RCTRL";
+            case 346:
+                return "RALT";
+            case 347:
+                return "RSUPER";
+            case 348:
+                return "MENU";
             default:
                 if (keyCode >= 320 && keyCode <= 329) {
                     return "NUMPAD " + (keyCode - 320);
@@ -600,15 +640,21 @@ public class SettingsPanel {
                 if (keyCode <= -100) {
                     int mouseButton = -100 - keyCode;
                     switch (mouseButton) {
-                        case 0: return "MOUSE LEFT";
-                        case 1: return "MOUSE RIGHT";
-                        case 2: return "MOUSE MIDDLE";
-                        default: return "MOUSE " + (mouseButton + 1);
+                        case 0:
+                            return "MOUSE LEFT";
+                        case 1:
+                            return "MOUSE RIGHT";
+                        case 2:
+                            return "MOUSE MIDDLE";
+                        default:
+                            return "MOUSE " + (mouseButton + 1);
                     }
                 }
-                String name = org.lwjgl.glfw.GLFW.glfwGetKeyName(keyCode, 0);
-                if (name != null) {
-                    return name.toUpperCase();
+                if (keyCode >= 65 && keyCode <= 90) {
+                    return String.valueOf((char) keyCode);
+                }
+                if (keyCode >= 48 && keyCode <= 57) {
+                    return String.valueOf((char) keyCode);
                 }
                 return "KEY " + keyCode;
         }
