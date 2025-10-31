@@ -3,7 +3,6 @@ package cc.silk.gui.newgui.components;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.utils.render.NanoVGRenderer;
-import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -73,7 +72,7 @@ public class CategoryPanel {
         this.searchQuery = query.toLowerCase();
     }
 
-    public void renderNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
+    public void render(int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
         int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
         int totalHeight = HEADER_HEIGHT + 1 + (visibleModules * MODULE_HEIGHT);
 
@@ -82,84 +81,57 @@ public class CategoryPanel {
 
         int panelAlpha = (int) (255 * alpha);
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
-        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
-                panelAlpha);
+        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(), panelAlpha);
         Color borderColor = new Color(40, 40, 46, panelAlpha);
-
-        NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, panelBg);
-        NanoVGRenderer.drawRoundedRectOutlineWithContext(context, x, y, width, totalHeight, CORNER_RADIUS, 1f,
-                borderColor);
-
-        NanoVGRenderer.drawRoundedRectWithContext(context, x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
-
-        float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
-        for (ModuleButton button : moduleButtons) {
-            button.renderNanoVG(context, x, moduleY, mouseX, mouseY, alpha);
-            moduleY += MODULE_HEIGHT;
-        }
-    }
-
-    public void renderMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
-        int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
-        int totalHeight = HEADER_HEIGHT + 1 + (visibleModules * MODULE_HEIGHT);
-
-        int panelAlpha = (int) (255 * alpha);
-        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
-                panelAlpha);
-        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(),
-                SEPARATOR_COLOR.getBlue(),
+        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(), SEPARATOR_COLOR.getBlue(),
                 (int) (SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
 
-        context.fill((int) x, (int) (y + HEADER_HEIGHT - CORNER_RADIUS), (int) (x + width), (int) (y + HEADER_HEIGHT),
-                headerColor.getRGB());
+        // Draw panel background
+        NanoVGRenderer.drawRoundedRect(x, y, width, totalHeight, CORNER_RADIUS, panelBg);
+        NanoVGRenderer.drawRoundedRectOutline(x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
 
-        context.fill((int) x, (int) (y + HEADER_HEIGHT), (int) (x + width), (int) (y + HEADER_HEIGHT + 1),
-                separatorColor.getRGB());
+        // Draw header
+        NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
+        
+        // Draw separator line
+        NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT, width, 1, separatorColor);
 
+        // Draw category icon and name
         String categoryName = category.getName();
-        cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager().getSize(12,
-                cc.silk.utils.render.font.FontManager.Type.Inter);
+        float fontSize = 12f;
+        float iconSize = CategoryIcons.getIconSize();
+        float iconX = x + 5 + iconSize / 2f;
+        float iconY = y + HEADER_HEIGHT / 2f;
+        float textX = x + 5 + iconSize + 4;
+        float textY = y + (HEADER_HEIGHT - fontSize) / 2f;
 
-        float iconX = x + 5;
-        float textY = y + (HEADER_HEIGHT - 9) / 2f;
-        float iconY = y + (HEADER_HEIGHT - CategoryIcon.getIconSize()) / 2f;
-
-        Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
-                (int) (255 * alpha));
-        CategoryIcon.drawIcon(context, category, iconX, iconY, iconColor);
-
-        float textX = iconX + CategoryIcon.getIconSize() + 4;
+        Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int) (255 * alpha));
         Color textColor = new Color(240, 240, 245, (int) (255 * alpha));
-        font.drawString(context.getMatrices(), categoryName, textX, textY, textColor);
+        
+        CategoryIcons.drawIcon(category, iconX, iconY, iconSize, iconColor);
+        NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
 
-        int scissorX = (int) x;
-        int scissorY = (int) (y + HEADER_HEIGHT + 1);
-        int scissorWidth = width;
-        int scissorHeight = visibleModules * MODULE_HEIGHT;
-
-        context.enableScissor(scissorX, scissorY, scissorX + scissorWidth, scissorY + scissorHeight);
-
+        // Draw modules (with scissor effect simulated by not drawing outside bounds)
         float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
+        float scissorTop = y + HEADER_HEIGHT + 1;
+        float scissorBottom = scissorTop + (visibleModules * MODULE_HEIGHT);
+        
         for (ModuleButton button : moduleButtons) {
-            button.renderMinecraft(context, x, moduleY, mouseX, mouseY, alpha);
+            if (moduleY + MODULE_HEIGHT >= scissorTop && moduleY <= scissorBottom) {
+                button.render(x, moduleY, mouseX, mouseY, alpha);
+            }
             moduleY += MODULE_HEIGHT;
         }
 
-        context.disableScissor();
-
+        // Draw scrollbar if needed
         if (moduleButtons.size() > MAX_VISIBLE_MODULES) {
-            drawScrollbar(context, totalHeight, alpha);
+            drawScrollbar(totalHeight, alpha);
         }
     }
 
-    public void renderSettingsPanelNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
+    public void renderSettingsPanel(int mouseX, int mouseY, float alpha) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
-            settingsPanel.renderNanoVG(context, mouseX, mouseY, alpha);
-        }
-    }
-
-    public void renderSettingsPanelMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
-        if (settingsPanel != null && settingsPanel.isAnimating()) {
+            // Draw connection line
             float lineAlpha = alpha * settingsPanel.getAnimationProgress();
             Color lineColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                     (int) (150 * lineAlpha));
@@ -169,18 +141,15 @@ public class CategoryPanel {
             float lineEndX = settingsPanel.getCurrentX();
             float lineEndY = settingsPanel.getY() + 11;
 
-            context.fill((int) lineStartX, (int) lineStartY, (int) lineEndX, (int) (lineStartY + 1),
-                    lineColor.getRGB());
+            // Horizontal line
+            NanoVGRenderer.drawLine(lineStartX, lineStartY, lineEndX, lineStartY, 1f, lineColor);
 
+            // Vertical line if needed
             if (lineEndY != lineStartY) {
-                float verticalLineX = lineEndX;
-                float minY = Math.min(lineStartY, lineEndY);
-                float maxY = Math.max(lineStartY, lineEndY);
-                context.fill((int) verticalLineX, (int) minY, (int) (verticalLineX + 1), (int) maxY,
-                        lineColor.getRGB());
+                NanoVGRenderer.drawLine(lineEndX, lineStartY, lineEndX, lineEndY, 1f, lineColor);
             }
 
-            settingsPanel.renderMinecraft(context, mouseX, mouseY, alpha);
+            settingsPanel.render(mouseX, mouseY, alpha);
         }
     }
     
@@ -192,7 +161,7 @@ public class CategoryPanel {
         return settingsPanel != null && settingsPanel.isAnimating();
     }
 
-    private void drawScrollbar(DrawContext context, int totalHeight, float alpha) {
+    private void drawScrollbar(int totalHeight, float alpha) {
         int scrollbarHeight = (int) ((float) MAX_VISIBLE_MODULES / moduleButtons.size()
                 * (MAX_VISIBLE_MODULES * MODULE_HEIGHT));
         int scrollbarY = (int) (y + HEADER_HEIGHT + 1
@@ -202,11 +171,8 @@ public class CategoryPanel {
         Color scrollbarColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (200 * alpha));
 
-        context.fill((int) (x + width - 3), (int) (y + HEADER_HEIGHT + 1), (int) (x + width - 1),
-                (int) (y + HEADER_HEIGHT + 1 + MAX_VISIBLE_MODULES * MODULE_HEIGHT), scrollbarBg.getRGB());
-
-        context.fill((int) (x + width - 3), scrollbarY, (int) (x + width - 1), scrollbarY + scrollbarHeight,
-                scrollbarColor.getRGB());
+        NanoVGRenderer.drawRect(x + width - 3, y + HEADER_HEIGHT + 1, 2, MAX_VISIBLE_MODULES * MODULE_HEIGHT, scrollbarBg);
+        NanoVGRenderer.drawRect(x + width - 3, scrollbarY, 2, scrollbarHeight, scrollbarColor);
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {

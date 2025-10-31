@@ -8,6 +8,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class NewClickGUI extends Screen {
     }
 
     private void initPanels() {
-        cc.silk.SilkClient.INSTANCE.getFontManager().initialize();
+        NanoVGRenderer.init();
 
         int x = 20;
         int y = 20;
@@ -98,116 +99,62 @@ public class NewClickGUI extends Screen {
 
         NanoVGRenderer.beginFrame();
 
-        context.getMatrices().push();
-        context.getMatrices().translate(centerX, centerY, 0);
-        context.getMatrices().scale(scale, scale, 1f);
-        context.getMatrices().translate(-centerX, -centerY, 0);
-
+        // Render all panels except dragged one
         for (CategoryPanel panel : panels) {
             if (panel != draggedPanel) {
-                panel.renderNanoVG(context, mouseX, mouseY, alpha);
+                panel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
             }
         }
 
-        context.getMatrices().pop();
-
-        renderSearchBarNanoVG(context, mouseX, mouseY, alpha);
-
-        NanoVGRenderer.endFrame();
-
-        context.getMatrices().push();
-        context.getMatrices().translate(centerX, centerY, 0);
-        context.getMatrices().scale(scale, scale, 1f);
-        context.getMatrices().translate(-centerX, -centerY, 0);
-
-        for (CategoryPanel panel : panels) {
-            if (panel != draggedPanel) {
-                panel.renderMinecraft(context, mouseX, mouseY, alpha);
-            }
-        }
-
-        context.getMatrices().pop();
-
-        renderSearchBarMinecraft(context, mouseX, mouseY, alpha);
-
+        // Render dragged panel on top
         if (draggedPanel != null) {
-            NanoVGRenderer.beginFrame();
-
-            context.getMatrices().push();
-            context.getMatrices().translate(centerX, centerY, 0);
-            context.getMatrices().scale(scale, scale, 1f);
-            context.getMatrices().translate(-centerX, -centerY, 0);
-
-            draggedPanel.renderNanoVG(context, mouseX, mouseY, alpha);
-
-            context.getMatrices().pop();
-
-            NanoVGRenderer.endFrame();
-
-            context.getMatrices().push();
-            context.getMatrices().translate(centerX, centerY, 0);
-            context.getMatrices().scale(scale, scale, 1f);
-            context.getMatrices().translate(-centerX, -centerY, 0);
-
-            draggedPanel.renderMinecraft(context, mouseX, mouseY, alpha);
-
-            context.getMatrices().pop();
+            draggedPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
         }
 
-        NanoVGRenderer.beginFrame();
-
+        // Render settings panels
         for (CategoryPanel panel : panels) {
-            panel.renderSettingsPanelNanoVG(context, mouseX, mouseY, alpha);
+            panel.renderSettingsPanel(mouseX, mouseY, alpha);
         }
+
+        // Render search bar
+        renderSearchBar(mouseX, mouseY, alpha);
 
         NanoVGRenderer.endFrame();
-
-        for (CategoryPanel panel : panels) {
-            panel.renderSettingsPanelMinecraft(context, mouseX, mouseY, alpha);
-        }
     }
 
-    private void renderSearchBarNanoVG(DrawContext context, int mouseX, int mouseY, float alpha) {
+    private void renderSearchBar(int mouseX, int mouseY, float alpha) {
         searchBarY = height - SEARCH_BAR_HEIGHT - 20;
         float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
 
         int bgAlpha = (int) (255 * alpha);
-        java.awt.Color bgColor = new java.awt.Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(),
-                bgAlpha);
-        java.awt.Color borderColor = new java.awt.Color(SEARCH_BORDER.getRed(), SEARCH_BORDER.getGreen(),
-                SEARCH_BORDER.getBlue(),
+        Color bgColor = new Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(), bgAlpha);
+        Color borderColor = new Color(SEARCH_BORDER.getRed(), SEARCH_BORDER.getGreen(), SEARCH_BORDER.getBlue(),
                 searchFocused ? bgAlpha : (int) (100 * alpha));
 
         float cornerRadius = 6f;
-        NanoVGRenderer.drawRoundedRectWithContext(context, searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT,
-                cornerRadius, bgColor);
+        NanoVGRenderer.drawRoundedRect(searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT, cornerRadius,
+                bgColor);
 
         float borderThickness = searchFocused ? 2f : 1f;
-        NanoVGRenderer.drawRoundedRectOutlineWithContext(context, searchBarX, searchBarY, SEARCH_BAR_WIDTH,
-                SEARCH_BAR_HEIGHT, cornerRadius, borderThickness, borderColor);
-    }
+        NanoVGRenderer.drawRoundedRectOutline(searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT,
+                cornerRadius, borderThickness, borderColor);
 
-    private void renderSearchBarMinecraft(DrawContext context, int mouseX, int mouseY, float alpha) {
-        searchBarY = height - SEARCH_BAR_HEIGHT - 20;
-        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
-
-        int bgAlpha = (int) (255 * alpha);
-        cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager()
-                .getSize(12, cc.silk.utils.render.font.FontManager.Type.Inter);
-
+        // Render text
         String displayText = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
-        java.awt.Color textColor = searchQuery.isEmpty()
-                ? new java.awt.Color(SEARCH_PLACEHOLDER.getRed(), SEARCH_PLACEHOLDER.getGreen(),
-                        SEARCH_PLACEHOLDER.getBlue(), bgAlpha)
-                : new java.awt.Color(SEARCH_TEXT.getRed(), SEARCH_TEXT.getGreen(), SEARCH_TEXT.getBlue(), bgAlpha);
+        Color textColor = searchQuery.isEmpty()
+                ? new Color(SEARCH_PLACEHOLDER.getRed(), SEARCH_PLACEHOLDER.getGreen(), SEARCH_PLACEHOLDER.getBlue(),
+                        bgAlpha)
+                : new Color(SEARCH_TEXT.getRed(), SEARCH_TEXT.getGreen(), SEARCH_TEXT.getBlue(), bgAlpha);
 
+        float fontSize = 12f;
         float textX = searchBarX + 10;
-        float textY = searchBarY + (SEARCH_BAR_HEIGHT - 9) / 2f;
-        font.drawString(context.getMatrices(), displayText, textX, textY, textColor);
+        float textY = searchBarY + (SEARCH_BAR_HEIGHT - fontSize) / 2f;
+        NanoVGRenderer.drawText(displayText, textX, textY, fontSize, textColor);
 
+        // Render cursor
         if (searchFocused && System.currentTimeMillis() % 1000 < 500) {
-            float cursorX = textX + font.getStringWidth(searchQuery);
-            context.fill((int) cursorX, (int) (textY - 1), (int) (cursorX + 1), (int) (textY + 10), textColor.getRGB());
+            float cursorX = textX + NanoVGRenderer.getTextWidth(searchQuery, fontSize);
+            NanoVGRenderer.drawRect(cursorX, textY - 1, 1, fontSize + 2, textColor);
         }
     }
 

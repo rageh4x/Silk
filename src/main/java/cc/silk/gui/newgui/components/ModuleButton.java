@@ -1,7 +1,7 @@
 package cc.silk.gui.newgui.components;
 
 import cc.silk.module.Module;
-import net.minecraft.client.gui.DrawContext;
+import cc.silk.utils.render.NanoVGRenderer;
 
 import java.awt.*;
 
@@ -45,7 +45,7 @@ public class ModuleButton {
         }
     }
 
-    public void renderNanoVG(DrawContext context, float panelX, float panelY, int mouseX, int mouseY, float alpha) {
+    public void render(float panelX, float panelY, int mouseX, int mouseY, float alpha) {
         if (searchAlpha <= 0.01f)
             return;
 
@@ -59,37 +59,25 @@ public class ModuleButton {
 
         boolean hovered = isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY);
 
+        // Draw hover background
         if (hovered && searchAlpha > 0.5f) {
             Color hoverBg = new Color(30, 30, 35, (int) (180 * combinedAlpha));
-            cc.silk.utils.render.NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, hoverBg);
+            NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, hoverBg);
         }
 
+        // Draw search highlight
         if (matchesSearch && searchAlpha > 0.9f && !searchQuery.isEmpty()) {
             Color highlightBg = new Color(88, 101, 242, (int) (50 * combinedAlpha));
-            cc.silk.utils.render.NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, highlightBg);
+            NanoVGRenderer.drawRoundedRect(x, y, buttonWidth, buttonHeight, cornerRadius, highlightBg);
         }
 
+        // Draw enabled indicator
         if (module.isEnabled()) {
             Color accentColor = new Color(88, 101, 242, (int) (255 * combinedAlpha));
-            cc.silk.utils.render.NanoVGRenderer.drawRoundedRect(x, y, 2, buttonHeight, 1f, accentColor);
+            NanoVGRenderer.drawRoundedRect(x, y, 2, buttonHeight, 1f, accentColor);
         }
-    }
-    
-    public void renderMinecraft(DrawContext context, float panelX, float panelY, int mouseX, int mouseY, float alpha) {
-        if (searchAlpha <= 0.01f)
-            return;
 
-        float combinedAlpha = alpha * searchAlpha;
-
-        float x = panelX + relativeX + 2;
-        float y = panelY + relativeY + 1;
-        float buttonWidth = width - 4;
-        float buttonHeight = height - 2;
-
-        boolean hovered = isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY);
-
-        cc.silk.utils.render.font.fonts.FontRenderer font = cc.silk.SilkClient.INSTANCE.getFontManager().getSize(11,
-                cc.silk.utils.render.font.FontManager.Type.Inter);
+        // Draw text
         Color textColor;
         if (module.isEnabled()) {
             textColor = new Color(240, 240, 245, (int) (255 * combinedAlpha));
@@ -98,9 +86,11 @@ public class ModuleButton {
         } else {
             textColor = new Color(130, 130, 140, (int) (255 * combinedAlpha));
         }
-        float textY = y + (buttonHeight - 8) / 2f;
+        
+        float fontSize = 11f;
+        float textY = y + (buttonHeight - fontSize) / 2f;
         float textX = x + (module.isEnabled() ? 8 : 6);
-        font.drawString(context.getMatrices(), module.getName(), textX, textY, textColor);
+        NanoVGRenderer.drawText(module.getName(), textX, textY, fontSize, textColor);
     }
 
     private String searchQuery = "";
