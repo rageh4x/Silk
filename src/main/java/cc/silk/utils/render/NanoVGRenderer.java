@@ -30,6 +30,7 @@ public class NanoVGRenderer {
     private static int iconFont = -1;
     private static int jetbrainsFont = -1;
     private static int poppinsFont = -1;
+    private static int monacoFont = -1;
 
     public static void init() {
         if (initialized)
@@ -51,6 +52,7 @@ public class NanoVGRenderer {
             boldFont = loadFont("inter-bold", "silk/fonts/Inter.ttf");
             jetbrainsFont = loadFont("jetbrains", "silk/fonts/jetbrainsmono.ttf");
             poppinsFont = loadFont("poppins", "silk/fonts/poppins-medium.ttf");
+            monacoFont = loadFont("monaco", "silk/fonts/Monaco.ttf");
 
             try {
                 iconFont = loadFont("fa-solid", "silk/fonts/font awesome 7 freesolid900.otf");
@@ -71,6 +73,7 @@ public class NanoVGRenderer {
             System.out.println("[NanoVG] Bold font ID: " + boldFont);
             System.out.println("[NanoVG] JetBrains font ID: " + jetbrainsFont);
             System.out.println("[NanoVG] Poppins font ID: " + poppinsFont);
+            System.out.println("[NanoVG] Monaco font ID: " + monacoFont);
 
             if (regularFont == -1) {
                 System.err.println("[NanoVG] Warning: Failed to load custom fonts, trying fallback...");
@@ -285,6 +288,8 @@ public class NanoVGRenderer {
                 return jetbrainsFont > 0 ? jetbrainsFont : regularFont;
             } else if ("poppins-medium.ttf".equals(fontStyle)) {
                 return poppinsFont > 0 ? poppinsFont : regularFont;
+            } else if ("Monaco.ttf".equals(fontStyle)) {
+                return monacoFont > 0 ? monacoFont : regularFont;
             } else if ("Inter.ttf".equals(fontStyle)) {
                 return regularFont > 0 ? regularFont : 0;
             }

@@ -10,7 +10,7 @@ import java.awt.Color;
 public class ClientSettingsModule extends Module {
 
     public static final ColorSetting accentColor = new ColorSetting("Accent Color", new Color(124, 77, 255, 255));
-    public static final ModeSetting fontStyle = new ModeSetting("Font", "Inter.ttf", "Inter.ttf", "jetbrainsmono.ttf", "poppins-medium.ttf");
+    public static final ModeSetting fontStyle = new ModeSetting("Font", "Inter.ttf", "Inter.ttf", "jetbrainsmono.ttf", "poppins-medium.ttf", "Monaco.ttf");
 
     public ClientSettingsModule() {
         super("ClientSettings", "Customize GUI appearance", 0, Category.CLIENT);
