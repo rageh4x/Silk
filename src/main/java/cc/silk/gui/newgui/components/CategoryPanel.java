@@ -36,6 +36,9 @@ public class CategoryPanel {
     private float settingsPanelSourceY = 0;
 
     private String searchQuery = "";
+    
+    private boolean collapsed = false;
+    private float collapseProgress = 0f;
 
     public CategoryPanel(Category category, float x, float y, int width) {
         this.category = category;
@@ -62,6 +65,14 @@ public class CategoryPanel {
         for (ModuleButton button : moduleButtons) {
             button.updateSearch(searchQuery, deltaTime);
         }
+        
+        if (collapsed) {
+            collapseProgress += deltaTime * 10f;
+            if (collapseProgress > 1f) collapseProgress = 1f;
+        } else {
+            collapseProgress -= deltaTime * 10f;
+            if (collapseProgress < 0f) collapseProgress = 0f;
+        }
     }
 
     public void setSearchQuery(String query) {
@@ -76,7 +87,9 @@ public class CategoryPanel {
             }
         }
 
-        int totalHeight = HEADER_HEIGHT + (visibleCount * MODULE_HEIGHT);
+        float expandProgress = 1f - collapseProgress;
+        int moduleAreaHeight = (int) ((visibleCount * MODULE_HEIGHT) * expandProgress);
+        int totalHeight = HEADER_HEIGHT + moduleAreaHeight;
 
         int panelAlpha = (int) (255 * alpha);
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
@@ -105,12 +118,15 @@ public class CategoryPanel {
         CategoryIcons.drawIcon(category, iconX, iconY, iconSize, iconColor);
         NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
 
-        float moduleY = y + HEADER_HEIGHT;
+        if (expandProgress > 0.01f) {
+            float moduleY = y + HEADER_HEIGHT;
+            float moduleAlpha = alpha * expandProgress;
 
-        for (ModuleButton button : moduleButtons) {
-            if (button.getSearchAlpha() > 0.01f) {
-                button.render(x, moduleY, mouseX, mouseY, alpha);
-                moduleY += MODULE_HEIGHT;
+            for (ModuleButton button : moduleButtons) {
+                if (button.getSearchAlpha() > 0.01f) {
+                    button.render(x, moduleY, mouseX, mouseY, moduleAlpha);
+                    moduleY += MODULE_HEIGHT;
+                }
             }
         }
     }
@@ -158,17 +174,29 @@ public class CategoryPanel {
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isMouseOverHeader(mouseX, mouseY)) {
-            dragging = true;
-            dragOffsetX = (float) (mouseX - x);
-            dragOffsetY = (float) (mouseY - y);
-            return true;
+        if (isMouseOverHeader(mouseX, mouseY)) {
+            if (button == 0) {
+                dragging = true;
+                dragOffsetX = (float) (mouseX - x);
+                dragOffsetY = (float) (mouseY - y);
+                return true;
+            } else if (button == 1) {
+                collapsed = !collapsed;
+                if (collapsed && settingsPanel != null) {
+                    settingsPanel.hide();
+                }
+                return true;
+            }
         }
 
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             if (settingsPanel.mouseClicked(mouseX, mouseY, button)) {
                 return true;
             }
+        }
+
+        if (collapsed) {
+            return false;
         }
 
         float moduleY = y + HEADER_HEIGHT;
