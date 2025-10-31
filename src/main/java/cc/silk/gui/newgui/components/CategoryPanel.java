@@ -69,30 +69,32 @@ public class CategoryPanel {
     }
 
     public void render(int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
-        int totalHeight = HEADER_HEIGHT + 1 + (moduleButtons.size() * MODULE_HEIGHT);
+        int visibleCount = 0;
+        for (ModuleButton button : moduleButtons) {
+            if (button.getSearchAlpha() > 0.01f) {
+                visibleCount++;
+            }
+        }
+        
+        int totalHeight = HEADER_HEIGHT + (visibleCount * MODULE_HEIGHT);
 
         int panelAlpha = (int) (255 * alpha);
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
         Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
                 panelAlpha);
         Color borderColor = new Color(40, 40, 46, panelAlpha);
-        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(),
-                SEPARATOR_COLOR.getBlue(),
-                (int) (SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
 
         NanoVGRenderer.drawRoundedRect(x, y, width, totalHeight, CORNER_RADIUS, panelBg);
         NanoVGRenderer.drawRoundedRectOutline(x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
 
         NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
 
-        NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT, width, 1, separatorColor);
-
         String categoryName = category.getName();
-        float fontSize = 11f;
+        float fontSize = 10f;
         float iconSize = CategoryIcons.getIconSize();
-        float iconX = x + 5 + iconSize / 2f;
+        float iconX = x + 6 + iconSize / 2f;
         float iconY = y + HEADER_HEIGHT / 2f;
-        float textX = x + 5 + iconSize + 4;
+        float textX = x + 6 + iconSize + 4;
         float textY = y + (HEADER_HEIGHT - fontSize) / 2f;
 
         Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
@@ -102,7 +104,7 @@ public class CategoryPanel {
         CategoryIcons.drawIcon(category, iconX, iconY, iconSize, iconColor);
         NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
 
-        float moduleY = y + HEADER_HEIGHT + 1;
+        float moduleY = y + HEADER_HEIGHT;
 
         for (ModuleButton button : moduleButtons) {
             if (button.getSearchAlpha() > 0.01f) {
@@ -112,8 +114,9 @@ public class CategoryPanel {
         }
     }
 
-    public void renderSettingsPanel(int mouseX, int mouseY, float alpha) {
+    public void renderSettingsPanel(int mouseX, int mouseY, float alpha, int screenWidth, int screenHeight) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
+            settingsPanel.setScreenDimensions(screenWidth, screenHeight);
             float lineAlpha = alpha * settingsPanel.getAnimationProgress();
             Color lineColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                     (int) (150 * lineAlpha));
@@ -142,7 +145,13 @@ public class CategoryPanel {
     }
 
     private boolean isMouseOver(double mouseX, double mouseY) {
-        int totalHeight = HEADER_HEIGHT + 1 + (moduleButtons.size() * MODULE_HEIGHT);
+        int visibleCount = 0;
+        for (ModuleButton button : moduleButtons) {
+            if (button.getSearchAlpha() > 0.01f) {
+                visibleCount++;
+            }
+        }
+        int totalHeight = HEADER_HEIGHT + (visibleCount * MODULE_HEIGHT);
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + totalHeight;
     }
 
@@ -160,7 +169,7 @@ public class CategoryPanel {
             }
         }
 
-        float moduleY = y + HEADER_HEIGHT + 1;
+        float moduleY = y + HEADER_HEIGHT;
         for (ModuleButton moduleButton : moduleButtons) {
             if (moduleButton.getSearchAlpha() > 0.01f) {
                 if (moduleButton.mouseClicked(x, moduleY, mouseX, mouseY, button)) {

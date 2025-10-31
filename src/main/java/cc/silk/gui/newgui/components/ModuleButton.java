@@ -97,9 +97,9 @@ public class ModuleButton {
             textColor = new Color(130, 130, 140, (int) (255 * combinedAlpha));
         }
 
-        float fontSize = 9.5f;
-        float textY = y + (buttonHeight - fontSize) / 2f;
-        float textX = x + 5;
+        float fontSize = 9f;
+        float textY = y + (buttonHeight - fontSize) / 2f - 0.5f;
+        float textX = x + 4;
         NanoVGRenderer.drawText(module.getName(), textX, textY, fontSize, textColor);
     }
 

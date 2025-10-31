@@ -115,7 +115,7 @@ public class NewClickGUI extends Screen {
         }
 
         for (CategoryPanel panel : panels) {
-            panel.renderSettingsPanel(mouseX, mouseY, alpha);
+            panel.renderSettingsPanel(mouseX, mouseY, alpha, width, height);
         }
 
         renderSearchBar(mouseX, mouseY, alpha);

@@ -57,6 +57,11 @@ public class SettingsPanel {
         this.visible = true;
     }
 
+    public void setScreenDimensions(int width, int height) {
+        this.screenWidth = width;
+        this.screenHeight = height;
+    }
+
     public void hide() {
         this.visible = false;
     }
@@ -78,6 +83,9 @@ public class SettingsPanel {
             colorPicker.update(delta);
         }
     }
+
+    private int screenWidth = 0;
+    private int screenHeight = 0;
 
     public void render(int mouseX, int mouseY, float alpha) {
         if (animationProgress <= 0f)
@@ -451,7 +459,7 @@ public class SettingsPanel {
                             colorPicker = null;
                         } else {
                             colorPicker = new ColorPicker((ColorSetting) setting, pickerX, pickerY);
-                            colorPicker.show(pickerX, pickerY);
+                            colorPicker.show(pickerX, pickerY, screenWidth, screenHeight);
                         }
                         return true;
                     }

@@ -8,11 +8,8 @@ import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.ColorSetting;
 import cc.silk.module.setting.ModeSetting;
 import cc.silk.module.setting.NumberSetting;
-import cc.silk.utils.render.DrawUtils;
 import cc.silk.utils.render.W2SUtil;
-import com.mojang.blaze3d.systems.RenderSystem;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.render.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
@@ -20,7 +17,6 @@ import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import org.joml.Matrix4f;
 import org.joml.Vector4d;
 
 import java.awt.*;
@@ -43,7 +39,7 @@ public class ESP2D extends Module {
 
     public ESP2D() {
         super("2D ESP", "Draws 2D boxes around entities", -1, Category.RENDER);
-        addSettings(targets, showSelf, range, boxMode, boxSetting, boxFill, fillOpacity, gradientFill, fillColor1, 
+        addSettings(targets, showSelf, range, boxMode, boxSetting, boxFill, fillOpacity, gradientFill, fillColor1,
                 fillColor2, playerColor, passiveColor, hostileColor);
     }
 
@@ -52,15 +48,9 @@ public class ESP2D extends Module {
         if (isNull() || mc.world == null || mc.player == null)
             return;
 
-        Matrix4f matrix = event.getContext().getMatrices().peek().getPositionMatrix();
-
-        RenderSystem.enableBlend();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        cc.silk.utils.render.NanoVGRenderer.beginFrame();
 
         for (Entity entity : mc.world.getEntities()) {
-            BufferBuilder bufferBuilder = null;
-
             if (!(entity instanceof LivingEntity))
                 continue;
 
@@ -118,96 +108,89 @@ public class ESP2D extends Module {
                 float endPosX = (float) position.z;
                 float endPosY = (float) position.w;
 
-                Color color = getColorForEntity(entity);
+                float lineThickness = 1f;
 
-                bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS,
-                        VertexFormats.POSITION_COLOR);
+                if (boxFill.getValue()) {
+                    Color fillColor = gradientFill.getValue() ? fillColor1.getValue()
+                            : new Color(0, 0, 0, fillOpacity.getValueInt());
+                    cc.silk.utils.render.NanoVGRenderer.drawRect(posX, posY, endPosX - posX, endPosY - posY, fillColor);
+                }
 
                 if (boxSetting.getValue()) {
                     if (boxMode.getMode().equals("Full")) {
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 1.0f, posY, posX + 0.5f, endPosY + 0.5f,
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX, endPosY - 1, lineThickness,
                                 Color.BLACK);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 1.0f, posY - 0.5f, endPosX + 0.5f,
-                                posY + 1.0f, Color.BLACK);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - 1.0f, posY, endPosX + 0.5f,
-                                endPosY + 0.5f, Color.BLACK);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 1.0f, endPosY - 1.0f, endPosX + 0.5f,
-                                endPosY + 0.5f, Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, endPosX, posY, lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX, endPosY - 1, lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY - 1, endPosX, endPosY - 1,
+                                lineThickness,
+                                Color.BLACK);
 
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 0.5f, posY, posX, endPosY, color);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX, endPosY - 0.5f, endPosX, endPosY, color);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 0.5f, posY, endPosX, posY + 0.5f, color);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - 0.5f, posY, endPosX, endPosY, color);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX, endPosY - 1, lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, endPosX, posY, lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX, endPosY - 1, lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY - 1, endPosX, endPosY - 1,
+                                lineThickness,
+                                Color.WHITE);
                     } else {
                         float cornerLength = (endPosX - posX) * 0.25f;
 
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 1.0f, posY, posX + 0.5f,
-                                posY + cornerLength + 0.5f, Color.BLACK);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 1.0f, posY - 0.5f,
-                                posX + cornerLength + 0.5f, posY + 1.0f, Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX, posY + cornerLength,
+                                lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX + cornerLength, posY,
+                                lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX, posY + cornerLength,
+                                lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength, posY, endPosX, posY,
+                                lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY - cornerLength, posX, endPosY,
+                                lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY, posX + cornerLength, endPosY,
+                                lineThickness,
+                                Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, endPosY - cornerLength, endPosX, endPosY,
+                                lineThickness, Color.BLACK);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength, endPosY, endPosX, endPosY,
+                                lineThickness, Color.BLACK);
 
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - 1.0f, posY, endPosX + 0.5f,
-                                posY + cornerLength + 0.5f, Color.BLACK);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - cornerLength - 1.0f, posY - 0.5f,
-                                endPosX + 0.5f, posY + 1.0f, Color.BLACK);
-
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 1.0f, endPosY - cornerLength - 1.0f,
-                                posX + 0.5f, endPosY + 0.5f, Color.BLACK);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 1.0f, endPosY - 1.0f,
-                                posX + cornerLength + 0.5f, endPosY + 0.5f, Color.BLACK);
-
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - 1.0f, endPosY - cornerLength - 1.0f,
-                                endPosX + 0.5f, endPosY + 0.5f, Color.BLACK);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - cornerLength - 1.0f, endPosY - 1.0f,
-                                endPosX + 0.5f, endPosY + 0.5f, Color.BLACK);
-
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 0.5f, posY, posX, posY + cornerLength,
-                                color);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 0.5f, posY, posX + cornerLength, posY + 0.5f,
-                                color);
-
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - 0.5f, posY, endPosX, posY + cornerLength,
-                                color);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - cornerLength, posY, endPosX, posY + 0.5f,
-                                color);
-
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 0.5f, endPosY - cornerLength, posX, endPosY,
-                                color);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, posX - 0.5f, endPosY - 0.5f, posX + cornerLength,
-                                endPosY, color);
-
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - 0.5f, endPosY - cornerLength, endPosX,
-                                endPosY, color);
-                        DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX - cornerLength, endPosY - 0.5f, endPosX,
-                                endPosY, color);
-                    }
-
-                    if (boxFill.getValue()) {
-                        if (gradientFill.getValue()) {
-                            Color topColor = new Color(fillColor1.getValue().getRed(), 
-                                    fillColor1.getValue().getGreen(), 
-                                    fillColor1.getValue().getBlue(), 
-                                    fillOpacity.getValueInt());
-                            Color bottomColor = new Color(fillColor2.getValue().getRed(), 
-                                    fillColor2.getValue().getGreen(), 
-                                    fillColor2.getValue().getBlue(), 
-                                    fillOpacity.getValueInt());
-                            DrawUtils.rectPoint4VerticalGradient(bufferBuilder, matrix, posX, posY, endPosX, endPosY,
-                                    topColor, bottomColor);
-                        } else {
-                            DrawUtils.rectPoint4(bufferBuilder, matrix, endPosX, endPosY, posX, posY,
-                                    new Color(0, 0, 0, fillOpacity.getValueInt()));
-                        }
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX, posY + cornerLength,
+                                lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX + cornerLength, posY,
+                                lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX, posY + cornerLength,
+                                lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength, posY, endPosX, posY,
+                                lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY - cornerLength, posX, endPosY,
+                                lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY, posX + cornerLength, endPosY,
+                                lineThickness,
+                                Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, endPosY - cornerLength, endPosX, endPosY,
+                                lineThickness, Color.WHITE);
+                        cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength, endPosY, endPosX, endPosY,
+                                lineThickness, Color.WHITE);
                     }
                 }
             }
-
-            if (bufferBuilder != null && (boxSetting.getValue() || boxFill.getValue())) {
-                BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-            }
         }
 
-        RenderSystem.disableBlend();
+        cc.silk.utils.render.NanoVGRenderer.endFrame();
     }
 
     private Color getColorForEntity(Entity entity) {

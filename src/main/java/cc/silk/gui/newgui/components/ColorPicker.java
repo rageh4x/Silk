@@ -49,9 +49,9 @@ public class ColorPicker {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
 
-    public void show(float x, float y) {
-        this.x = x;
-        this.y = y;
+    public void show(float x, float y, int screenWidth, int screenHeight) {
+        this.x = Math.max(0, Math.min(x, screenWidth - width));
+        this.y = Math.max(0, Math.min(y, screenHeight - height));
         this.visible = true;
         colorToHSV(setting.getValue());
     }
