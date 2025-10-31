@@ -16,9 +16,10 @@ public class SettingsPanel {
     private static final Color BORDER_COLOR = new Color(40, 40, 46, 255);
     private static final int HEADER_HEIGHT = 22;
     private static final float CORNER_RADIUS = 4f;
-    private static final int SETTING_HEIGHT = 20;
-    private static final int NUMBER_SETTING_HEIGHT = 26;
+    private static final int SETTING_HEIGHT = 16;
+    private static final int NUMBER_SETTING_HEIGHT = 22;
     private static final int PADDING = 5;
+    private ModeSetting expandedDropdown = null;
     private boolean visible = false;
     private float animationProgress = 0f;
     private Setting draggingSlider = null;
@@ -87,123 +88,193 @@ public class SettingsPanel {
         Color separatorColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (80 * renderAlpha));
 
-        // Draw panel
         NanoVGRenderer.drawRoundedRect(currentX, y, width, height, CORNER_RADIUS, panelBg);
         NanoVGRenderer.drawRoundedRectOutline(currentX, y, width, height, CORNER_RADIUS, 1f, borderColor);
 
-        // Draw header
         NanoVGRenderer.drawRoundedRect(currentX, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerBg);
         NanoVGRenderer.drawRect(currentX, y + HEADER_HEIGHT, width, 1, separatorColor);
 
-        // Draw module name
         Color textColor = new Color(240, 240, 245, panelAlpha);
         float fontSize = 11f;
         NanoVGRenderer.drawText(module.getName(), currentX + PADDING, y + (HEADER_HEIGHT - fontSize) / 2f, fontSize,
                 textColor);
-
-        // Draw settings
         float settingY = y + HEADER_HEIGHT + PADDING;
         for (Setting setting : module.getSettings()) {
             if (setting instanceof KeybindSetting)
                 continue;
 
-            renderSetting(setting, settingY, mouseX, mouseY, renderAlpha);
+            renderSetting(setting, settingY, mouseX, mouseY, renderAlpha, false);
             if (setting instanceof NumberSetting) {
                 settingY += NUMBER_SETTING_HEIGHT;
             } else {
                 settingY += SETTING_HEIGHT;
             }
         }
+
+        if (expandedDropdown != null) {
+            settingY = y + HEADER_HEIGHT + PADDING;
+            for (Setting setting : module.getSettings()) {
+                if (setting instanceof KeybindSetting)
+                    continue;
+
+                if (setting == expandedDropdown) {
+                    renderSetting(setting, settingY, mouseX, mouseY, renderAlpha, true);
+                    break;
+                }
+
+                if (setting instanceof NumberSetting) {
+                    settingY += NUMBER_SETTING_HEIGHT;
+                } else {
+                    settingY += SETTING_HEIGHT;
+                }
+            }
+        }
     }
 
-    private void renderSetting(Setting setting, float settingY, int mouseX, int mouseY, float alpha) {
+    private void renderSetting(Setting setting, float settingY, int mouseX, int mouseY, float alpha,
+            boolean renderDropdownOnly) {
         if (setting instanceof BooleanSetting) {
             renderBooleanSetting((BooleanSetting) setting, settingY, mouseX, mouseY, alpha);
         } else if (setting instanceof NumberSetting) {
             renderNumberSetting((NumberSetting) setting, settingY, mouseX, mouseY, alpha);
         } else if (setting instanceof ModeSetting) {
-            renderModeSetting((ModeSetting) setting, settingY, mouseX, mouseY, alpha);
+            renderModeSetting((ModeSetting) setting, settingY, mouseX, mouseY, alpha, renderDropdownOnly);
         } else if (setting instanceof ColorSetting) {
             renderColorSetting((ColorSetting) setting, settingY, mouseX, mouseY, alpha);
         }
     }
 
     private void renderBooleanSetting(BooleanSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
-        int checkboxSize = 10;
-        float checkboxX = currentX + width - PADDING - checkboxSize;
-        float checkboxY = settingY + 5;
+        float toggleWidth = 20;
+        float toggleHeight = 10;
+        float toggleX = currentX + width - PADDING - toggleWidth;
+        float toggleY = settingY + 3;
 
         int bgAlpha = (int) (255 * alpha);
-        Color checkboxBg = new Color(30, 30, 35, bgAlpha);
-        Color checkboxBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
-                (int) (100 * alpha));
-        Color checkColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
+        boolean isOn = setting.getValue();
+
+        Color toggleBg = isOn
+                ? new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha)
+                : new Color(40, 40, 46, bgAlpha);
+
+        NanoVGRenderer.drawRoundedRect(toggleX, toggleY, toggleWidth, toggleHeight, toggleHeight / 2f, toggleBg);
+
+        float handleSize = 6;
+        float handleX = isOn
+                ? toggleX + toggleWidth - handleSize - 2
+                : toggleX + 2;
+        float handleY = toggleY + 2;
+
+        Color handleColor = new Color(255, 255, 255, bgAlpha);
+        NanoVGRenderer.drawCircle(handleX + handleSize / 2f, handleY + handleSize / 2f, handleSize / 2f, handleColor);
+
         Color textColor = new Color(200, 200, 200, bgAlpha);
-
-        NanoVGRenderer.drawRoundedRect(checkboxX, checkboxY, checkboxSize, checkboxSize, 2f, checkboxBg);
-        NanoVGRenderer.drawRoundedRectOutline(checkboxX, checkboxY, checkboxSize, checkboxSize, 2f, 1f, checkboxBorder);
-
-        if (setting.getValue()) {
-            NanoVGRenderer.drawRoundedRect(checkboxX + 2, checkboxY + 2, checkboxSize - 4, checkboxSize - 4, 1f,
-                    checkColor);
-        }
-
-        float fontSize = 10f;
-        NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 5, fontSize, textColor);
+        float fontSize = 9f;
+        NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 3, fontSize, textColor);
     }
 
     private void renderNumberSetting(NumberSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
-        float sliderY = settingY + 15;
+        float sliderY = settingY + 13;
         float sliderWidth = width - PADDING * 2;
         float sliderHeight = 4;
+        float sliderRadius = sliderHeight / 2f;
 
         int bgAlpha = (int) (255 * alpha);
         Color sliderBg = new Color(30, 30, 35, bgAlpha);
         Color sliderFill = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
-        Color sliderHandle = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
         Color textColor = new Color(200, 200, 200, bgAlpha);
+        Color valueColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
 
-        NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, sliderWidth, sliderHeight, 2f, sliderBg);
+        NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, sliderWidth, sliderHeight, sliderRadius, sliderBg);
 
         double percentage = (setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
         float fillWidth = (float) (sliderWidth * percentage);
 
         if (fillWidth > 0) {
-            NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, fillWidth, sliderHeight, 2f, sliderFill);
+            NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, fillWidth, sliderHeight, sliderRadius,
+                    sliderFill);
         }
 
-        float handleX = currentX + PADDING + fillWidth - 3;
-        float handleWidth = 6;
-        float handleHeight = 10;
-        NanoVGRenderer.drawRoundedRect(handleX, sliderY - 3, handleWidth, handleHeight, 2f, sliderHandle);
+        float handleRadius = 5;
+        float handleX = currentX + PADDING + fillWidth;
+        float handleY = sliderY + sliderHeight / 2f;
 
-        String displayText = setting.getName() + ": " + formatNumber(setting.getValue());
-        float fontSize = 10f;
-        NanoVGRenderer.drawText(displayText, currentX + PADDING, settingY + 3, fontSize, textColor);
+        Color handleGlow = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+                (int) (60 * alpha));
+        NanoVGRenderer.drawCircle(handleX, handleY, handleRadius + 1.5f, handleGlow);
+
+        Color handleColor = new Color(255, 255, 255, bgAlpha);
+        NanoVGRenderer.drawCircle(handleX, handleY, handleRadius, handleColor);
+
+        String displayText = setting.getName();
+        String valueText = formatNumber(setting.getValue());
+        float fontSize = 9f;
+        float valueWidth = NanoVGRenderer.getTextWidth(valueText, fontSize);
+
+        NanoVGRenderer.drawText(displayText, currentX + PADDING, settingY + 2, fontSize, textColor);
+        NanoVGRenderer.drawText(valueText, currentX + width - PADDING - valueWidth, settingY + 2, fontSize, valueColor);
     }
 
-    private void renderModeSetting(ModeSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
+    private void renderModeSetting(ModeSetting setting, float settingY, int mouseX, int mouseY, float alpha,
+            boolean renderDropdownOnly) {
         String mode = setting.getMode();
-        float fontSize = 10f;
-        float modeWidth = NanoVGRenderer.getTextWidth(mode, fontSize);
+        float fontSize = 9f;
 
         int bgAlpha = (int) (255 * alpha);
-        Color modeBg = new Color(30, 30, 35, bgAlpha);
-        Color modeBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+        Color dropdownBg = new Color(30, 30, 35, bgAlpha);
+        Color dropdownBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                 (int) (100 * alpha));
         Color textColor = new Color(200, 200, 200, bgAlpha);
         Color modeText = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), bgAlpha);
 
-        float modeX = currentX + width - PADDING - modeWidth - 6;
-        float modeY = settingY + 10;
-        float modeBoxWidth = modeWidth + 6;
-        float modeBoxHeight = 12;
+        float dropdownWidth = 60;
+        float dropdownHeight = 14;
+        float dropdownX = currentX + width - PADDING - dropdownWidth;
+        float dropdownY = settingY + 1;
 
-        NanoVGRenderer.drawRoundedRect(modeX - 3, modeY - 2, modeBoxWidth, modeBoxHeight, 3f, modeBg);
-        NanoVGRenderer.drawRoundedRectOutline(modeX - 3, modeY - 2, modeBoxWidth, modeBoxHeight, 3f, 1f, modeBorder);
+        if (!renderDropdownOnly) {
+            NanoVGRenderer.drawRoundedRect(dropdownX, dropdownY, dropdownWidth, dropdownHeight, 3f, dropdownBg);
+            NanoVGRenderer.drawRoundedRectOutline(dropdownX, dropdownY, dropdownWidth, dropdownHeight, 3f, 1f,
+                    dropdownBorder);
 
-        NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 2, fontSize, textColor);
-        NanoVGRenderer.drawText(mode, modeX, modeY, fontSize, modeText);
+            NanoVGRenderer.drawText(mode, dropdownX + 4, dropdownY + 2, fontSize, modeText);
+
+            String arrow = expandedDropdown == setting ? "▲" : "▼";
+            float arrowWidth = NanoVGRenderer.getTextWidth(arrow, fontSize);
+            NanoVGRenderer.drawText(arrow, dropdownX + dropdownWidth - arrowWidth - 4, dropdownY + 2, fontSize,
+                    textColor);
+
+            NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 3, fontSize, textColor);
+        }
+
+        if (expandedDropdown == setting && renderDropdownOnly) {
+            float menuY = dropdownY + dropdownHeight + 2;
+            int optionCount = setting.getModes().size();
+            float menuHeight = optionCount * 14;
+
+            Color menuBg = new Color(25, 25, 30, bgAlpha);
+            Color hoverBg = new Color(40, 40, 46, bgAlpha);
+            Color menuBorder = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+                    (int) (150 * alpha));
+
+            NanoVGRenderer.drawRoundedRect(dropdownX, menuY, dropdownWidth, menuHeight, 3f, menuBg);
+            NanoVGRenderer.drawRoundedRectOutline(dropdownX, menuY, dropdownWidth, menuHeight, 3f, 1.5f, menuBorder);
+
+            float optionY = menuY;
+            for (String option : setting.getModes()) {
+                boolean isHovered = mouseX >= dropdownX && mouseX <= dropdownX + dropdownWidth &&
+                        mouseY >= optionY && mouseY <= optionY + 14;
+                boolean isSelected = option.equals(mode);
+
+                if (isHovered) {
+                    NanoVGRenderer.drawRect(dropdownX + 1, optionY, dropdownWidth - 2, 14, hoverBg);
+                }
+
+                Color optionColor = isSelected ? modeText : textColor;
+                NanoVGRenderer.drawText(option, dropdownX + 4, optionY + 2, fontSize, optionColor);
+                optionY += 14;
+            }
+        }
     }
 
     private void renderColorSetting(ColorSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
@@ -236,6 +307,41 @@ public class SettingsPanel {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (animationProgress <= 0f || button != 0)
             return false;
+
+        if (expandedDropdown != null) {
+            float settingY = y + HEADER_HEIGHT + PADDING;
+            for (Setting setting : module.getSettings()) {
+                if (setting instanceof KeybindSetting)
+                    continue;
+
+                if (setting == expandedDropdown) {
+                    float dropdownWidth = 60;
+                    float dropdownX = currentX + width - PADDING - dropdownWidth;
+                    float dropdownY = settingY + 1;
+                    float dropdownHeight = 14;
+                    float menuY = dropdownY + dropdownHeight + 2;
+
+                    int optionIndex = 0;
+                    for (String option : ((ModeSetting) expandedDropdown).getModes()) {
+                        float optionY = menuY + (optionIndex * 14);
+                        if (mouseX >= dropdownX && mouseX <= dropdownX + dropdownWidth &&
+                                mouseY >= optionY && mouseY <= optionY + 14) {
+                            ((ModeSetting) expandedDropdown).setMode(option);
+                            expandedDropdown = null;
+                            return true;
+                        }
+                        optionIndex++;
+                    }
+
+                    expandedDropdown = null;
+                    return true;
+                }
+
+                int currentHeight = (setting instanceof NumberSetting) ? NUMBER_SETTING_HEIGHT : SETTING_HEIGHT;
+                settingY += currentHeight;
+            }
+        }
+
         if (!isMouseOver(mouseX, mouseY))
             return false;
 
@@ -255,8 +361,32 @@ public class SettingsPanel {
                     updateSliderValue((NumberSetting) setting, mouseX);
                     return true;
                 } else if (setting instanceof ModeSetting) {
-                    ((ModeSetting) setting).cycle();
-                    return true;
+                    ModeSetting modeSetting = (ModeSetting) setting;
+                    float dropdownWidth = 60;
+                    float dropdownX = currentX + width - PADDING - dropdownWidth;
+                    float dropdownY = settingY + 1;
+                    float dropdownHeight = 14;
+
+                    if (mouseX >= dropdownX && mouseX <= dropdownX + dropdownWidth &&
+                            mouseY >= dropdownY && mouseY <= dropdownY + dropdownHeight) {
+                        expandedDropdown = (expandedDropdown == modeSetting) ? null : modeSetting;
+                        return true;
+                    }
+
+                    if (expandedDropdown == modeSetting) {
+                        float menuY = dropdownY + dropdownHeight + 2;
+                        int optionIndex = 0;
+                        for (String option : modeSetting.getModes()) {
+                            float optionY = menuY + (optionIndex * 14);
+                            if (mouseX >= dropdownX && mouseX <= dropdownX + dropdownWidth &&
+                                    mouseY >= optionY && mouseY <= optionY + 14) {
+                                modeSetting.setMode(option);
+                                expandedDropdown = null;
+                                return true;
+                            }
+                            optionIndex++;
+                        }
+                    }
                 }
             }
             settingY += currentHeight;
