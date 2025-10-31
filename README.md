@@ -65,7 +65,7 @@ OpenVolt wouldn't exist without these amazing individuals:
 | **3000IQPlay** | 1193266310977691760 | Strategic guidance & Walmart Solutions creator |
 | **Walper**     | 957343617272414230  | Code contributions and auth, yo.               |
 | **Pathos**     | 1126202321550975078 | Inspired and gave advice on NanoVG             |
-| **Meta**       | 297075664530440192  | Awsome Fonts and good guy                      |
+| **Meta**       | 297075664530440192  | FontAwesome and good guy                       |
 
 
 A special shoutout to **Koi** for being an invaluable part of the Silk journey and for their deep knowledge of 1.9+ combat mechanics.
