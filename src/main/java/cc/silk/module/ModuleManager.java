@@ -39,6 +39,10 @@ public final class ModuleManager {
                 .toList();
     }
 
+    public List<Module> getModulesByCategory(Category category) {
+        return getModulesInCategory(category);
+    }
+
     public <T extends Module> Optional<T> getModule(Class<T> moduleClass) {
         return modules.stream()
                 .filter(module -> module.getClass().equals(moduleClass))
@@ -72,7 +76,7 @@ public final class ModuleManager {
                 new SkeletonESP(), new EntityESP(), new ShaderESP(), new Trail(),
                 new JumpCircles(), new TargetESP(), new HitParticles(), new CircleESP(),
                 new Breadcrumbs(), new Notifications(), new ArrowESP(), new OutlineESP(),
-                new SquareESP(), new ESP2D());
+                new SquareESP(), new ESP2D(), new NanoVGTest());
 
         // Misc
         add(
