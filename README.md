@@ -64,7 +64,7 @@ OpenVolt wouldn't exist without these amazing individuals:
 | **Etho**       | 1383737664645369926 | Moral support & Walmart Solutions              |
 | **3000IQPlay** | 1193266310977691760 | Strategic guidance & Walmart Solutions creator |
 | **Walper**     | 957343617272414230  | Code contributions and auth, yo.               |
-| **Pathos**     | 1126202321550975078 | Inspured and gave advice on NanoVG             |
+| **Pathos**     | 1126202321550975078 | Inspired and gave advice on NanoVG             |
 | **Meta**       | 297075664530440192  | Awsome Fonts and good guy                      |
 
 
