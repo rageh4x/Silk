@@ -103,6 +103,8 @@ public class NewClickGUI extends Screen {
         NanoVGRenderer.scale(scale, scale);
         NanoVGRenderer.translate(-centerX, -centerY);
 
+        renderSearchBar(mouseX, mouseY, alpha);
+
         for (CategoryPanel panel : panels) {
             if (panel != draggedPanel) {
                 panel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
@@ -116,8 +118,6 @@ public class NewClickGUI extends Screen {
         for (CategoryPanel panel : panels) {
             panel.renderSettingsPanel(mouseX, mouseY, alpha, width, height);
         }
-
-        renderSearchBar(mouseX, mouseY, alpha);
 
         NanoVGRenderer.restore();
 

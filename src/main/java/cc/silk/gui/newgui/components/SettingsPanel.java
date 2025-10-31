@@ -59,11 +59,33 @@ public class SettingsPanel {
         this.targetX = x;
         this.y = y;
         this.visible = true;
+        clampToScreen();
     }
 
     public void setScreenDimensions(int width, int height) {
         this.screenWidth = width;
         this.screenHeight = height;
+        clampToScreen();
+    }
+    
+    private void clampToScreen() {
+        if (screenWidth > 0 && screenHeight > 0) {
+            // Clamp X position
+            if (targetX + width > screenWidth) {
+                targetX = screenWidth - width - 10;
+            }
+            if (targetX < 10) {
+                targetX = 10;
+            }
+            
+            // Clamp Y position
+            if (y + height > screenHeight) {
+                y = screenHeight - height - 10;
+            }
+            if (y < 10) {
+                y = 10;
+            }
+        }
     }
 
     public void hide() {
