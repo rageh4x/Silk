@@ -20,6 +20,7 @@ public class SettingsPanel {
     private static final int NUMBER_SETTING_HEIGHT = 22;
     private static final int PADDING = 5;
     private ModeSetting expandedDropdown = null;
+    private ColorPicker colorPicker = null;
     private boolean visible = false;
     private float animationProgress = 0f;
     private Setting draggingSlider = null;
@@ -72,6 +73,10 @@ public class SettingsPanel {
         }
         float easedProgress = 1f - (float) Math.pow(1f - animationProgress, 3);
         currentX = (targetX - width) + (width * easedProgress);
+
+        if (colorPicker != null) {
+            colorPicker.update(delta);
+        }
     }
 
     public void render(int mouseX, int mouseY, float alpha) {
@@ -128,6 +133,10 @@ public class SettingsPanel {
                     settingY += SETTING_HEIGHT;
                 }
             }
+        }
+
+        if (colorPicker != null && colorPicker.isAnimating()) {
+            colorPicker.render(mouseX, mouseY, renderAlpha);
         }
     }
 
@@ -280,7 +289,7 @@ public class SettingsPanel {
     private void renderColorSetting(ColorSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
         int previewSize = 12;
         float previewX = currentX + width - PADDING - previewSize;
-        float previewY = settingY + 4;
+        float previewY = settingY + 2;
 
         Color color = setting.getValue();
         int colorAlpha = (int) (color.getAlpha() * alpha);
@@ -292,8 +301,8 @@ public class SettingsPanel {
         NanoVGRenderer.drawRoundedRect(previewX, previewY, previewSize, previewSize, 3f, displayColor);
         NanoVGRenderer.drawRoundedRectOutline(previewX, previewY, previewSize, previewSize, 3f, 1f, border);
 
-        float fontSize = 10f;
-        NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 5, fontSize, textColor);
+        float fontSize = 9f;
+        NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 3, fontSize, textColor);
     }
 
     private String formatNumber(double value) {
@@ -307,6 +316,14 @@ public class SettingsPanel {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (animationProgress <= 0f || button != 0)
             return false;
+
+        if (colorPicker != null && colorPicker.isAnimating()) {
+            boolean clickedInside = colorPicker.mouseClicked(mouseX, mouseY, button);
+            if (!clickedInside) {
+                colorPicker.hide();
+            }
+            return true;
+        }
 
         if (expandedDropdown != null) {
             float settingY = y + HEADER_HEIGHT + PADDING;
@@ -387,6 +404,25 @@ public class SettingsPanel {
                             optionIndex++;
                         }
                     }
+                } else if (setting instanceof ColorSetting) {
+                    int previewSize = 12;
+                    float previewX = currentX + width - PADDING - previewSize;
+                    float previewY = settingY + 2;
+
+                    if (mouseX >= previewX && mouseX <= previewX + previewSize &&
+                            mouseY >= previewY && mouseY <= previewY + previewSize) {
+                        float pickerX = currentX + width + 5;
+                        float pickerY = settingY;
+
+                        if (colorPicker != null && colorPicker.isVisible()) {
+                            colorPicker.hide();
+                            colorPicker = null;
+                        } else {
+                            colorPicker = new ColorPicker((ColorSetting) setting, pickerX, pickerY);
+                            colorPicker.show(pickerX, pickerY);
+                        }
+                        return true;
+                    }
                 }
             }
             settingY += currentHeight;
@@ -396,6 +432,10 @@ public class SettingsPanel {
     }
 
     public boolean mouseDragged(double mouseX, double mouseY, int button) {
+        if (colorPicker != null && colorPicker.isAnimating()) {
+            return colorPicker.mouseDragged(mouseX, mouseY, button);
+        }
+
         if (draggingSlider instanceof NumberSetting && button == 0) {
             updateSliderValue((NumberSetting) draggingSlider, mouseX);
             return true;
@@ -406,6 +446,10 @@ public class SettingsPanel {
     public void mouseReleased(double mouseX, double mouseY, int button) {
         if (button == 0) {
             draggingSlider = null;
+        }
+
+        if (colorPicker != null) {
+            colorPicker.mouseReleased(mouseX, mouseY, button);
         }
     }
 
