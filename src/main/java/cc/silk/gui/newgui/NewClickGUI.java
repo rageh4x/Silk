@@ -99,30 +99,25 @@ public class NewClickGUI extends Screen {
 
         NanoVGRenderer.beginFrame();
 
-        // Apply scale transformation from center
         NanoVGRenderer.save();
         NanoVGRenderer.translate(centerX, centerY);
         NanoVGRenderer.scale(scale, scale);
         NanoVGRenderer.translate(-centerX, -centerY);
 
-        // Render all panels except dragged one
         for (CategoryPanel panel : panels) {
             if (panel != draggedPanel) {
                 panel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
             }
         }
 
-        // Render dragged panel on top
         if (draggedPanel != null) {
             draggedPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
         }
 
-        // Render settings panels
         for (CategoryPanel panel : panels) {
             panel.renderSettingsPanel(mouseX, mouseY, alpha);
         }
 
-        // Render search bar
         renderSearchBar(mouseX, mouseY, alpha);
 
         NanoVGRenderer.restore();
@@ -147,7 +142,6 @@ public class NewClickGUI extends Screen {
         NanoVGRenderer.drawRoundedRectOutline(searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT,
                 cornerRadius, borderThickness, borderColor);
 
-        // Render text
         String displayText = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
         Color textColor = searchQuery.isEmpty()
                 ? new Color(SEARCH_PLACEHOLDER.getRed(), SEARCH_PLACEHOLDER.getGreen(), SEARCH_PLACEHOLDER.getBlue(),
@@ -159,7 +153,6 @@ public class NewClickGUI extends Screen {
         float textY = searchBarY + (SEARCH_BAR_HEIGHT - fontSize) / 2f;
         NanoVGRenderer.drawText(displayText, textX, textY, fontSize, textColor);
 
-        // Render cursor
         if (searchFocused && System.currentTimeMillis() % 1000 < 500) {
             float cursorX = textX + NanoVGRenderer.getTextWidth(searchQuery, fontSize);
             NanoVGRenderer.drawRect(cursorX, textY - 1, 1, fontSize + 2, textColor);
@@ -210,6 +203,12 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        for (CategoryPanel panel : panels) {
+            if (panel.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+        }
+
         if (searchFocused) {
             if (keyCode == 259) {
                 if (!searchQuery.isEmpty()) {

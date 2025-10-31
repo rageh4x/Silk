@@ -69,7 +69,6 @@ public class CategoryPanel {
     }
 
     public void render(int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
-        // Always size background for all modules, regardless of search
         int totalHeight = HEADER_HEIGHT + 1 + (moduleButtons.size() * MODULE_HEIGHT);
 
         int panelAlpha = (int) (255 * alpha);
@@ -81,17 +80,13 @@ public class CategoryPanel {
                 SEPARATOR_COLOR.getBlue(),
                 (int) (SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
 
-        // Draw panel background
         NanoVGRenderer.drawRoundedRect(x, y, width, totalHeight, CORNER_RADIUS, panelBg);
         NanoVGRenderer.drawRoundedRectOutline(x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
 
-        // Draw header
         NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
 
-        // Draw separator line
         NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT, width, 1, separatorColor);
 
-        // Draw category icon and name
         String categoryName = category.getName();
         float fontSize = 11f;
         float iconSize = CategoryIcons.getIconSize();
@@ -107,7 +102,6 @@ public class CategoryPanel {
         CategoryIcons.drawIcon(category, iconX, iconY, iconSize, iconColor);
         NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
 
-        // Draw modules - only render visible ones (matching the height calculation)
         float moduleY = y + HEADER_HEIGHT + 1;
 
         for (ModuleButton button : moduleButtons) {
@@ -120,7 +114,6 @@ public class CategoryPanel {
 
     public void renderSettingsPanel(int mouseX, int mouseY, float alpha) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
-            // Draw connection line
             float lineAlpha = alpha * settingsPanel.getAnimationProgress();
             Color lineColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
                     (int) (150 * lineAlpha));
@@ -130,10 +123,8 @@ public class CategoryPanel {
             float lineEndX = settingsPanel.getCurrentX();
             float lineEndY = settingsPanel.getY() + 11;
 
-            // Horizontal line
             NanoVGRenderer.drawLine(lineStartX, lineStartY, lineEndX, lineStartY, 1f, lineColor);
 
-            // Vertical line if needed
             if (lineEndY != lineStartY) {
                 NanoVGRenderer.drawLine(lineEndX, lineStartY, lineEndX, lineEndY, 1f, lineColor);
             }
@@ -171,7 +162,6 @@ public class CategoryPanel {
 
         float moduleY = y + HEADER_HEIGHT + 1;
         for (ModuleButton moduleButton : moduleButtons) {
-            // Only process clicks for visible modules
             if (moduleButton.getSearchAlpha() > 0.01f) {
                 if (moduleButton.mouseClicked(x, moduleY, mouseX, mouseY, button)) {
                     if (button == 1 && moduleButton.getModule().getSettings().size() > 1) {
@@ -218,5 +208,12 @@ public class CategoryPanel {
 
     private boolean isMouseOverHeader(double mouseX, double mouseY) {
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + HEADER_HEIGHT;
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (settingsPanel != null && settingsPanel.isAnimating()) {
+            return settingsPanel.keyPressed(keyCode, scanCode, modifiers);
+        }
+        return false;
     }
 }
