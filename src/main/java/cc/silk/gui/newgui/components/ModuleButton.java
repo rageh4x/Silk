@@ -87,16 +87,15 @@ public class ModuleButton {
             textColor = new Color(130, 130, 140, (int) (255 * combinedAlpha));
         }
         
-        float fontSize = 11f;
+        float fontSize = 9.5f;
         float textY = y + (buttonHeight - fontSize) / 2f;
-        float textX = x + (module.isEnabled() ? 8 : 6);
+        float textX = x + (module.isEnabled() ? 7 : 5);
         NanoVGRenderer.drawText(module.getName(), textX, textY, fontSize, textColor);
     }
 
     private String searchQuery = "";
 
-    public boolean mouseClicked(float panelX, float panelY, double mouseX, double mouseY, int button,
-            float panelHeaderY, int visibleHeight) {
+    public boolean mouseClicked(float panelX, float panelY, double mouseX, double mouseY, int button) {
         if (searchAlpha <= 0.01f)
             return false;
 
@@ -104,10 +103,6 @@ public class ModuleButton {
         float y = panelY + relativeY + 1;
         float buttonWidth = width - 4;
         float buttonHeight = height - 2;
-
-        if (y < panelHeaderY || y + buttonHeight > panelHeaderY + visibleHeight) {
-            return false;
-        }
 
         if (isMouseOver(x, y, buttonWidth, buttonHeight, mouseX, mouseY)) {
             if (button == 0) {
@@ -126,6 +121,10 @@ public class ModuleButton {
 
     public float getAbsoluteY(float panelY) {
         return panelY + relativeY;
+    }
+
+    public float getSearchAlpha() {
+        return searchAlpha;
     }
 
     private boolean isMouseOver(float x, float y, float width, float height, double mouseX, double mouseY) {

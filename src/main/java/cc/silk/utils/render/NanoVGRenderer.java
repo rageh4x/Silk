@@ -361,6 +361,22 @@ public class NanoVGRenderer {
         }
     }
 
+    public static void save() {
+        nvgSave(vg);
+    }
+
+    public static void restore() {
+        nvgRestore(vg);
+    }
+
+    public static void translate(float x, float y) {
+        nvgTranslate(vg, x, y);
+    }
+
+    public static void scale(float x, float y) {
+        nvgScale(vg, x, y);
+    }
+
     public static void cleanup() {
         if (vg != -1) {
             nvgDelete(vg);

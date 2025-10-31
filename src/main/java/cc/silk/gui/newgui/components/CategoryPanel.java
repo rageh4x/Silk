@@ -14,9 +14,8 @@ public class CategoryPanel {
     private final int width;
     private final List<ModuleButton> moduleButtons = new ArrayList<>();
 
-    private static final int HEADER_HEIGHT = 18;
-    private static final int MODULE_HEIGHT = 12;
-    private static final int MAX_VISIBLE_MODULES = 15;
+    private static final int HEADER_HEIGHT = 16;
+    private static final int MODULE_HEIGHT = 10;
 
     private static final Color HEADER_COLOR = new Color(28, 28, 32, 255);
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
@@ -24,12 +23,9 @@ public class CategoryPanel {
     private static final Color SEPARATOR_COLOR = new Color(88, 101, 242, 80);
     private static final float CORNER_RADIUS = 4f;
 
-    private float scrollOffset = 0;
-    private float maxScroll = 0;
-
     private boolean dragging = false;
     private float dragOffsetX, dragOffsetY;
-    
+
     public boolean isDragging() {
         return dragging;
     }
@@ -73,17 +69,16 @@ public class CategoryPanel {
     }
 
     public void render(int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
-        int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
-        int totalHeight = HEADER_HEIGHT + 1 + (visibleModules * MODULE_HEIGHT);
-
-        maxScroll = Math.max(0, (moduleButtons.size() - MAX_VISIBLE_MODULES) * MODULE_HEIGHT);
-        scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
+        // Always size background for all modules, regardless of search
+        int totalHeight = HEADER_HEIGHT + 1 + (moduleButtons.size() * MODULE_HEIGHT);
 
         int panelAlpha = (int) (255 * alpha);
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
-        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(), panelAlpha);
+        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
+                panelAlpha);
         Color borderColor = new Color(40, 40, 46, panelAlpha);
-        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(), SEPARATOR_COLOR.getBlue(),
+        Color separatorColor = new Color(SEPARATOR_COLOR.getRed(), SEPARATOR_COLOR.getGreen(),
+                SEPARATOR_COLOR.getBlue(),
                 (int) (SEPARATOR_COLOR.getAlpha() * alpha / 255.0));
 
         // Draw panel background
@@ -92,40 +87,34 @@ public class CategoryPanel {
 
         // Draw header
         NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
-        
+
         // Draw separator line
         NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT, width, 1, separatorColor);
 
         // Draw category icon and name
         String categoryName = category.getName();
-        float fontSize = 12f;
+        float fontSize = 11f;
         float iconSize = CategoryIcons.getIconSize();
         float iconX = x + 5 + iconSize / 2f;
         float iconY = y + HEADER_HEIGHT / 2f;
         float textX = x + 5 + iconSize + 4;
         float textY = y + (HEADER_HEIGHT - fontSize) / 2f;
 
-        Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), (int) (255 * alpha));
+        Color iconColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
+                (int) (255 * alpha));
         Color textColor = new Color(240, 240, 245, (int) (255 * alpha));
-        
+
         CategoryIcons.drawIcon(category, iconX, iconY, iconSize, iconColor);
         NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
 
-        // Draw modules (with scissor effect simulated by not drawing outside bounds)
-        float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
-        float scissorTop = y + HEADER_HEIGHT + 1;
-        float scissorBottom = scissorTop + (visibleModules * MODULE_HEIGHT);
-        
-        for (ModuleButton button : moduleButtons) {
-            if (moduleY + MODULE_HEIGHT >= scissorTop && moduleY <= scissorBottom) {
-                button.render(x, moduleY, mouseX, mouseY, alpha);
-            }
-            moduleY += MODULE_HEIGHT;
-        }
+        // Draw modules - only render visible ones (matching the height calculation)
+        float moduleY = y + HEADER_HEIGHT + 1;
 
-        // Draw scrollbar if needed
-        if (moduleButtons.size() > MAX_VISIBLE_MODULES) {
-            drawScrollbar(totalHeight, alpha);
+        for (ModuleButton button : moduleButtons) {
+            if (button.getSearchAlpha() > 0.01f) {
+                button.render(x, moduleY, mouseX, mouseY, alpha);
+                moduleY += MODULE_HEIGHT;
+            }
         }
     }
 
@@ -152,41 +141,17 @@ public class CategoryPanel {
             settingsPanel.render(mouseX, mouseY, alpha);
         }
     }
-    
+
     public SettingsPanel getSettingsPanel() {
         return settingsPanel;
     }
-    
+
     public boolean hasActiveSettingsPanel() {
         return settingsPanel != null && settingsPanel.isAnimating();
     }
 
-    private void drawScrollbar(int totalHeight, float alpha) {
-        int scrollbarHeight = (int) ((float) MAX_VISIBLE_MODULES / moduleButtons.size()
-                * (MAX_VISIBLE_MODULES * MODULE_HEIGHT));
-        int scrollbarY = (int) (y + HEADER_HEIGHT + 1
-                + (scrollOffset / maxScroll) * ((MAX_VISIBLE_MODULES * MODULE_HEIGHT) - scrollbarHeight));
-
-        Color scrollbarBg = new Color(35, 35, 40, (int) (180 * alpha));
-        Color scrollbarColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
-                (int) (200 * alpha));
-
-        NanoVGRenderer.drawRect(x + width - 3, y + HEADER_HEIGHT + 1, 2, MAX_VISIBLE_MODULES * MODULE_HEIGHT, scrollbarBg);
-        NanoVGRenderer.drawRect(x + width - 3, scrollbarY, 2, scrollbarHeight, scrollbarColor);
-    }
-
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        if (isMouseOver(mouseX, mouseY)) {
-            scrollOffset -= (float) (amount * MODULE_HEIGHT);
-            scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
-            return true;
-        }
-        return false;
-    }
-
     private boolean isMouseOver(double mouseX, double mouseY) {
-        int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
-        int totalHeight = HEADER_HEIGHT + (visibleModules * MODULE_HEIGHT);
+        int totalHeight = HEADER_HEIGHT + 1 + (moduleButtons.size() * MODULE_HEIGHT);
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + totalHeight;
     }
 
@@ -198,34 +163,33 @@ public class CategoryPanel {
             return true;
         }
 
-        int visibleModules = Math.min(moduleButtons.size(), MAX_VISIBLE_MODULES);
-        int visibleHeight = visibleModules * MODULE_HEIGHT;
-        float panelHeaderY = y + HEADER_HEIGHT + 1;
-
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             if (settingsPanel.mouseClicked(mouseX, mouseY, button)) {
                 return true;
             }
         }
 
-        float moduleY = y + HEADER_HEIGHT + 1 - scrollOffset;
+        float moduleY = y + HEADER_HEIGHT + 1;
         for (ModuleButton moduleButton : moduleButtons) {
-            if (moduleButton.mouseClicked(x, moduleY, mouseX, mouseY, button, panelHeaderY, visibleHeight)) {
-                if (button == 1 && moduleButton.getModule().getSettings().size() > 1) {
-                    float settingsX = x + width + 5;
-                    float settingsY = moduleButton.getAbsoluteY(y + HEADER_HEIGHT + 1 - scrollOffset);
-                    settingsPanelSourceY = moduleY;
+            // Only process clicks for visible modules
+            if (moduleButton.getSearchAlpha() > 0.01f) {
+                if (moduleButton.mouseClicked(x, moduleY, mouseX, mouseY, button)) {
+                    if (button == 1 && moduleButton.getModule().getSettings().size() > 1) {
+                        float settingsX = x + width + 5;
+                        float settingsY = moduleY;
+                        settingsPanelSourceY = moduleY;
 
-                    if (settingsPanel != null && settingsPanel.isVisible()) {
-                        settingsPanel.hide();
-                    } else {
-                        settingsPanel = new SettingsPanel(moduleButton.getModule(), settingsX, settingsY);
-                        settingsPanel.show(settingsX, settingsY);
+                        if (settingsPanel != null && settingsPanel.isVisible()) {
+                            settingsPanel.hide();
+                        } else {
+                            settingsPanel = new SettingsPanel(moduleButton.getModule(), settingsX, settingsY);
+                            settingsPanel.show(settingsX, settingsY);
+                        }
                     }
+                    return true;
                 }
-                return true;
+                moduleY += MODULE_HEIGHT;
             }
-            moduleY += MODULE_HEIGHT;
         }
 
         return false;

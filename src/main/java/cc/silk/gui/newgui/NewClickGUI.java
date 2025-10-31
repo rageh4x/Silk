@@ -99,6 +99,12 @@ public class NewClickGUI extends Screen {
 
         NanoVGRenderer.beginFrame();
 
+        // Apply scale transformation from center
+        NanoVGRenderer.save();
+        NanoVGRenderer.translate(centerX, centerY);
+        NanoVGRenderer.scale(scale, scale);
+        NanoVGRenderer.translate(-centerX, -centerY);
+
         // Render all panels except dragged one
         for (CategoryPanel panel : panels) {
             if (panel != draggedPanel) {
@@ -118,6 +124,8 @@ public class NewClickGUI extends Screen {
 
         // Render search bar
         renderSearchBar(mouseX, mouseY, alpha);
+
+        NanoVGRenderer.restore();
 
         NanoVGRenderer.endFrame();
     }
@@ -236,11 +244,6 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        for (CategoryPanel panel : panels) {
-            if (panel.mouseScrolled(mouseX, mouseY, verticalAmount)) {
-                return true;
-            }
-        }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
