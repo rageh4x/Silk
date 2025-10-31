@@ -11,7 +11,7 @@ public class CategoryIcons {
     private static final Map<Category, String> ICON_MAP = new HashMap<>();
 
     static {
-        ICON_MAP.put(Category.COMBAT, "\uf71c");
+        ICON_MAP.put(Category.COMBAT, "uf6cf");
         ICON_MAP.put(Category.PLAYER, "\uf007");
         ICON_MAP.put(Category.MOVEMENT, "\uf70c");
         ICON_MAP.put(Category.RENDER, "\uf06e");
