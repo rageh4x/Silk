@@ -119,9 +119,9 @@ public class CategoryPanel {
 
         String categoryName = category.getName();
         float fontSize = 10f;
-        float iconSize = CategoryIcons.getIconSize();
-        float iconX = Math.round(x + 6 + iconSize / 2f);
-        float iconY = Math.round(y + HEADER_HEIGHT / 2f);
+        float iconSize = CategoryIcon.getIconSize();
+        float iconX = Math.round(x + 6);
+        float iconY = Math.round(y + (HEADER_HEIGHT - iconSize) / 2f);
         float textX = Math.round(x + 6 + iconSize + 4);
         float textY = Math.round(y + (HEADER_HEIGHT - fontSize) / 2f);
 
@@ -130,7 +130,7 @@ public class CategoryPanel {
                 (int) (255 * alpha));
         Color textColor = new Color(240, 240, 245, (int) (255 * alpha));
 
-        CategoryIcons.drawIcon(category, iconX, iconY, iconSize, iconColor);
+        CategoryIcon.drawIcon(category, iconX, iconY, iconColor);
         NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
 
         if (expandProgress > 0.01f) {

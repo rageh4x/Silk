@@ -110,9 +110,12 @@ public class NanoVGRenderer {
         InputStream is = null;
 
         is = NanoVGRenderer.class.getClassLoader().getResourceAsStream(path);
-        if (is == null) is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
-        if (is == null) is = ClassLoader.getSystemResourceAsStream(path);
-        if (is == null) is = NanoVGRenderer.class.getResourceAsStream("/" + path);
+        if (is == null)
+            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
+        if (is == null)
+            is = ClassLoader.getSystemResourceAsStream(path);
+        if (is == null)
+            is = NanoVGRenderer.class.getResourceAsStream("/" + path);
 
         if (is == null) {
             System.err.println("[NanoVG] Font resource not found: " + path);
@@ -449,6 +452,78 @@ public class NanoVGRenderer {
 
     public static void resetScissor() {
         nvgResetScissor(vg);
+    }
+
+    public static int loadImage(String path) {
+        if (!initialized)
+            init();
+
+        try {
+            InputStream is = NanoVGRenderer.class.getClassLoader().getResourceAsStream(path);
+            if (is == null)
+                is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
+            if (is == null)
+                is = ClassLoader.getSystemResourceAsStream(path);
+            if (is == null)
+                is = NanoVGRenderer.class.getResourceAsStream("/" + path);
+
+            if (is == null) {
+                System.err.println("[NanoVG] Image resource not found: " + path);
+                return -1;
+            }
+
+            ByteBuffer buffer = MemoryUtil.memAlloc(8192);
+            ReadableByteChannel rbc = Channels.newChannel(is);
+
+            while (rbc.read(buffer) != -1) {
+                if (buffer.remaining() == 0) {
+                    ByteBuffer newBuffer = MemoryUtil.memAlloc(buffer.capacity() * 2);
+                    buffer.flip();
+                    newBuffer.put(buffer);
+                    MemoryUtil.memFree(buffer);
+                    buffer = newBuffer;
+                }
+            }
+
+            buffer.flip();
+            System.out.println("[NanoVG] Loading image: " + path + " (buffer size: " + buffer.remaining() + " bytes)");
+            int image = nvgCreateImageMem(vg, NVG_IMAGE_GENERATE_MIPMAPS, buffer);
+
+            if (image == -1) {
+                System.err.println("[NanoVG] Failed to create image: " + path);
+                MemoryUtil.memFree(buffer);
+                return -1;
+            }
+
+            System.out.println("[NanoVG] Successfully loaded image: " + path + " (ID: " + image + ")");
+            is.close();
+            return image;
+        } catch (Exception e) {
+            System.err.println("[NanoVG] Error loading image: " + path);
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    public static void drawImage(int imageId, float x, float y, float width, float height, Color tint) {
+        if (!inFrame) {
+            throw new IllegalStateException("Must call beginFrame() before drawing image");
+        }
+
+        if (imageId == -1) {
+            return;
+        }
+
+        try (MemoryStack stack = stackPush()) {
+            float alpha = tint.getAlpha() / 255f;
+            
+            NVGPaint paint = nvgImagePattern(vg, x, y, width, height, 0, imageId, alpha, NVGPaint.malloc(stack));
+
+            nvgBeginPath(vg);
+            nvgRect(vg, x, y, width, height);
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
+        }
     }
 
     public static void cleanup() {

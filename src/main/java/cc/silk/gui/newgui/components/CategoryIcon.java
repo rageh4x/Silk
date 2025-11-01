@@ -1,42 +1,40 @@
 package cc.silk.gui.newgui.components;
 
 import cc.silk.module.Category;
-import cc.silk.utils.render.TextureRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.Identifier;
+import cc.silk.utils.render.NanoVGRenderer;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class CategoryIcon {
-    private static final Map<Category, Identifier> ICON_MAP = new HashMap<>();
+    private static final Map<Category, Integer> ICON_MAP = new HashMap<>();
     private static final int ICON_SIZE = 12;
+    private static boolean initialized = false;
 
-    static {
-        ICON_MAP.put(Category.COMBAT, Identifier.of("silk", "imgs/sword.png"));
-        ICON_MAP.put(Category.PLAYER, Identifier.of("silk", "imgs/user.png"));
-        ICON_MAP.put(Category.MOVEMENT, Identifier.of("silk", "imgs/accessibility.png"));
-        ICON_MAP.put(Category.MISC, Identifier.of("silk", "imgs/harddrive.png"));
-        ICON_MAP.put(Category.RENDER, Identifier.of("silk", "imgs/eye.png"));
-        ICON_MAP.put(Category.CLIENT, Identifier.of("silk", "imgs/computer.png"));
-    }
-
-    public static void drawIcon(DrawContext context, Category category, float x, float y, Color color) {
-        Identifier icon = ICON_MAP.get(category);
-        if (icon == null)
+    public static void init() {
+        if (initialized)
             return;
 
-        int colorInt = (color.getAlpha() << 24) | (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
+        ICON_MAP.put(Category.COMBAT, NanoVGRenderer.loadImage("assets/silk/imgs/sword.png"));
+        ICON_MAP.put(Category.PLAYER, NanoVGRenderer.loadImage("assets/silk/imgs/user.png"));
+        ICON_MAP.put(Category.MOVEMENT, NanoVGRenderer.loadImage("assets/silk/imgs/accessibility.png"));
+        ICON_MAP.put(Category.MISC, NanoVGRenderer.loadImage("assets/silk/imgs/harddrive.png"));
+        ICON_MAP.put(Category.RENDER, NanoVGRenderer.loadImage("assets/silk/imgs/eye.png"));
+        ICON_MAP.put(Category.CLIENT, NanoVGRenderer.loadImage("assets/silk/imgs/computer.png"));
 
-        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
-        com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        initialized = true;
+    }
 
-        TextureRenderer.drawCenteredQuad(context, icon, x + ICON_SIZE / 2f, y + ICON_SIZE / 2f, ICON_SIZE, ICON_SIZE, 0,
-                colorInt, true);
+    public static void drawIcon(Category category, float x, float y, Color color) {
+        if (!initialized)
+            init();
 
-        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+        Integer imageId = ICON_MAP.get(category);
+        if (imageId == null || imageId == -1)
+            return;
+
+        NanoVGRenderer.drawImage(imageId, x, y, ICON_SIZE, ICON_SIZE, Color.WHITE);
     }
 
     public static int getIconSize() {
