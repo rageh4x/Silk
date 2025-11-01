@@ -86,9 +86,10 @@ public class ConfigPanel {
         Color iconColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
         NanoVGRenderer.drawIcon("\uf0f6", iconX, iconY, iconSize, iconColor);
 
+        float fontSize = 10f;
         float textX = x + 6 + iconSize + 4;
-        float textY = y + 2f;
-        NanoVGRenderer.drawText("Configs", textX, textY, 10f, textColor);
+        float textY = y + (HEADER_HEIGHT - fontSize) / 2f;
+        NanoVGRenderer.drawText("Configs", textX, textY, fontSize, textColor);
 
         float loadIconX = x + width - 22f;
         float loadIconY = y + HEADER_HEIGHT / 2f;

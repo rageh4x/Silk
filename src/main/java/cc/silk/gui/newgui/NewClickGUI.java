@@ -122,22 +122,20 @@ public class NewClickGUI extends Screen {
             }
         }
 
+        if (configPanel != null && !configDragging) {
+            configPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
+        }
+
         if (draggedPanel != null) {
             draggedPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
         }
 
-        // Render config panel
-        if (configPanel != null && !configDragging) {
+        if (configPanel != null && configDragging) {
             configPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
         }
 
         for (CategoryPanel panel : panels) {
             panel.renderSettingsPanel(mouseX, mouseY, alpha, width, height);
-        }
-
-        // Render config panel on top if dragging
-        if (configPanel != null && configDragging) {
-            configPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
         }
 
         NanoVGRenderer.restore();
