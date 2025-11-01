@@ -110,18 +110,9 @@ public class NanoVGRenderer {
         InputStream is = null;
 
         is = NanoVGRenderer.class.getClassLoader().getResourceAsStream(path);
-
-        if (is == null) {
-            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
-        }
-
-        if (is == null) {
-            is = ClassLoader.getSystemResourceAsStream(path);
-        }
-
-        if (is == null) {
-            is = NanoVGRenderer.class.getResourceAsStream("/" + path);
-        }
+        if (is == null) is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
+        if (is == null) is = ClassLoader.getSystemResourceAsStream(path);
+        if (is == null) is = NanoVGRenderer.class.getResourceAsStream("/" + path);
 
         if (is == null) {
             System.err.println("[NanoVG] Font resource not found: " + path);
@@ -297,6 +288,32 @@ public class NanoVGRenderer {
 
     public static void drawText(String text, float x, float y, float size, Color color) {
         drawText(text, x, y, size, color, false);
+    }
+
+    public static void drawTextWithFont(String text, float x, float y, float size, Color color, int fontId) {
+        if (!inFrame) {
+            throw new IllegalStateException("Must call beginFrame() before drawing text");
+        }
+        if (!initialized)
+            init();
+
+        try (MemoryStack stack = stackPush()) {
+            NVGColor nvgColor = NVGColor.malloc(stack);
+            nvgColor.r(color.getRed() / 255f);
+            nvgColor.g(color.getGreen() / 255f);
+            nvgColor.b(color.getBlue() / 255f);
+            nvgColor.a(color.getAlpha() / 255f);
+
+            nvgFontFaceId(vg, fontId);
+            nvgFontSize(vg, size);
+            nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+            nvgFillColor(vg, nvgColor);
+            nvgText(vg, x, y, text);
+        }
+    }
+
+    public static int getPoppinsFontId() {
+        return poppinsFont > 0 ? poppinsFont : regularFont;
     }
 
     private static int getFontId(boolean bold) {

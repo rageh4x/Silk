@@ -1,120 +1,197 @@
 package cc.silk.module.modules.render;
 
-import cc.silk.SilkClient;
-import com.mojang.blaze3d.systems.RenderSystem;
+import cc.silk.event.impl.player.AttackEvent;
 import cc.silk.event.impl.render.EventRender2D;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
-import cc.silk.utils.render.font.FontManager;
-import cc.silk.utils.render.font.fonts.FontRenderer;
+import cc.silk.module.setting.BooleanSetting;
+import cc.silk.module.setting.NumberSetting;
+import cc.silk.utils.render.DraggableComponent;
+import cc.silk.utils.render.NanoVGRenderer;
+import com.mojang.blaze3d.systems.RenderSystem;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class TargetHUD extends Module {
 
-    private static final int BOX_WIDTH = 220;
-    private static final int BOX_HEIGHT = 96;
-    private static final int PADDING = 10;
-    private static final int HEAD_SIZE = 40;
+    private static final int BOX_WIDTH = 140;
+    private static final int BOX_HEIGHT = 50;
+    private static final int PADDING = 8;
+    private static final int HEAD_SIZE = 34;
+    private static final float CORNER_RADIUS = 8f;
 
-    private static final Color BOX_COLOR = new Color(28, 28, 36);
-    private static final Color BOX_OUTLINE = new Color(10, 10, 16);
-    private static final Color HEALTH_BACKGROUND = new Color(20, 20, 28);
-    private static final Color HEALTH_COLOR = new Color(170, 70, 255);
-    private static final Color ABSORPTION_COLOR = new Color(208, 160, 255);
-    private static final int TEXT_PRIMARY = 0xFFFFFFFF;
-    private static final int TEXT_SECONDARY = 0xFFE7E4FF;
-    private static final int TEXT_STATUS = 0xFFBBAAFF;
-    private static final int TEXT_META = 0xFF9FA9D9;
+    private final NumberSetting transparency = new NumberSetting("Transparency", 0, 255, 200, 5);
+    private final BooleanSetting particles = new BooleanSetting("Particles", true);
+    private final NumberSetting particleCount = new NumberSetting("Particle Count", 5, 30, 15, 1);
 
-    private FontRenderer interLarge;
-    private FontRenderer interMedium;
-    private FontRenderer interSmall;
+    private final DraggableComponent draggable;
+    private final Deque<HUDParticle> hudParticles = new ArrayDeque<>();
 
     public TargetHUD() {
         super("Target HUD", "Displays information about the current combat target", -1, Category.RENDER);
+        this.draggable = new DraggableComponent(20, 100, BOX_WIDTH, BOX_HEIGHT);
+        addSettings(transparency, particles, particleCount);
     }
 
     @EventHandler
     private void onRender2D(EventRender2D event) {
-        if (isNull()) return;
-        if (mc.currentScreen != null) return;
+        if (isNull())
+            return;
 
         PlayerEntity target = findTarget();
-        if (target == null) {
+        if (target == null && mc.currentScreen == null) {
             return;
         }
 
-        DrawContext context = event.getContext();
-        MatrixStack matrices = context.getMatrices();
+        draggable.update();
 
-        int x = 20;
-        int y = event.getHeight() / 2 - BOX_HEIGHT / 2;
+        float x = draggable.getX();
+        float y = draggable.getY();
 
-        matrices.push();
-        matrices.translate(0, 0, 400);
+        NanoVGRenderer.beginFrame();
 
-        ensureFonts();
+        int alpha = transparency.getValueInt();
+        int dragAlpha = Math.min(255, alpha + 30);
+        Color bgColor = draggable.isDragging() ? new Color(30, 30, 35, dragAlpha) : new Color(20, 20, 25, alpha);
+        NanoVGRenderer.drawRoundedRect(x, y, BOX_WIDTH, BOX_HEIGHT, CORNER_RADIUS, bgColor);
 
-        context.fill(x, y, x + BOX_WIDTH, y + BOX_HEIGHT, BOX_COLOR.getRGB());
-        context.drawBorder(x, y, BOX_WIDTH, BOX_HEIGHT, BOX_OUTLINE.getRGB());
-        context.fill(x, y, x + 3, y + BOX_HEIGHT, HEALTH_COLOR.getRGB());
-
-        int headX = x + PADDING;
-        int headY = y + PADDING;
-        renderPlayerHead(context, target, headX, headY);
-
-        int textX = headX + HEAD_SIZE + 8;
-
-        String name = target.getName().getString();
-        drawInter(interLarge, context, name, textX, headY, TEXT_PRIMARY);
-
-        float playerTotalHealth = mc.player.getHealth() + mc.player.getAbsorptionAmount();
-        float targetTotalHealth = target.getHealth() + target.getAbsorptionAmount();
-        CombatStatus status = determineStatus(playerTotalHealth, targetTotalHealth);
-        drawInter(interMedium, context, status.text(), textX, headY + 18, TEXT_STATUS);
-
-        int barY = headY + HEAD_SIZE + 4;
-        int barWidth = BOX_WIDTH - (textX - x) - PADDING;
-        renderHealthBar(context, target, textX, barY, barWidth);
-
-        String healthText = formatHealthValue(targetTotalHealth) + "/" + formatHealthValue(target.getMaxHealth());
-        float healthTextWidth = getStringWidth(interMedium, healthText);
-        int healthTextX = (int) (x + BOX_WIDTH - PADDING - healthTextWidth);
-        float healthTextY = barY - 16;
-        drawInter(interMedium, context, healthText, healthTextX, healthTextY, TEXT_SECONDARY);
-
-        double distance = mc.player.distanceTo(target);
-        String rangeMeta = String.format("%.1fm", distance);
-        float rangeWidth = getStringWidth(interSmall, rangeMeta);
-        float rangeHeight = getStringHeight(interSmall, rangeMeta);
-        float rangeY = y + BOX_HEIGHT - PADDING - rangeHeight;
-        drawInter(interSmall, context, rangeMeta, x + BOX_WIDTH - PADDING - rangeWidth, rangeY, TEXT_META);
-
-        List<ItemStack> armorStacks = collectArmor(target);
-        if (!armorStacks.isEmpty()) {
-            int armorRowY = y + BOX_HEIGHT - PADDING - 18;
-            int armorStartX = x + PADDING;
-            for (ItemStack stack : armorStacks) {
-                renderItemStack(context, stack, armorStartX, armorRowY);
-                armorStartX += 20;
-            }
+        if (draggable.isDragging()) {
+            Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+            NanoVGRenderer.drawRoundedRectOutline(x, y, BOX_WIDTH, BOX_HEIGHT, CORNER_RADIUS, 2f, accentColor);
         }
 
-        matrices.pop();
+        float headX = x + PADDING;
+        float headY = y + PADDING;
+
+        renderPlayerHeadCircle(headX, headY);
+
+        NanoVGRenderer.endFrame();
+
+        if (target != null) {
+            renderPlayerHead(event.getContext(), target, (int) headX, (int) headY);
+        }
+
+        NanoVGRenderer.beginFrame();
+
+        float barX = headX + HEAD_SIZE + PADDING;
+        float barY = y + PADDING + 4;
+        float barWidth = BOX_WIDTH - HEAD_SIZE - PADDING * 3;
+        float barHeight = 8;
+
+        String name = target != null ? target.getName().getString() : "Target";
+        float nameY = barY - 2;
+        drawPoppinsText(name, barX, nameY, 10f, new Color(255, 255, 255, 255));
+
+        int barAlpha = Math.min(255, alpha + 20);
+        Color barBgColor = new Color(15, 15, 20, barAlpha);
+        NanoVGRenderer.drawRoundedRect(barX, barY + 10, barWidth, barHeight, 4f, barBgColor);
+
+        float maxHealth = target != null ? Math.max(target.getMaxHealth(), 1f) : 20f;
+        float health = target != null ? MathHelper.clamp(target.getHealth(), 0f, maxHealth) : 15f;
+        float healthPercent = MathHelper.clamp(health / maxHealth, 0f, 1f);
+        float healthBarWidth = barWidth * healthPercent;
+
+        if (healthBarWidth > 0) {
+            Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+            NanoVGRenderer.drawRoundedRect(barX, barY + 10, healthBarWidth, barHeight, 4f, accentColor);
+        }
+
+        float targetTotalHealth = target != null ? target.getHealth() + target.getAbsorptionAmount() : 15f;
+        String healthText = formatHealthValue(targetTotalHealth);
+        float healthTextY = barY + 22;
+        drawPoppinsText(healthText, barX, healthTextY, 8f, new Color(200, 200, 200, 255));
+
+        if (particles.getValue()) {
+            renderParticles(event.getContext().getScaledWindowWidth(), event.getContext().getScaledWindowHeight());
+        }
+
+        NanoVGRenderer.endFrame();
+    }
+
+    @EventHandler
+    private void onAttack(AttackEvent e) {
+        if (!particles.getValue())
+            return;
+        if (!(e.getTarget() instanceof LivingEntity))
+            return;
+
+        long now = System.currentTimeMillis();
+        int count = particleCount.getValueInt();
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+        float hudCenterX = draggable.getX() + BOX_WIDTH / 2f;
+        float hudCenterY = draggable.getY() + BOX_HEIGHT / 2f;
+
+        Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+
+        for (int i = 0; i < count; i++) {
+            float angle = (float) (rnd.nextDouble() * Math.PI * 2);
+            float speed = 50 + rnd.nextFloat() * 100;
+            float vx = (float) Math.cos(angle) * speed;
+            float vy = (float) Math.sin(angle) * speed;
+            float size = 2 + rnd.nextFloat() * 3;
+
+            hudParticles.addLast(new HUDParticle(hudCenterX, hudCenterY, vx, vy, size, accentColor, now));
+        }
+    }
+
+    private void renderParticles(int screenWidth, int screenHeight) {
+        long now = System.currentTimeMillis();
+        float deltaTime = mc.getRenderTickCounter().getTickDelta(true) / 20f;
+
+        Iterator<HUDParticle> it = hudParticles.iterator();
+        while (it.hasNext()) {
+            HUDParticle p = it.next();
+
+            if (now - p.spawnTime > 1000) {
+                it.remove();
+                continue;
+            }
+
+            p.x += p.vx * deltaTime;
+            p.y += p.vy * deltaTime;
+            p.vy += 200 * deltaTime;
+
+            float life = (now - p.spawnTime) / 1000f;
+            int alpha = (int) ((1f - life) * p.color.getAlpha());
+
+            if (alpha > 0) {
+                Color particleColor = new Color(p.color.getRed(), p.color.getGreen(), p.color.getBlue(), alpha);
+                NanoVGRenderer.drawCircle(p.x, p.y, p.size, particleColor);
+            }
+        }
+    }
+
+    private static class HUDParticle {
+        float x, y;
+        float vx, vy;
+        float size;
+        Color color;
+        long spawnTime;
+
+        HUDParticle(float x, float y, float vx, float vy, float size, Color color, long spawnTime) {
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.size = size;
+            this.color = color;
+            this.spawnTime = spawnTime;
+        }
     }
 
     private PlayerEntity findTarget() {
@@ -122,7 +199,8 @@ public final class TargetHUD extends Module {
             return null;
         }
 
-        if (mc.targetedEntity instanceof PlayerEntity player && player.isAlive() && player != mc.player && !player.isSpectator()) {
+        if (mc.targetedEntity instanceof PlayerEntity player && player.isAlive() && player != mc.player
+                && !player.isSpectator()) {
             return player;
         }
 
@@ -130,7 +208,8 @@ public final class TargetHUD extends Module {
         PlayerEntity closest = null;
         double closestDistance = Double.MAX_VALUE;
         for (PlayerEntity player : mc.world.getPlayers()) {
-            if (player == mc.player || !player.isAlive() || player.isSpectator()) continue;
+            if (player == mc.player || !player.isAlive() || player.isSpectator())
+                continue;
             double distance = mc.player.distanceTo(player);
             if (distance <= range && distance < closestDistance) {
                 closest = player;
@@ -140,29 +219,31 @@ public final class TargetHUD extends Module {
         return closest;
     }
 
-    private void renderHealthBar(DrawContext context, PlayerEntity target, int x, int y, int width) {
-        context.fill(x, y, x + width, y + 10, HEALTH_BACKGROUND.getRGB());
+    private void renderPlayerHeadCircle(float x, float y) {
+        float centerX = x + HEAD_SIZE / 2f;
+        float centerY = y + HEAD_SIZE / 2f;
+        float radius = HEAD_SIZE / 2f;
 
-        float maxHealth = Math.max(target.getMaxHealth(), 1f);
-        float health = MathHelper.clamp(target.getHealth(), 0f, maxHealth);
-        float absorption = Math.max(target.getAbsorptionAmount(), 0f);
+        Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+        Color headBg = new Color(
+                accentColor.getRed(),
+                accentColor.getGreen(),
+                accentColor.getBlue(),
+                100);
 
-        float healthPercent = MathHelper.clamp(health / maxHealth, 0f, 1f);
-        int healthWidth = Math.round(width * healthPercent);
-        if (healthWidth > 0) {
-            context.fill(x, y, x + healthWidth, y + 10, HEALTH_COLOR.getRGB());
+        NanoVGRenderer.drawCircle(centerX, centerY, radius, headBg);
+    }
+
+    private void drawPoppinsText(String text, float x, float y, float size, Color color) {
+        int poppinsFontId = NanoVGRenderer.getPoppinsFontId();
+        NanoVGRenderer.drawTextWithFont(text, x, y, size, color, poppinsFontId);
+    }
+
+    private String formatHealthValue(float value) {
+        if (Math.abs(value - Math.round(value)) < 0.05f) {
+            return Integer.toString(Math.round(value));
         }
-
-        if (absorption > 0f) {
-            float absorptionPercent = MathHelper.clamp((health + absorption) / maxHealth, 0f, 1f);
-            int absorptionWidth = Math.round(width * absorptionPercent);
-            int overlayWidth = Math.max(0, absorptionWidth - healthWidth);
-            if (overlayWidth > 0) {
-                context.fill(x + healthWidth, y, x + healthWidth + overlayWidth, y + 10, ABSORPTION_COLOR.getRGB());
-            }
-        }
-
-        context.drawBorder(x, y, width, 10, BOX_OUTLINE.getRGB());
+        return String.format("%.1f", value);
     }
 
     private void renderPlayerHead(DrawContext context, PlayerEntity player, int x, int y) {
@@ -173,82 +254,24 @@ public final class TargetHUD extends Module {
 
         MatrixStack matrices = context.getMatrices();
         matrices.push();
+
+        NanoVGRenderer.save();
+        NanoVGRenderer.scissor(x, y, HEAD_SIZE, HEAD_SIZE);
+
         matrices.translate(x, y, 0);
-        float scale = TargetHUD.HEAD_SIZE / 8.0f;
+        float scale = HEAD_SIZE / 8.0f;
         matrices.scale(scale, scale, 1f);
 
         RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
         context.drawTexture(texture, 0, 0, 8, 8, 8, 8, 64, 64);
         context.drawTexture(texture, 0, 0, 40, 8, 8, 8, 64, 64);
         RenderSystem.disableBlend();
 
+        NanoVGRenderer.resetScissor();
+        NanoVGRenderer.restore();
+
         matrices.pop();
-    }
-
-    private void drawInter(FontRenderer font, DrawContext context, String text, float x, float y, int color) {
-        if (font != null) {
-            font.drawString(context.getMatrices(), text, x, y, new Color(color, true));
-        } else {
-            context.drawTextWithShadow(mc.textRenderer, text, (int) x, (int) y, color);
-        }
-    }
-
-    private float getStringWidth(FontRenderer font, String text) {
-        return font != null ? font.getStringWidth(text) : mc.textRenderer.getWidth(text);
-    }
-
-    private float getStringHeight(FontRenderer font, String text) {
-        if (font != null) {
-            return font.getStringHeight(text);
-        }
-        return mc.textRenderer.fontHeight;
-    }
-
-    private String formatHealthValue(float value) {
-        if (Math.abs(value - Math.round(value)) < 0.05f) {
-            return Integer.toString(Math.round(value));
-        }
-        return String.format("%.1f", value);
-    }
-
-    private void ensureFonts() {
-        if (interLarge != null && interMedium != null && interSmall != null) {
-            return;
-        }
-
-        if (SilkClient.INSTANCE == null || SilkClient.INSTANCE.getFontManager() == null) {
-            return;
-        }
-
-        FontManager fontManager = SilkClient.INSTANCE.getFontManager();
-        if (interLarge == null) {
-            interLarge = fontManager.getSize(18, FontManager.Type.Inter);
-        }
-        if (interMedium == null) {
-            interMedium = fontManager.getSize(16, FontManager.Type.Inter);
-        }
-        if (interSmall == null) {
-            interSmall = fontManager.getSize(14, FontManager.Type.Inter);
-        }
-    }
-
-    private void renderItemStack(DrawContext context, ItemStack stack, int x, int y) {
-        if (stack == null || stack.isEmpty()) {
-            return;
-        }
-        context.drawItem(stack, x, y, 0);
-        context.drawItemInSlot(mc.textRenderer, stack, x, y);
-    }
-
-    private List<ItemStack> collectArmor(PlayerEntity target) {
-        List<ItemStack> armor = new ArrayList<>();
-        target.getArmorItems().forEach(armor::add);
-        Collections.reverse(armor);
-        armor.removeIf(ItemStack::isEmpty);
-        if (armor.size() > 6) {
-            armor = new ArrayList<>(armor.subList(0, 6));
-        }
-        return armor;
     }
 
     private Identifier resolveSkin(PlayerEntity player) {
@@ -261,16 +284,4 @@ public final class TargetHUD extends Module {
         return textures.texture();
     }
 
-    private CombatStatus determineStatus(float playerTotal, float targetTotal) {
-        float diff = playerTotal - targetTotal;
-        if (diff > 2.0f) {
-            return new CombatStatus("Advantage", 0xFF7CFF9A);
-        } else if (diff < -2.0f) {
-            return new CombatStatus("Danger", 0xFFFF6666);
-        }
-        return new CombatStatus("Even", 0xFFFFE27A);
-    }
-
-    private record CombatStatus(String text, int color) {
-    }
 }
