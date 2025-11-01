@@ -126,15 +126,28 @@ public final class TargetHUD extends Module {
     private void onAttack(AttackEvent e) {
         if (!particles.getValue())
             return;
-        if (!(e.getTarget() instanceof LivingEntity))
+        if (!(e.getTarget() instanceof LivingEntity target))
             return;
 
         long now = System.currentTimeMillis();
         int count = particleCount.getValueInt();
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
-        float hudCenterX = draggable.getX() + BOX_WIDTH / 2f;
-        float hudCenterY = draggable.getY() + BOX_HEIGHT / 2f;
+        float x = draggable.getX();
+        float y = draggable.getY();
+        float headX = x + PADDING;
+        float barX = headX + HEAD_SIZE + PADDING;
+        float barY = y + PADDING + 4;
+        float barWidth = BOX_WIDTH - HEAD_SIZE - PADDING * 3;
+        float barHeight = 8;
+
+        float maxHealth = Math.max(target.getMaxHealth(), 1f);
+        float health = MathHelper.clamp(target.getHealth(), 0f, maxHealth);
+        float healthPercent = MathHelper.clamp(health / maxHealth, 0f, 1f);
+        float healthBarWidth = barWidth * healthPercent;
+
+        float particleSpawnX = barX + healthBarWidth;
+        float particleSpawnY = barY + 10 + barHeight / 2f;
 
         Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
 
@@ -145,7 +158,7 @@ public final class TargetHUD extends Module {
             float vy = (float) Math.sin(angle) * speed;
             float size = 2 + rnd.nextFloat() * 3;
 
-            hudParticles.addLast(new HUDParticle(hudCenterX, hudCenterY, vx, vy, size, accentColor, now));
+            hudParticles.addLast(new HUDParticle(particleSpawnX, particleSpawnY, vx, vy, size, accentColor, now));
         }
     }
 
