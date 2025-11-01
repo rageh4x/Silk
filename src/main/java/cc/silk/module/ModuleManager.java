@@ -5,6 +5,7 @@ import cc.silk.module.modules.client.Client;
 import cc.silk.module.modules.client.ClientSettingsModule;
 import cc.silk.module.modules.client.Debugger;
 import cc.silk.module.modules.client.NewClickGUIModule;
+import cc.silk.module.modules.client.Secret;
 import cc.silk.module.modules.combat.*;
 import cc.silk.module.modules.misc.*;
 import cc.silk.module.modules.player.*;
@@ -86,7 +87,8 @@ public final class ModuleManager {
                 new PearlKey(), new PearlCatch(), new WindChargeKey(), new Teams(), new FakePlayer());
 
         // Client
-        add(new ClickGUIModule(), new NewClickGUIModule(), new ClientSettingsModule(), new Client(), new Debugger());
+        add(new ClickGUIModule(), new NewClickGUIModule(), new ClientSettingsModule(), new Client(), new Debugger(),
+                new Secret());
     }
 
     private void add(Module... mods) {
