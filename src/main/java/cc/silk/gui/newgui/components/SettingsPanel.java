@@ -70,7 +70,6 @@ public class SettingsPanel {
     
     private void clampToScreen() {
         if (screenWidth > 0 && screenHeight > 0) {
-            // Clamp X position
             if (targetX + width > screenWidth) {
                 targetX = screenWidth - width - 10;
             }
@@ -78,7 +77,6 @@ public class SettingsPanel {
                 targetX = 10;
             }
             
-            // Clamp Y position
             if (y + height > screenHeight) {
                 y = screenHeight - height - 10;
             }
@@ -587,7 +585,7 @@ public class SettingsPanel {
     }
 
     private String getKeyName(int keyCode) {
-        if (keyCode == 0)
+        if (keyCode == 0 || keyCode == -1)
             return "NONE";
 
         switch (keyCode) {

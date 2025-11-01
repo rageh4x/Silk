@@ -92,9 +92,24 @@ public final class KeyUtils implements IMinecraft {
     }
 
     public static boolean isKeyPressed(int keyCode) {
-        if (keyCode <= 8)
-            return GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), keyCode) == GLFW.GLFW_PRESS;
+        try {
+            if (keyCode >= 0 && keyCode <= 8) {
+                return GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), keyCode) == GLFW.GLFW_PRESS;
+            } else if (keyCode <= -100) {
+                int button = -100 - keyCode;
+                if (button >= 0 && button <= 8) {
+                    return GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), button) == GLFW.GLFW_PRESS;
+                }
+            } else if (keyCode < 0) {
+                int button = -(keyCode + 1);
+                if (button >= 0 && button <= 8) {
+                    return GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), button) == GLFW.GLFW_PRESS;
+                }
+            }
 
-        return GLFW.glfwGetKey(mc.getWindow().getHandle(), keyCode) == GLFW.GLFW_PRESS;
+            return GLFW.glfwGetKey(mc.getWindow().getHandle(), keyCode) == GLFW.GLFW_PRESS;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

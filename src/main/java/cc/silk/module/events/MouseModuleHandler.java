@@ -11,8 +11,16 @@ public class MouseModuleHandler {
     @EventHandler
     public void onMouseClick(MouseClickEvent event) {
         if (event.action() == GLFW.GLFW_PRESS) {
+            int button = event.button();
+
             for (Module module : SilkClient.INSTANCE.getModuleManager().getModules()) {
-                if (event.button() == module.getKey()) {
+                int moduleKey = module.getKey();
+
+                boolean matches = moduleKey == button ||
+                        moduleKey == -(button + 1) ||
+                        moduleKey == (-100 - button);
+
+                if (matches) {
                     module.toggle();
                     break;
                 }
