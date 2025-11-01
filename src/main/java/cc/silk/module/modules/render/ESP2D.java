@@ -27,29 +27,30 @@ public class ESP2D extends Module {
                         "All");
         private final BooleanSetting showSelf = new BooleanSetting("Show Self", false);
         private final NumberSetting range = new NumberSetting("Range", 10, 200, 64, 5);
-        private final ModeSetting boxMode = new ModeSetting("Box Mode", "Full", "Full", "Corners");
+        private final ModeSetting boxMode = new ModeSetting("Box Mode", "Full", "Full", "Corners", "Rounded");
         private final BooleanSetting boxSetting = new BooleanSetting("Box", true);
+        private final NumberSetting roundRadius = new NumberSetting("Round Radius", 0, 10, 3, 0.5);
         private final BooleanSetting boxFill = new BooleanSetting("Box Fill", false);
         private final NumberSetting fillOpacity = new NumberSetting("Fill Opacity", 0, 255, 80, 5);
-        private final BooleanSetting gradientFill = new BooleanSetting("Gradient Fill", false);
-        private final ColorSetting fillColor1 = new ColorSetting("Fill Color 1", new Color(255, 0, 0, 80));
-        private final ColorSetting fillColor2 = new ColorSetting("Fill Color 2", new Color(0, 0, 255, 80));
         private final BooleanSetting healthBar = new BooleanSetting("Health Bar", true);
+        private final ColorSetting boxColor = new ColorSetting("Box Color", new Color(255, 255, 255));
         private final ColorSetting playerColor = new ColorSetting("Player Color", new Color(255, 255, 255));
         private final ColorSetting passiveColor = new ColorSetting("Passive Color", new Color(0, 255, 0));
         private final ColorSetting hostileColor = new ColorSetting("Hostile Color", new Color(255, 0, 0));
 
         public ESP2D() {
                 super("2D ESP", "Draws 2D boxes around entities", -1, Category.RENDER);
-                addSettings(targets, showSelf, range, boxMode, boxSetting, boxFill, fillOpacity, gradientFill,
-                                fillColor1,
-                                fillColor2, healthBar, playerColor, passiveColor, hostileColor);
+                addSettings(targets, showSelf, range, boxMode, boxSetting, roundRadius, boxFill, fillOpacity, healthBar,
+                                boxColor, playerColor, passiveColor, hostileColor);
         }
 
         @EventHandler
         private void onRender2D(EventRender2D event) {
                 if (isNull() || mc.world == null || mc.player == null)
                         return;
+
+                com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+                com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
 
                 cc.silk.utils.render.NanoVGRenderer.beginFrame();
 
@@ -115,125 +116,106 @@ public class ESP2D extends Module {
                                 float endPosX = (float) position.z;
                                 float endPosY = (float) position.w;
 
-                                float lineThickness = 1f;
-
-                                Color entityColor = getColorForEntity(entity);
+                                Color accentColor = boxColor.getValue();
 
                                 if (boxFill.getValue()) {
-                                        if (gradientFill.getValue()) {
-                                                int opacity = fillOpacity.getValueInt();
-                                                Color color1 = new Color(fillColor1.getValue().getRed(),
-                                                                fillColor1.getValue().getGreen(),
-                                                                fillColor1.getValue().getBlue(), opacity);
-                                                Color color2 = new Color(fillColor2.getValue().getRed(),
-                                                                fillColor2.getValue().getGreen(),
-                                                                fillColor2.getValue().getBlue(), opacity);
-                                                cc.silk.utils.render.NanoVGRenderer.drawRoundedRectGradient(posX, posY,
-                                                                endPosX - posX,
-                                                                endPosY - posY, 0f, color1, color2);
-                                        } else {
-                                                Color fillColor = new Color(entityColor.getRed(),
-                                                                entityColor.getGreen(),
-                                                                entityColor.getBlue(), fillOpacity.getValueInt());
-                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX, posY, endPosX - posX,
-                                                                endPosY - posY,
-                                                                fillColor);
-                                        }
+                                        int opacity = fillOpacity.getValueInt();
+                                        Color fillColor = new Color(0, 0, 0, opacity);
+                                        cc.silk.utils.render.NanoVGRenderer.drawRect(posX, posY, endPosX - posX,
+                                                        endPosY - posY, fillColor);
                                 }
 
                                 if (boxSetting.getValue()) {
+                                        float shadowOffset = 1f;
+                                        float lineWidth = 0.5f;
+
                                         if (boxMode.getMode().equals("Full")) {
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX,
-                                                                endPosY - 1, lineThickness,
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - shadowOffset, posY,
+                                                                lineWidth + shadowOffset, endPosY - posY + shadowOffset,
                                                                 Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, endPosX, posY,
-                                                                lineThickness,
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - shadowOffset,
+                                                                posY - shadowOffset, endPosX - posX + shadowOffset,
+                                                                lineWidth + shadowOffset, Color.BLACK);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - lineWidth, posY,
+                                                                lineWidth + shadowOffset, endPosY - posY + shadowOffset,
                                                                 Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX,
-                                                                endPosY - 1, lineThickness,
-                                                                Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY - 1, endPosX,
-                                                                endPosY - 1,
-                                                                lineThickness,
-                                                                Color.BLACK);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - shadowOffset,
+                                                                endPosY - lineWidth, endPosX - posX + shadowOffset,
+                                                                lineWidth + shadowOffset, Color.BLACK);
 
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX,
-                                                                endPosY - 1, lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, endPosX, posY,
-                                                                lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX,
-                                                                endPosY - 1, lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY - 1, endPosX,
-                                                                endPosY - 1,
-                                                                lineThickness,
-                                                                entityColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - lineWidth, posY,
+                                                                lineWidth, endPosY - posY, accentColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX, endPosY - lineWidth,
+                                                                endPosX - posX, lineWidth, accentColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX, posY - lineWidth,
+                                                                endPosX - posX, lineWidth, accentColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - lineWidth, posY,
+                                                                lineWidth, endPosY - posY, accentColor);
+                                        } else if (boxMode.getMode().equals("Rounded")) {
+                                                float radius = (float) roundRadius.getValue();
+                                                float boxWidth = endPosX - posX;
+                                                float boxHeight = endPosY - posY;
+                                                
+                                                cc.silk.utils.render.NanoVGRenderer.drawRoundedRectOutline(
+                                                                posX - 1, posY - 1, boxWidth + 2, boxHeight + 2, radius, 1.5f, Color.BLACK);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRoundedRectOutline(
+                                                                posX, posY, boxWidth, boxHeight, radius, 1f, accentColor);
                                         } else {
-                                                float cornerLength = (endPosX - posX) * 0.25f;
+                                                float boxWidth = endPosX - posX;
+                                                float cornerLength = Math.min(boxWidth * 0.25f, 15f);
 
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX,
-                                                                posY + cornerLength,
-                                                                lineThickness,
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - shadowOffset, posY,
+                                                                lineWidth + shadowOffset, cornerLength + shadowOffset,
                                                                 Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY,
-                                                                posX + cornerLength, posY,
-                                                                lineThickness,
-                                                                Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX,
-                                                                posY + cornerLength,
-                                                                lineThickness,
-                                                                Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength,
-                                                                posY, endPosX, posY,
-                                                                lineThickness,
-                                                                Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX,
-                                                                endPosY - cornerLength, posX, endPosY,
-                                                                lineThickness,
-                                                                Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY,
-                                                                posX + cornerLength, endPosY,
-                                                                lineThickness,
-                                                                Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX,
-                                                                endPosY - cornerLength, endPosX, endPosY,
-                                                                lineThickness, Color.BLACK);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength,
-                                                                endPosY, endPosX, endPosY,
-                                                                lineThickness, Color.BLACK);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - shadowOffset,
+                                                                posY - shadowOffset, cornerLength + shadowOffset,
+                                                                lineWidth + shadowOffset, Color.BLACK);
 
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY, posX,
-                                                                posY + cornerLength,
-                                                                lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, posY,
-                                                                posX + cornerLength, posY,
-                                                                lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX, posY, endPosX,
-                                                                posY + cornerLength,
-                                                                lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength,
-                                                                posY, endPosX, posY,
-                                                                lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX,
-                                                                endPosY - cornerLength, posX, endPosY,
-                                                                lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(posX, endPosY,
-                                                                posX + cornerLength, endPosY,
-                                                                lineThickness,
-                                                                entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX,
-                                                                endPosY - cornerLength, endPosX, endPosY,
-                                                                lineThickness, entityColor);
-                                                cc.silk.utils.render.NanoVGRenderer.drawLine(endPosX - cornerLength,
-                                                                endPosY, endPosX, endPosY,
-                                                                lineThickness, entityColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - lineWidth, posY,
+                                                                lineWidth + shadowOffset, cornerLength + shadowOffset,
+                                                                Color.BLACK);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(
+                                                                endPosX - cornerLength - shadowOffset,
+                                                                posY - shadowOffset, cornerLength + shadowOffset,
+                                                                lineWidth + shadowOffset, Color.BLACK);
+
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - shadowOffset,
+                                                                endPosY - cornerLength, lineWidth + shadowOffset,
+                                                                cornerLength + shadowOffset, Color.BLACK);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - shadowOffset,
+                                                                endPosY - lineWidth, cornerLength + shadowOffset,
+                                                                lineWidth + shadowOffset, Color.BLACK);
+
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - lineWidth,
+                                                                endPosY - cornerLength, lineWidth + shadowOffset,
+                                                                cornerLength + shadowOffset, Color.BLACK);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(
+                                                                endPosX - cornerLength - shadowOffset,
+                                                                endPosY - lineWidth, cornerLength + shadowOffset,
+                                                                lineWidth + shadowOffset, Color.BLACK);
+
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - lineWidth, posY,
+                                                                lineWidth, cornerLength, accentColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX, posY - lineWidth,
+                                                                cornerLength, lineWidth, accentColor);
+
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - lineWidth, posY,
+                                                                lineWidth, cornerLength, accentColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - cornerLength,
+                                                                posY - lineWidth, cornerLength, lineWidth, accentColor);
+
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX - lineWidth,
+                                                                endPosY - cornerLength, lineWidth, cornerLength,
+                                                                accentColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(posX, endPosY - lineWidth,
+                                                                cornerLength, lineWidth, accentColor);
+
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - lineWidth,
+                                                                endPosY - cornerLength, lineWidth, cornerLength,
+                                                                accentColor);
+                                                cc.silk.utils.render.NanoVGRenderer.drawRect(endPosX - cornerLength,
+                                                                endPosY - lineWidth, cornerLength, lineWidth,
+                                                                accentColor);
                                         }
                                 }
 
@@ -243,30 +225,40 @@ public class ESP2D extends Module {
                                         float healthPercent = Math.min(health / maxHealth, 1f);
 
                                         float boxWidth = endPosX - posX;
-                                        float barWidth = Math.max(2f, Math.min(3f, boxWidth * 0.05f));
-                                        float barHeight = endPosY - posY;
-                                        float barX = posX - barWidth - 2;
-                                        float barY = posY;
+                                        float maxBarWidth = 3.5f;
+                                        float barWidth = Math.min(2.5f, boxWidth * 0.08f);
+                                        barWidth = Math.min(barWidth, maxBarWidth);
 
-                                        Color barBg = new Color(0, 0, 0, 150);
-                                        cc.silk.utils.render.NanoVGRenderer.drawRect(barX, barY, barWidth, barHeight,
-                                                        barBg);
+                                        float barHeight = endPosY - posY;
+                                        float barX = posX - barWidth - 3f;
+                                        float barY = posY;
+                                        float yOffset = 0.3f;
+
+                                        cc.silk.utils.render.NanoVGRenderer.drawRect(barX, barY, barWidth + 0.5f,
+                                                        barHeight, Color.BLACK);
+                                        cc.silk.utils.render.NanoVGRenderer.drawRect(barX, barY - yOffset,
+                                                        barWidth, yOffset, Color.BLACK);
+                                        cc.silk.utils.render.NanoVGRenderer.drawRect(barX, barY + barHeight,
+                                                        barWidth, yOffset, Color.BLACK);
 
                                         float healthBarHeight = barHeight * healthPercent;
                                         float healthBarY = barY + (barHeight - healthBarHeight);
 
-                                        int red = (int) ((1f - healthPercent) * 255);
-                                        int green = (int) (healthPercent * 255);
-                                        Color healthColor = new Color(red, green, 0, 255);
+                                        Color accentDark = new Color(
+                                                        Math.max(0, accentColor.getRed() - 60),
+                                                        Math.max(0, accentColor.getGreen() - 60),
+                                                        Math.max(0, accentColor.getBlue() - 60));
 
-                                        cc.silk.utils.render.NanoVGRenderer.drawRect(barX, healthBarY, barWidth,
-                                                        healthBarHeight,
-                                                        healthColor);
+                                        cc.silk.utils.render.NanoVGRenderer.drawRoundedRectGradient(barX, healthBarY,
+                                                        barWidth, healthBarHeight, 0f, accentColor, accentDark);
                                 }
                         }
                 }
 
                 cc.silk.utils.render.NanoVGRenderer.endFrame();
+
+                com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+                com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
         }
 
         private Color getColorForEntity(Entity entity) {

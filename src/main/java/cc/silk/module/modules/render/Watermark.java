@@ -81,10 +81,14 @@ public class Watermark extends Module {
 
         String title = text.getValue();
         int fps = mc.getCurrentFps();
-        int ping = mc.getNetworkHandler() != null
-                && mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid()) != null
-                        ? mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid()).getLatency()
-                        : 0;
+
+        int ping = 0;
+        if (mc.getNetworkHandler() != null && mc.player != null) {
+            var playerEntry = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
+            if (playerEntry != null) {
+                ping = playerEntry.getLatency();
+            }
+        }
 
         String fpsText = String.valueOf(fps);
         String pingText = ping + "ms";

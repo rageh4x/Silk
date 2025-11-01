@@ -170,6 +170,7 @@ public class NanoVGRenderer {
         int height = mc.getWindow().getScaledHeight();
         float pixelRatio = (float) mc.getWindow().getFramebufferWidth() / (float) mc.getWindow().getScaledWidth();
 
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
@@ -188,10 +189,15 @@ public class NanoVGRenderer {
     }
 
     public static void restoreMinecraftState() {
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest();
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthFunc(515);
         RenderSystem.enableCull();
+        RenderSystem.disableScissor();
+        RenderSystem.colorMask(true, true, true, true);
+        RenderSystem.depthMask(true);
     }
 
     public static void drawRoundedRect(float x, float y, float width, float height, float radius, Color color) {
@@ -516,7 +522,7 @@ public class NanoVGRenderer {
 
         try (MemoryStack stack = stackPush()) {
             float alpha = tint.getAlpha() / 255f;
-            
+
             NVGPaint paint = nvgImagePattern(vg, x, y, width, height, 0, imageId, alpha, NVGPaint.malloc(stack));
 
             nvgBeginPath(vg);

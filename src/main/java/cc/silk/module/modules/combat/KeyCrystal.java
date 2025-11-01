@@ -91,8 +91,9 @@ public final class KeyCrystal extends Module {
         if (mc.crosshairTarget instanceof EntityHitResult entityHit) {
             if (entityHit.getEntity() instanceof EndCrystalEntity crystal) {
 
-                if (mc.player.getPos().distanceTo(crystal.getPos()) <= 6.0 && attackTimer.hasElapsedTime(150)) {
-                    if (antiWeakness.getValue() && mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.WEAKNESS)) {
+                if (mc.player.getPos().distanceTo(crystal.getPos()) <= 6.0 && attackTimer.hasElapsedTime(50)) {
+                    if (antiWeakness.getValue()
+                            && mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.WEAKNESS)) {
                         InventoryUtil.swapToWeapon(SwordItem.class);
                     }
                     ((MinecraftClientAccessor) mc).invokeDoAttack();
