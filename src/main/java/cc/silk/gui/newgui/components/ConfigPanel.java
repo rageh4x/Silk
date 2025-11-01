@@ -34,6 +34,9 @@ public class ConfigPanel {
     private String newConfigName = "";
     private boolean namingNewConfig = false;
     private String selectedConfig = null;
+    private String deleteConfirmConfig = null;
+    private long deleteConfirmTime = 0;
+    private static final long DELETE_CONFIRM_TIMEOUT = 3000;
 
     public ConfigPanel(float x, float y, int width) {
         this.x = x;
@@ -156,9 +159,18 @@ public class ConfigPanel {
             NanoVGRenderer.drawRect(x, entryY, width, CONFIG_ENTRY_HEIGHT, hoverBg);
         }
 
-        String displayName = config.name;
+        boolean isDeleteConfirm = config.name.equals(deleteConfirmConfig) 
+            && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
+        
+        if (isDeleteConfirm) {
+            int deleteAlpha = (int) (80 * alpha);
+            Color deleteBg = new Color(180, 50, 50, deleteAlpha);
+            NanoVGRenderer.drawRect(x, entryY, width, CONFIG_ENTRY_HEIGHT, deleteBg);
+        }
+
+        String displayName = isDeleteConfirm ? "Delete?" : config.name;
         float textWidth = NanoVGRenderer.getTextWidth(displayName, 8f);
-        if (textWidth > width - 8) {
+        if (!isDeleteConfirm && textWidth > width - 8) {
             while (textWidth > width - 12 && displayName.length() > 3) {
                 displayName = displayName.substring(0, displayName.length() - 1);
                 textWidth = NanoVGRenderer.getTextWidth(displayName + "...", 8f);
@@ -167,7 +179,7 @@ public class ConfigPanel {
         }
 
         float entryFontSize = 8f;
-        float entryTextX = Math.round(x + 4f);
+        float entryTextX = Math.round(x + (isDeleteConfirm ? (width - textWidth) / 2f : 4f));
         float entryTextY = Math.round(entryY + (CONFIG_ENTRY_HEIGHT - entryFontSize) / 2f);
         NanoVGRenderer.drawText(displayName, entryTextX, entryTextY, entryFontSize, textColor);
 
@@ -203,10 +215,10 @@ public class ConfigPanel {
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0)
+        if (button != 0 && button != 1)
             return false;
 
-        if (isMouseOver(mouseX, mouseY, x + width - 28f, y, 14f, HEADER_HEIGHT)) {
+        if (button == 0 && isMouseOver(mouseX, mouseY, x + width - 28f, y, 14f, HEADER_HEIGHT)) {
             if (selectedConfig != null) {
                 ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
                 if (pm != null) {
@@ -216,7 +228,7 @@ public class ConfigPanel {
             return true;
         }
 
-        if (isMouseOver(mouseX, mouseY, x + width - 16f, y, 12f, HEADER_HEIGHT)) {
+        if (button == 0 && isMouseOver(mouseX, mouseY, x + width - 16f, y, 12f, HEADER_HEIGHT)) {
             ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
             if (pm != null) {
                 String saveName = selectedConfig != null ? selectedConfig : "quicksave";
@@ -231,12 +243,14 @@ public class ConfigPanel {
                 refreshConfigs();
                 return true;
             }
-            dragging = true;
-            x = Math.round(x);
-            y = Math.round(y);
-            dragOffsetX = (float) (mouseX - x);
-            dragOffsetY = (float) (mouseY - y);
-            return true;
+            if (button == 0) {
+                dragging = true;
+                x = Math.round(x);
+                y = Math.round(y);
+                dragOffsetX = (float) (mouseX - x);
+                dragOffsetY = (float) (mouseY - y);
+                return true;
+            }
         }
 
         float contentY = y + HEADER_HEIGHT;
@@ -248,16 +262,26 @@ public class ConfigPanel {
 
                 if (button == 0) {
                     selectedConfig = config.name;
+                    deleteConfirmConfig = null;
                 } else if (button == 1) {
-                    ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
-                    if (pm != null) {
-                        File profileFile = new File(pm.getProfileDir(), config.name + ".json");
-                        if (profileFile.delete()) {
-                            if (config.name.equals(selectedConfig)) {
-                                selectedConfig = null;
+                    boolean isAlreadyConfirming = config.name.equals(deleteConfirmConfig) 
+                        && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
+                    
+                    if (isAlreadyConfirming) {
+                        ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
+                        if (pm != null) {
+                            File profileFile = new File(pm.getProfileDir(), config.name + ".json");
+                            if (profileFile.delete()) {
+                                if (config.name.equals(selectedConfig)) {
+                                    selectedConfig = null;
+                                }
+                                deleteConfirmConfig = null;
+                                refreshConfigs();
                             }
-                            refreshConfigs();
                         }
+                    } else {
+                        deleteConfirmConfig = config.name;
+                        deleteConfirmTime = System.currentTimeMillis();
                     }
                 }
                 return true;
@@ -356,6 +380,9 @@ public class ConfigPanel {
     }
 
     public void update(float deltaTime) {
+        if (deleteConfirmConfig != null && System.currentTimeMillis() - deleteConfirmTime >= DELETE_CONFIRM_TIMEOUT) {
+            deleteConfirmConfig = null;
+        }
     }
 
     private static class ConfigEntry {
