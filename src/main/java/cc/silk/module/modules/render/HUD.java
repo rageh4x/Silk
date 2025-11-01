@@ -19,12 +19,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public class HUD extends Module {
-    public static final BooleanSetting watermark = new BooleanSetting("Watermark", true);
-    public static final ModeSetting watermarkMode = new ModeSetting("Watermark Mode", "Simple", "Simple", "Gamesense");
-    public static final StringSetting watermarkText = new StringSetting("Watermark Text", "Silk");
-    public static final ModeSetting watermarkSimpleFontMode = new ModeSetting("Watermark Font", "MC", "MC", "Inter",
-            "JetbrainsMono", "Poppins");
-    public static final NumberSetting watermarkScale = new NumberSetting("Watermark Scale", 0.5, 3.0, 1.0, 0.1);
     public static final BooleanSetting arrayList = new BooleanSetting("ArrayList", true);
     public static final NumberSetting arrayListScale = new NumberSetting("ArrayList Scale", 0.5, 3.0, 1.0, 0.1);
     public static final ModeSetting colorMode = new ModeSetting("Color Mode", "Astolfo", "Astolfo", "Theme", "Custom");
@@ -53,10 +47,9 @@ public class HUD extends Module {
 
     public HUD() {
         super("HUD", "Renders information", -1, Category.RENDER);
-        addSettings(watermark, watermarkMode, watermarkText, watermarkSimpleFontMode, watermarkScale, arrayList,
-                arrayListScale, colorMode, customColor, fontMode, suffixMode, hideVisuals, lowercase, backBarMode,
-                outline, waveAnimation, waveDirection, waveSpeed, waveSpread, glow, glowIntensity, padding, opacity,
-                info, bpsCounter, fpsCounter, scale);
+        addSettings(arrayList, arrayListScale, colorMode, customColor, fontMode, suffixMode, hideVisuals, lowercase,
+                backBarMode, outline, waveAnimation, waveDirection, waveSpeed, waveSpread, glow, glowIntensity, padding,
+                opacity, info, bpsCounter, fpsCounter, scale);
     }
 
     public static int getAstolfo(int offset) {
@@ -72,89 +65,6 @@ public class HUD extends Module {
         }
         if (mc.currentScreen != null) {
             return;
-        }
-
-        if (watermark.getValue()) {
-            switch (watermarkMode.getMode()) {
-                case "Simple":
-                    if (!watermarkText.getValue().isEmpty()) {
-                        String watermark = watermarkText.getValue();
-
-                        char firstCharacter = watermark.charAt(0);
-                        String restOfString = watermark.substring(1);
-
-                        String totalWatermarkText = firstCharacter + Formatting.WHITE.toString() + restOfString;
-
-                        int scaledX = (int) (3 * watermarkScale.getValue());
-                        int scaledY = (int) (3 * watermarkScale.getValue());
-
-                        Color watermarkColor = switch (colorMode.getMode()) {
-                            case "Astolfo" -> new Color(getAstolfo(0));
-                            case "Custom" -> getCustomColor();
-                            default -> getThemeColor();
-                        };
-
-                        if (watermarkSimpleFontMode.getMode().equals("MC")) {
-                            event.getContext().getMatrices().push();
-                            event.getContext().getMatrices().scale((float) watermarkScale.getValue(),
-                                    (float) watermarkScale.getValue(), 1.0f);
-
-                            int adjustedX = (int) (scaledX / watermarkScale.getValue());
-                            int adjustedY = (int) (scaledY / watermarkScale.getValue());
-
-                            event.getContext().drawText(mc.textRenderer, totalWatermarkText, adjustedX, adjustedY,
-                                    watermarkColor.getRGB(), true);
-                            event.getContext().getMatrices().pop();
-                        } else {
-                            getWatermarkFontRenderer(watermarkSimpleFontMode.getMode()).drawString(
-                                    event.getContext().getMatrices(), totalWatermarkText, scaledX, scaledY,
-                                    watermarkColor);
-                        }
-                    }
-                    break;
-
-                case "Gamesense":
-                    String text = "§f" + watermarkText.getValue() + "§rsense §8| §f " + ("free") + "§7 (" + ("0000")
-                            + ") §8 | §f " + getIP();
-
-                    int padding = (int) (2 * watermarkScale.getValue());
-                    int offsetX = (int) (4 * watermarkScale.getValue());
-                    int offsetY = (int) (4 * watermarkScale.getValue());
-
-                    FontRenderer gamesenseFont = getWatermarkFontRenderer("Inter");
-                    int textWidth = (int) gamesenseFont.getStringWidth(text);
-                    int textHeight = (int) gamesenseFont.getStringHeight(text);
-                    int backgroundWidth = textWidth + padding * 2;
-                    int backgroundHeight = textHeight + padding * 2;
-
-                    event.getContext().fill(
-                            offsetX - padding - 1,
-                            offsetY - padding - 1,
-                            offsetX + backgroundWidth + 1,
-                            offsetY + backgroundHeight + 1,
-                            new Color(96, 96, 96).getRGB());
-
-                    event.getContext().fill(
-                            offsetX - padding,
-                            offsetY - padding,
-                            offsetX + backgroundWidth,
-                            offsetY + backgroundHeight,
-                            new Color(25, 25, 25).getRGB());
-
-                    Color gamesenseColor = switch (colorMode.getMode()) {
-                        case "Astolfo" -> new Color(getAstolfo(0));
-                        case "Custom" -> getCustomColor();
-                        default -> getThemeColor();
-                    };
-
-                    gamesenseFont.drawString(
-                            event.getContext().getMatrices(),
-                            text,
-                            offsetX,
-                            offsetY,
-                            gamesenseColor);
-                    break;
-            }
         }
 
         if (arrayList.getValue()) {
@@ -331,27 +241,6 @@ public class HUD extends Module {
             case "Poppins" -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.Poppins);
             default -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.Inter);
         };
-    }
-
-    private FontRenderer getWatermarkFontRenderer(String name) {
-        int scaledSize = (int) (16 * watermarkScale.getValue());
-        return switch (name) {
-            case "JetbrainsMono" -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.JetbrainsMono);
-            case "Poppins" -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.Poppins);
-            default -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.Inter);
-        };
-    }
-
-    private String getIP() {
-        if (mc.world == null) {
-            return "NULL";
-        } else {
-            if (mc.isInSingleplayer()) {
-                return "Singleplayer";
-            } else {
-                return mc.getCurrentServerEntry().address;
-            }
-        }
     }
 
     private String getFullName(Module m) {

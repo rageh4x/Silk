@@ -7,14 +7,14 @@ import org.lwjgl.glfw.GLFW;
 public class DraggableComponent {
     private float x;
     private float y;
-    private final int width;
-    private final int height;
+    private float width;
+    private float height;
 
     private boolean dragging = false;
     private float dragOffsetX = 0;
     private float dragOffsetY = 0;
 
-    public DraggableComponent(float x, float y, int width, int height) {
+    public DraggableComponent(float x, float y, float width, float height) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -77,11 +77,19 @@ public class DraggableComponent {
         return dragging;
     }
 
-    public int getWidth() {
+    public float getWidth() {
         return width;
     }
 
-    public int getHeight() {
+    public float getHeight() {
         return height;
+    }
+
+    public void setWidth(float width) {
+        this.width = width;
+    }
+
+    public void setHeight(float height) {
+        this.height = height;
     }
 }
