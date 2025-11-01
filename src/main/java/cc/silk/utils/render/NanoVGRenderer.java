@@ -50,9 +50,9 @@ public class NanoVGRenderer {
             System.out.println("[NanoVG] Attempting to load fonts...");
             regularFont = loadFont("inter", "silk/fonts/Inter.ttf");
             boldFont = loadFont("inter-bold", "silk/fonts/Inter.ttf");
-            jetbrainsFont = loadFont("jetbrains", "silk/fonts/jetbrainsmono.ttf");
-            poppinsFont = loadFont("poppins", "silk/fonts/poppins-medium.ttf");
-            monacoFont = loadFont("monaco", "silk/fonts/Monaco.ttf");
+            jetbrainsFont = loadFont("jetbrains", "silk/fonts/JetbrainsMono.ttf");
+            poppinsFont = loadFont("poppins", "silk/fonts/Poppins-Medium.ttf");
+            monacoFont = loadFont("monaco", "silk/fonts/monaco.ttf");
 
             try {
                 iconFont = loadFont("fa-solid", "silk/fonts/font awesome 7 freesolid900.otf");
@@ -106,13 +106,32 @@ public class NanoVGRenderer {
     private static int loadFont(String name, String path) throws IOException {
         System.out.println("[NanoVG] Loading font: " + name + " from " + path);
 
-        try (InputStream is = NanoVGRenderer.class.getClassLoader().getResourceAsStream(path)) {
-            if (is == null) {
-                System.err.println("[NanoVG] Font resource not found: " + path);
-                return -1;
-            }
+      // graph this is for feather support cuz fonts didnt work on it
+        InputStream is = null;
 
+        is = NanoVGRenderer.class.getClassLoader().getResourceAsStream(path);
+        
+        if (is == null) {
+            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
+        }
+        
+        if (is == null) {
+            is = ClassLoader.getSystemResourceAsStream(path);
+        }
+        
+        if (is == null) {
+            is = NanoVGRenderer.class.getResourceAsStream("/" + path);
+        }
+        
+        if (is == null) {
+            System.err.println("[NanoVG] Font resource not found: " + path);
+            return -1;
+        }
+
+        try {
             return createFontFromStream(name, is);
+        } finally {
+            is.close();
         }
     }
 
@@ -284,11 +303,11 @@ public class NanoVGRenderer {
         try {
             String fontStyle = cc.silk.module.modules.client.ClientSettingsModule.getFontStyle();
 
-            if ("jetbrainsmono.ttf".equals(fontStyle)) {
+            if ("JetbrainsMono.ttf".equals(fontStyle) || "jetbrainsmono.ttf".equals(fontStyle)) {
                 return jetbrainsFont > 0 ? jetbrainsFont : regularFont;
-            } else if ("poppins-medium.ttf".equals(fontStyle)) {
+            } else if ("Poppins-Medium.ttf".equals(fontStyle) || "poppins-medium.ttf".equals(fontStyle)) {
                 return poppinsFont > 0 ? poppinsFont : regularFont;
-            } else if ("Monaco.ttf".equals(fontStyle)) {
+            } else if ("monaco.ttf".equals(fontStyle) || "Monaco.ttf".equals(fontStyle)) {
                 return monacoFont > 0 ? monacoFont : regularFont;
             } else if ("Inter.ttf".equals(fontStyle)) {
                 return regularFont > 0 ? regularFont : 0;

@@ -40,17 +40,28 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    include implementation("meteordevelopment:orbit:${project.orbit_version}")
-    include implementation("io.github.racoondog:norbit:${project.norbit_version}")
+    // blame feather
+    implementation("meteordevelopment:orbit:${project.orbit_version}")
+    include("meteordevelopment:orbit:${project.orbit_version}")
+    implementation("io.github.racoondog:norbit:${project.norbit_version}")
+    include("io.github.racoondog:norbit:${project.norbit_version}")
     implementation 'net.java.dev.jna:jna:5.13.0'
     
     // NanoVG
-    implementation platform("org.lwjgl:lwjgl-bom:3.3.3")
-    implementation "org.lwjgl:lwjgl-nanovg"
-    runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-windows"
-    runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-macos"
-    runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-macos-arm64"
-    runtimeOnly "org.lwjgl:lwjgl-nanovg::natives-linux"
+    implementation(platform("org.lwjgl:lwjgl-bom:3.3.3"))
+    include(platform("org.lwjgl:lwjgl-bom:3.3.3"))
+    
+    implementation("org.lwjgl:lwjgl-nanovg")
+    include("org.lwjgl:lwjgl-nanovg")
+    
+    runtimeOnly("org.lwjgl:lwjgl-nanovg::natives-windows")
+    include("org.lwjgl:lwjgl-nanovg::natives-windows")
+    runtimeOnly("org.lwjgl:lwjgl-nanovg::natives-macos")
+    include("org.lwjgl:lwjgl-nanovg::natives-macos")
+    runtimeOnly("org.lwjgl:lwjgl-nanovg::natives-macos-arm64")
+    include("org.lwjgl:lwjgl-nanovg::natives-macos-arm64")
+    runtimeOnly("org.lwjgl:lwjgl-nanovg::natives-linux")
+    include("org.lwjgl:lwjgl-nanovg::natives-linux")
 }
 
 processResources {
