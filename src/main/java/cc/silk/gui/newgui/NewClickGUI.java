@@ -3,6 +3,7 @@ package cc.silk.gui.newgui;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.gui.newgui.components.CategoryPanel;
+import cc.silk.gui.newgui.components.ConfigPanel;
 import cc.silk.utils.render.NanoVGRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -14,6 +15,7 @@ import java.util.List;
 
 public class NewClickGUI extends Screen {
     private final List<CategoryPanel> panels = new ArrayList<>();
+    private ConfigPanel configPanel;
     private static final int PANEL_WIDTH = 110;
     private static final int PANEL_SPACING = 5;
 
@@ -51,6 +53,9 @@ public class NewClickGUI extends Screen {
                 x += PANEL_WIDTH + PANEL_SPACING;
             }
         }
+
+        // Add config panel on the right side
+        configPanel = new ConfigPanel(x, y, PANEL_WIDTH);
     }
 
     @Override
@@ -85,6 +90,10 @@ public class NewClickGUI extends Screen {
             panel.setSearchQuery(searchQuery);
         }
 
+        if (configPanel != null) {
+            configPanel.update(deltaTime);
+        }
+
         int centerX = width / 2;
         int centerY = height / 2;
 
@@ -95,6 +104,8 @@ public class NewClickGUI extends Screen {
                 break;
             }
         }
+
+        boolean configDragging = configPanel != null && configPanel.isDragging();
 
         NanoVGRenderer.beginFrame();
 
@@ -115,8 +126,18 @@ public class NewClickGUI extends Screen {
             draggedPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
         }
 
+        // Render config panel
+        if (configPanel != null && !configDragging) {
+            configPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
+        }
+
         for (CategoryPanel panel : panels) {
             panel.renderSettingsPanel(mouseX, mouseY, alpha, width, height);
+        }
+
+        // Render config panel on top if dragging
+        if (configPanel != null && configDragging) {
+            configPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
         }
 
         NanoVGRenderer.restore();
@@ -185,6 +206,10 @@ public class NewClickGUI extends Screen {
             searchFocused = false;
         }
 
+        if (configPanel != null && configPanel.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+
         for (CategoryPanel panel : panels) {
             if (panel.mouseClicked(mouseX, mouseY, button)) {
                 return true;
@@ -195,6 +220,10 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean charTyped(char chr, int modifiers) {
+        if (configPanel != null && configPanel.charTyped(chr, modifiers)) {
+            return true;
+        }
+
         if (searchFocused) {
             searchQuery += chr;
             return true;
@@ -204,6 +233,10 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (configPanel != null && configPanel.keyPressed(keyCode, scanCode, modifiers)) {
+            return true;
+        }
+
         for (CategoryPanel panel : panels) {
             if (panel.keyPressed(keyCode, scanCode, modifiers)) {
                 return true;
@@ -226,6 +259,10 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (configPanel != null) {
+            configPanel.mouseReleased(mouseX, mouseY, button);
+        }
+
         for (CategoryPanel panel : panels) {
             panel.mouseReleased(mouseX, mouseY, button);
         }
@@ -234,6 +271,10 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (configPanel != null && configPanel.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+            return true;
+        }
+
         for (CategoryPanel panel : panels) {
             if (panel.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
                 return true;
@@ -244,6 +285,10 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (configPanel != null && configPanel.mouseScrolled(mouseX, mouseY, verticalAmount)) {
+            return true;
+        }
+
         for (CategoryPanel panel : panels) {
             if (panel.mouseScrolled(mouseX, mouseY, verticalAmount)) {
                 return true;

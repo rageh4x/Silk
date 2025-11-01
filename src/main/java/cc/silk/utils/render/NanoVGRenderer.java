@@ -106,23 +106,23 @@ public class NanoVGRenderer {
     private static int loadFont(String name, String path) throws IOException {
         System.out.println("[NanoVG] Loading font: " + name + " from " + path);
 
-      // graph this is for feather support cuz fonts didnt work on it
+        // graph this is for feather support cuz fonts didnt work on it
         InputStream is = null;
 
         is = NanoVGRenderer.class.getClassLoader().getResourceAsStream(path);
-        
+
         if (is == null) {
             is = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
         }
-        
+
         if (is == null) {
             is = ClassLoader.getSystemResourceAsStream(path);
         }
-        
+
         if (is == null) {
             is = NanoVGRenderer.class.getResourceAsStream("/" + path);
         }
-        
+
         if (is == null) {
             System.err.println("[NanoVG] Font resource not found: " + path);
             return -1;
