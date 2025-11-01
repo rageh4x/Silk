@@ -54,7 +54,6 @@ public class NewClickGUI extends Screen {
             }
         }
 
-        // Add config panel on the right side
         configPanel = new ConfigPanel(x, y, PANEL_WIDTH);
     }
 
@@ -298,5 +297,12 @@ public class NewClickGUI extends Screen {
     @Override
     public boolean shouldPause() {
         return false;
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        if (cc.silk.module.modules.client.ClientSettingsModule.isGuiBlurEnabled()) {
+            super.renderBackground(context, mouseX, mouseY, delta);
+        }
     }
 }

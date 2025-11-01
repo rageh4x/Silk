@@ -12,13 +12,15 @@ import java.awt.Color;
 public class ClientSettingsModule extends Module {
 
     public static final ColorSetting accentColor = new ColorSetting("Accent Color", new Color(124, 77, 255, 255));
-    public static final ModeSetting fontStyle = new ModeSetting("Font", "Inter.ttf", "Inter.ttf", "jetbrainsmono.ttf", "poppins-medium.ttf", "Monaco.ttf");
+    public static final ModeSetting fontStyle = new ModeSetting("Font", "Inter.ttf", "Inter.ttf", "jetbrainsmono.ttf",
+            "poppins-medium.ttf", "Monaco.ttf");
     public static final BooleanSetting scrollableCategories = new BooleanSetting("Scrollable Categories", false);
     public static final NumberSetting guiTransparency = new NumberSetting("GUI Transparency", 0, 100, 0, 1);
+    public static final BooleanSetting guiBlur = new BooleanSetting("GUI Blur", false);
 
     public ClientSettingsModule() {
         super("ClientSettings", "Customize GUI appearance", 0, Category.CLIENT);
-        this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency);
+        this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur);
         this.setEnabled(true);
     }
 
@@ -36,5 +38,9 @@ public class ClientSettingsModule extends Module {
 
     public static float getGuiTransparency() {
         return guiTransparency.getValueFloat() / 100f;
+    }
+
+    public static boolean isGuiBlurEnabled() {
+        return guiBlur.getValue();
     }
 }

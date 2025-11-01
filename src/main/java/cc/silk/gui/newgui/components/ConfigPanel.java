@@ -79,6 +79,7 @@ public class ConfigPanel {
         NanoVGRenderer.drawRoundedRectOutline(x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
 
         NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerBg);
+        NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT - CORNER_RADIUS, width, CORNER_RADIUS, headerBg);
 
         float iconSize = 12f;
         float iconX = Math.round(x + 6 + iconSize / 2f);
@@ -231,6 +232,8 @@ public class ConfigPanel {
                 return true;
             }
             dragging = true;
+            x = Math.round(x);
+            y = Math.round(y);
             dragOffsetX = (float) (mouseX - x);
             dragOffsetY = (float) (mouseY - y);
             return true;
@@ -289,8 +292,8 @@ public class ConfigPanel {
 
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
         if (dragging) {
-            x = (float) (mouseX - dragOffsetX);
-            y = (float) (mouseY - dragOffsetY);
+            x = Math.round((float) (mouseX - dragOffsetX));
+            y = Math.round((float) (mouseY - dragOffsetY));
             return true;
         }
         return false;

@@ -112,6 +112,7 @@ public class CategoryPanel {
         NanoVGRenderer.drawRoundedRectOutline(x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
 
         NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
+        NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT - CORNER_RADIUS, width, CORNER_RADIUS, headerColor);
 
         String categoryName = category.getName();
         float fontSize = 10f;
@@ -187,6 +188,8 @@ public class CategoryPanel {
         if (isMouseOverHeader(mouseX, mouseY)) {
             if (button == 0) {
                 dragging = true;
+                x = Math.round(x);
+                y = Math.round(y);
                 dragOffsetX = (float) (mouseX - x);
                 dragOffsetY = (float) (mouseY - y);
                 return true;
@@ -251,8 +254,8 @@ public class CategoryPanel {
         }
         if (dragging) {
             float oldY = y;
-            x = (float) (mouseX - dragOffsetX);
-            y = (float) (mouseY - dragOffsetY);
+            x = Math.round((float) (mouseX - dragOffsetX));
+            y = Math.round((float) (mouseY - dragOffsetY));
 
             if (settingsPanel != null && settingsPanel.isVisible()) {
                 float deltaYMove = y - oldY;
