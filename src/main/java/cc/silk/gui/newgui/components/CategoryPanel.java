@@ -116,10 +116,10 @@ public class CategoryPanel {
         String categoryName = category.getName();
         float fontSize = 10f;
         float iconSize = CategoryIcons.getIconSize();
-        float iconX = x + 6 + iconSize / 2f;
-        float iconY = y + HEADER_HEIGHT / 2f;
-        float textX = x + 6 + iconSize + 4;
-        float textY = y + (HEADER_HEIGHT - fontSize) / 2f;
+        float iconX = Math.round(x + 6 + iconSize / 2f);
+        float iconY = Math.round(y + HEADER_HEIGHT / 2f);
+        float textX = Math.round(x + 6 + iconSize + 4);
+        float textY = Math.round(y + (HEADER_HEIGHT - fontSize) / 2f);
 
         Color accentColor = getAccentColor();
         Color iconColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),

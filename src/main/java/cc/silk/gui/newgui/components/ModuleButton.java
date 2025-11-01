@@ -103,8 +103,8 @@ public class ModuleButton {
         }
 
         float fontSize = 9f;
-        float textY = y + (buttonHeight - fontSize) / 2f - 0.5f;
-        float textX = x + 4;
+        float textY = Math.round(y + (buttonHeight - fontSize) / 2f);
+        float textX = Math.round(x + 4);
         NanoVGRenderer.drawText(module.getName(), textX, textY, fontSize, textColor);
 
         if (module.getKey() != 0 && module.getKey() != -1) {
@@ -113,8 +113,8 @@ public class ModuleButton {
                 keyName = "[" + keyName + "]";
                 float keybindFontSize = 7f;
                 float keybindWidth = NanoVGRenderer.getTextWidth(keyName, keybindFontSize);
-                float keybindX = x + buttonWidth - keybindWidth - 4;
-                float keybindY = y + (buttonHeight - keybindFontSize) / 2f;
+                float keybindX = Math.round(x + buttonWidth - keybindWidth - 4);
+                float keybindY = Math.round(y + (buttonHeight - keybindFontSize) / 2f);
 
                 Color keybindColor = new Color(
                         textColor.getRed(),

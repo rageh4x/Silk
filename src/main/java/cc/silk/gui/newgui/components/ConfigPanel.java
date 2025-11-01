@@ -81,18 +81,18 @@ public class ConfigPanel {
         NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerBg);
 
         float iconSize = 12f;
-        float iconX = x + 6 + iconSize / 2f;
-        float iconY = y + HEADER_HEIGHT / 2f;
+        float iconX = Math.round(x + 6 + iconSize / 2f);
+        float iconY = Math.round(y + HEADER_HEIGHT / 2f);
         Color iconColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
         NanoVGRenderer.drawIcon("\uf0f6", iconX, iconY, iconSize, iconColor);
 
         float fontSize = 10f;
-        float textX = x + 6 + iconSize + 4;
-        float textY = y + (HEADER_HEIGHT - fontSize) / 2f;
+        float textX = Math.round(x + 6 + iconSize + 4);
+        float textY = Math.round(y + (HEADER_HEIGHT - fontSize) / 2f);
         NanoVGRenderer.drawText("Configs", textX, textY, fontSize, textColor);
 
-        float loadIconX = x + width - 22f;
-        float loadIconY = y + HEADER_HEIGHT / 2f;
+        float loadIconX = Math.round(x + width - 22f);
+        float loadIconY = Math.round(y + HEADER_HEIGHT / 2f);
         boolean loadHover = isMouseOver(mouseX, mouseY, x + width - 28f, y, 14f, HEADER_HEIGHT);
         Color loadColor = (selectedConfig != null && loadHover)
                 ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
@@ -100,8 +100,8 @@ public class ConfigPanel {
                         selectedConfig != null ? (int) (bgAlpha * 0.7f) : (int) (bgAlpha * 0.3f));
         NanoVGRenderer.drawIcon("\uf019", loadIconX, loadIconY, 9f, loadColor);
 
-        float saveIconX = x + width - 10f;
-        float saveIconY = y + HEADER_HEIGHT / 2f;
+        float saveIconX = Math.round(x + width - 10f);
+        float saveIconY = Math.round(y + HEADER_HEIGHT / 2f);
         boolean saveHover = isMouseOver(mouseX, mouseY, x + width - 16f, y, 12f, HEADER_HEIGHT);
         boolean willOverride = selectedConfig != null;
         Color saveColor = (saveHover || willOverride)
@@ -165,7 +165,10 @@ public class ConfigPanel {
             displayName += "...";
         }
 
-        NanoVGRenderer.drawText(displayName, x + 4f, entryY + 3f, 8f, textColor);
+        float entryFontSize = 8f;
+        float entryTextX = Math.round(x + 4f);
+        float entryTextY = Math.round(entryY + (CONFIG_ENTRY_HEIGHT - entryFontSize) / 2f);
+        NanoVGRenderer.drawText(displayName, entryTextX, entryTextY, entryFontSize, textColor);
 
         config.bounds = new float[] { x, entryY, width, CONFIG_ENTRY_HEIGHT };
     }
@@ -183,7 +186,10 @@ public class ConfigPanel {
 
         String displayText = namingNewConfig ? (newConfigName.isEmpty() ? "_" : newConfigName) : "+ New";
 
-        NanoVGRenderer.drawText(displayText, x + 4f, entryY + 3f, 8f, textColor);
+        float newEntryFontSize = 8f;
+        float newEntryTextX = Math.round(x + 4f);
+        float newEntryTextY = Math.round(entryY + (CONFIG_ENTRY_HEIGHT - newEntryFontSize) / 2f);
+        NanoVGRenderer.drawText(displayText, newEntryTextX, newEntryTextY, newEntryFontSize, textColor);
 
         if (namingNewConfig && System.currentTimeMillis() % 1000 < 500) {
             float cursorX = x + 4f + NanoVGRenderer.getTextWidth(newConfigName, 8f);
