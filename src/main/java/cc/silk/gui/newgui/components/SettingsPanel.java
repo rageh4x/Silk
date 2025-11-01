@@ -115,7 +115,8 @@ public class SettingsPanel {
         if (animationProgress <= 0f)
             return;
 
-        float renderAlpha = alpha * animationProgress;
+        float transparency = cc.silk.module.modules.client.ClientSettingsModule.getGuiTransparency();
+        float renderAlpha = alpha * animationProgress * (1f - transparency);
         int panelAlpha = (int) (255 * renderAlpha);
 
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);

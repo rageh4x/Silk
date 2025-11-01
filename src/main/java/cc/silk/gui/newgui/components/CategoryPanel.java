@@ -101,7 +101,8 @@ public class CategoryPanel {
         int moduleAreaHeight = (int) ((displayedModules * MODULE_HEIGHT) * expandProgress);
         int totalHeight = HEADER_HEIGHT + moduleAreaHeight;
 
-        int panelAlpha = (int) (255 * alpha);
+        float transparency = cc.silk.module.modules.client.ClientSettingsModule.getGuiTransparency();
+        int panelAlpha = (int) (255 * alpha * (1f - transparency));
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
         Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
                 panelAlpha);
