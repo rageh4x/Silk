@@ -137,9 +137,47 @@ public class NewClickGUI extends Screen {
             panel.renderSettingsPanel(mouseX, mouseY, alpha, width, height);
         }
 
+        renderTooltips(mouseX, mouseY, alpha);
+
         NanoVGRenderer.restore();
 
         NanoVGRenderer.endFrame();
+    }
+
+    private void renderTooltips(int mouseX, int mouseY, float alpha) {
+        for (CategoryPanel panel : panels) {
+            String tooltipText = panel.getTooltipText();
+            if (tooltipText != null && !tooltipText.isEmpty()) {
+                float fontSize = 10f;
+                float padding = 6f;
+                float textWidth = NanoVGRenderer.getTextWidth(tooltipText, fontSize);
+                float tooltipWidth = textWidth + padding * 2;
+                float tooltipHeight = fontSize + padding * 2;
+
+                float tooltipX = panel.getTooltipX(mouseX);
+                float tooltipY = panel.getTooltipY(mouseY);
+
+                if (tooltipX + tooltipWidth > width) {
+                    tooltipX = mouseX - tooltipWidth - 10;
+                }
+                if (tooltipY + tooltipHeight > height) {
+                    tooltipY = mouseY - tooltipHeight - 10;
+                }
+
+                int bgAlpha = (int) (230 * alpha);
+                Color tooltipBg = new Color(28, 28, 32, bgAlpha);
+                Color tooltipBorder = new Color(60, 60, 70, bgAlpha);
+                Color tooltipTextColor = new Color(240, 240, 245, (int) (255 * alpha));
+
+                NanoVGRenderer.drawRoundedRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 4f, tooltipBg);
+                NanoVGRenderer.drawRoundedRectOutline(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 4f, 1f,
+                        tooltipBorder);
+                NanoVGRenderer.drawText(tooltipText, tooltipX + padding, tooltipY + padding, fontSize,
+                        tooltipTextColor);
+
+                break;
+            }
+        }
     }
 
     private void renderSearchBar(int mouseX, int mouseY, float alpha) {

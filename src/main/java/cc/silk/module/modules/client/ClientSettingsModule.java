@@ -17,10 +17,11 @@ public class ClientSettingsModule extends Module {
     public static final BooleanSetting scrollableCategories = new BooleanSetting("Scrollable Categories", false);
     public static final NumberSetting guiTransparency = new NumberSetting("GUI Transparency", 0, 100, 0, 1);
     public static final BooleanSetting guiBlur = new BooleanSetting("GUI Blur", false);
+    public static final BooleanSetting moduleDescriptions = new BooleanSetting("Module Descriptions", true);
 
     public ClientSettingsModule() {
         super("ClientSettings", "Customize GUI appearance", 0, Category.CLIENT);
-        this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur);
+        this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur, moduleDescriptions);
         this.setEnabled(true);
     }
 
@@ -42,5 +43,9 @@ public class ClientSettingsModule extends Module {
 
     public static boolean isGuiBlurEnabled() {
         return guiBlur.getValue();
+    }
+
+    public static boolean isModuleDescriptionsEnabled() {
+        return moduleDescriptions.getValue();
     }
 }

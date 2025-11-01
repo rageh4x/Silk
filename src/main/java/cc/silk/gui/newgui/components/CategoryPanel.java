@@ -45,6 +45,8 @@ public class CategoryPanel {
     private static final int MAX_VISIBLE_MODULES = 8;
     private static final int SCROLLBAR_WIDTH = 3;
 
+    private Module hoveredModule = null;
+
     public CategoryPanel(Category category, float x, float y, int width) {
         this.category = category;
         this.x = x;
@@ -80,6 +82,7 @@ public class CategoryPanel {
             if (collapseProgress < 0f)
                 collapseProgress = 0f;
         }
+
     }
 
     public void setSearchQuery(String query) {
@@ -136,12 +139,22 @@ public class CategoryPanel {
             float moduleY = y + HEADER_HEIGHT - scrollOffset;
             float moduleAlpha = alpha * expandProgress;
 
+            Module newHoveredModule = null;
+
             for (ModuleButton button : moduleButtons) {
                 if (button.getSearchAlpha() > 0.01f) {
                     button.render(x, moduleY, mouseX, mouseY, moduleAlpha);
+
+                    if (mouseX >= x && mouseX <= x + width &&
+                            mouseY >= moduleY && mouseY <= moduleY + MODULE_HEIGHT) {
+                        newHoveredModule = button.getModule();
+                    }
+
                     moduleY += MODULE_HEIGHT;
                 }
             }
+
+            hoveredModule = newHoveredModule;
 
             NanoVGRenderer.resetScissor();
 
@@ -313,5 +326,20 @@ public class CategoryPanel {
             scrollOffset = maxScroll;
 
         return true;
+    }
+
+    public String getTooltipText() {
+        if (hoveredModule != null && cc.silk.module.modules.client.ClientSettingsModule.isModuleDescriptionsEnabled()) {
+            return hoveredModule.getDescription();
+        }
+        return null;
+    }
+
+    public int getTooltipX(int mouseX) {
+        return mouseX + 10;
+    }
+
+    public int getTooltipY(int mouseY) {
+        return mouseY + 10;
     }
 }

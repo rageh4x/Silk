@@ -279,10 +279,21 @@ public class SettingsPanel {
             NanoVGRenderer.drawRoundedRectOutline(dropdownX, dropdownY, dropdownWidth, dropdownHeight, 3f, 1f,
                     dropdownBorder);
 
-            NanoVGRenderer.drawText(mode, dropdownX + 4, dropdownY + 2, fontSize, modeText);
-
             String arrow = expandedDropdown == setting ? "▲" : "▼";
             float arrowWidth = NanoVGRenderer.getTextWidth(arrow, fontSize);
+            float availableWidth = dropdownWidth - 8 - arrowWidth - 4;
+            
+            String displayMode = mode;
+            float modeWidth = NanoVGRenderer.getTextWidth(displayMode, fontSize);
+            if (modeWidth > availableWidth) {
+                while (modeWidth > availableWidth && displayMode.length() > 3) {
+                    displayMode = displayMode.substring(0, displayMode.length() - 1);
+                    modeWidth = NanoVGRenderer.getTextWidth(displayMode + "...", fontSize);
+                }
+                displayMode += "...";
+            }
+            
+            NanoVGRenderer.drawText(displayMode, dropdownX + 4, dropdownY + 2, fontSize, modeText);
             NanoVGRenderer.drawText(arrow, dropdownX + dropdownWidth - arrowWidth - 4, dropdownY + 2, fontSize,
                     textColor);
 
@@ -312,8 +323,19 @@ public class SettingsPanel {
                     NanoVGRenderer.drawRect(dropdownX + 1, optionY, dropdownWidth - 2, 14, hoverBg);
                 }
 
+                String displayOption = option;
+                float optionWidth = NanoVGRenderer.getTextWidth(displayOption, fontSize);
+                float maxOptionWidth = dropdownWidth - 8;
+                if (optionWidth > maxOptionWidth) {
+                    while (optionWidth > maxOptionWidth && displayOption.length() > 3) {
+                        displayOption = displayOption.substring(0, displayOption.length() - 1);
+                        optionWidth = NanoVGRenderer.getTextWidth(displayOption + "...", fontSize);
+                    }
+                    displayOption += "...";
+                }
+
                 Color optionColor = isSelected ? modeText : textColor;
-                NanoVGRenderer.drawText(option, dropdownX + 4, optionY + 2, fontSize, optionColor);
+                NanoVGRenderer.drawText(displayOption, dropdownX + 4, optionY + 2, fontSize, optionColor);
                 optionY += 14;
             }
         }
