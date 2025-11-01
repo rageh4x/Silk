@@ -407,6 +407,14 @@ public class NanoVGRenderer {
         nvgScale(vg, x, y);
     }
 
+    public static void scissor(float x, float y, float width, float height) {
+        nvgScissor(vg, x, y, width, height);
+    }
+
+    public static void resetScissor() {
+        nvgResetScissor(vg);
+    }
+
     public static void cleanup() {
         if (vg != -1) {
             nvgDelete(vg);

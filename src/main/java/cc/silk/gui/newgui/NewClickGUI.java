@@ -130,7 +130,7 @@ public class NewClickGUI extends Screen {
 
         int bgAlpha = (int) (255 * alpha);
         Color bgColor = new Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(), bgAlpha);
-        
+
         Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
         Color borderColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                 searchFocused ? bgAlpha : (int) (100 * alpha));
@@ -244,6 +244,11 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        for (CategoryPanel panel : panels) {
+            if (panel.mouseScrolled(mouseX, mouseY, verticalAmount)) {
+                return true;
+            }
+        }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 

@@ -19,10 +19,11 @@ public class CategoryPanel {
 
     private static final Color HEADER_COLOR = new Color(28, 28, 32, 255);
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
-    
+
     private static Color getAccentColor() {
         return cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
     }
+
     private static final float CORNER_RADIUS = 4f;
 
     private boolean dragging = false;
@@ -36,9 +37,13 @@ public class CategoryPanel {
     private float settingsPanelSourceY = 0;
 
     private String searchQuery = "";
-    
+
     private boolean collapsed = false;
     private float collapseProgress = 0f;
+
+    private float scrollOffset = 0f;
+    private static final int MAX_VISIBLE_MODULES = 8;
+    private static final int SCROLLBAR_WIDTH = 3;
 
     public CategoryPanel(Category category, float x, float y, int width) {
         this.category = category;
@@ -65,13 +70,15 @@ public class CategoryPanel {
         for (ModuleButton button : moduleButtons) {
             button.updateSearch(searchQuery, deltaTime);
         }
-        
+
         if (collapsed) {
             collapseProgress += deltaTime * 10f;
-            if (collapseProgress > 1f) collapseProgress = 1f;
+            if (collapseProgress > 1f)
+                collapseProgress = 1f;
         } else {
             collapseProgress -= deltaTime * 10f;
-            if (collapseProgress < 0f) collapseProgress = 0f;
+            if (collapseProgress < 0f)
+                collapseProgress = 0f;
         }
     }
 
@@ -87,8 +94,11 @@ public class CategoryPanel {
             }
         }
 
+        boolean scrollable = cc.silk.module.modules.client.ClientSettingsModule.isScrollable();
         float expandProgress = 1f - collapseProgress;
-        int moduleAreaHeight = (int) ((visibleCount * MODULE_HEIGHT) * expandProgress);
+
+        int displayedModules = scrollable ? Math.min(visibleCount, MAX_VISIBLE_MODULES) : visibleCount;
+        int moduleAreaHeight = (int) ((displayedModules * MODULE_HEIGHT) * expandProgress);
         int totalHeight = HEADER_HEIGHT + moduleAreaHeight;
 
         int panelAlpha = (int) (255 * alpha);
@@ -119,7 +129,9 @@ public class CategoryPanel {
         NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
 
         if (expandProgress > 0.01f) {
-            float moduleY = y + HEADER_HEIGHT;
+            NanoVGRenderer.scissor(x, y + HEADER_HEIGHT, width, moduleAreaHeight);
+
+            float moduleY = y + HEADER_HEIGHT - scrollOffset;
             float moduleAlpha = alpha * expandProgress;
 
             for (ModuleButton button : moduleButtons) {
@@ -127,6 +139,19 @@ public class CategoryPanel {
                     button.render(x, moduleY, mouseX, mouseY, moduleAlpha);
                     moduleY += MODULE_HEIGHT;
                 }
+            }
+
+            NanoVGRenderer.resetScissor();
+
+            if (scrollable && visibleCount > MAX_VISIBLE_MODULES) {
+                float scrollbarHeight = ((float) displayedModules / visibleCount) * moduleAreaHeight;
+                float scrollbarY = y + HEADER_HEIGHT
+                        + (scrollOffset / (visibleCount * MODULE_HEIGHT)) * moduleAreaHeight;
+
+                Color scrollbarColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
+                        (int) (150 * alpha * expandProgress));
+                NanoVGRenderer.drawRoundedRect(x + width - SCROLLBAR_WIDTH - 2, scrollbarY, SCROLLBAR_WIDTH,
+                        scrollbarHeight, SCROLLBAR_WIDTH / 2f, scrollbarColor);
             }
         }
     }
@@ -183,7 +208,9 @@ public class CategoryPanel {
             return false;
         }
 
-        float moduleY = y + HEADER_HEIGHT;
+        boolean scrollable = cc.silk.module.modules.client.ClientSettingsModule.isScrollable();
+        float moduleY = y + HEADER_HEIGHT - (scrollable ? scrollOffset : 0);
+
         for (ModuleButton moduleButton : moduleButtons) {
             if (moduleButton.getSearchAlpha() > 0.01f) {
                 if (moduleButton.mouseClicked(x, moduleY, mouseX, mouseY, button)) {
@@ -225,14 +252,14 @@ public class CategoryPanel {
             float oldY = y;
             x = (float) (mouseX - dragOffsetX);
             y = (float) (mouseY - dragOffsetY);
-            
+
             if (settingsPanel != null && settingsPanel.isVisible()) {
                 float deltaYMove = y - oldY;
                 float newSettingsX = x + width + 5;
                 settingsPanelSourceY += deltaYMove;
                 settingsPanel.show(newSettingsX, settingsPanelSourceY);
             }
-            
+
             return true;
         }
         return false;
@@ -247,5 +274,40 @@ public class CategoryPanel {
             return settingsPanel.keyPressed(keyCode, scanCode, modifiers);
         }
         return false;
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        if (!cc.silk.module.modules.client.ClientSettingsModule.isScrollable()) {
+            return false;
+        }
+
+        if (collapsed) {
+            return false;
+        }
+
+        if (!isMouseOver(mouseX, mouseY)) {
+            return false;
+        }
+
+        int visibleCount = 0;
+        for (ModuleButton button : moduleButtons) {
+            if (button.getSearchAlpha() > 0.01f) {
+                visibleCount++;
+            }
+        }
+
+        if (visibleCount <= MAX_VISIBLE_MODULES) {
+            return false;
+        }
+
+        float maxScroll = (visibleCount - MAX_VISIBLE_MODULES) * MODULE_HEIGHT;
+        scrollOffset -= (float) amount * 10f;
+
+        if (scrollOffset < 0)
+            scrollOffset = 0;
+        if (scrollOffset > maxScroll)
+            scrollOffset = maxScroll;
+
+        return true;
     }
 }
