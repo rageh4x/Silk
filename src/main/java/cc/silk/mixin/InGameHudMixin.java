@@ -14,12 +14,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGameHud.class)
 public class InGameHudMixin {
-    @Inject(method = "render", at = @At("TAIL"))
+    @Inject(method = "render", at = @At(value = "TAIL"))
     private void onRender(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         RenderUtils.unscaledProjection();
         RenderUtils.scaledProjection();
         RenderSystem.applyModelViewMatrix();
-
-        SilkClient.INSTANCE.getSilkEventBus().post(new EventRender2D(context, context.getScaledWindowWidth(), context.getScaledWindowHeight()));
+        
+        RenderSystem.disableDepthTest();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableCull();
+        RenderSystem.glBindVertexArray(0);
+        
+        SilkClient.INSTANCE.getSilkEventBus()
+                .post(new EventRender2D(context, context.getScaledWindowWidth(), context.getScaledWindowHeight()));
+        
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableCull();
     }
 }

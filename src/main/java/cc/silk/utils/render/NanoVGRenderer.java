@@ -5,6 +5,7 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -24,6 +25,13 @@ public class NanoVGRenderer {
     private static long vg = -1;
     private static boolean initialized = false;
     private static boolean inFrame = false;
+    private static boolean usePerDrawStateIsolation = true;
+
+    private static boolean savedDepthTest;
+    private static boolean savedBlend;
+    private static boolean savedCull;
+    private static int savedBlendSrc;
+    private static int savedBlendDst;
 
     private static int regularFont = -1;
     private static int boldFont = -1;
@@ -36,13 +44,23 @@ public class NanoVGRenderer {
         if (initialized)
             return;
 
-        vg = nvgCreate(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+        vg = nvgCreate(NVG_ANTIALIAS);
         if (vg == 0) {
             throw new RuntimeException("Failed to initialize NanoVG");
         }
 
+        System.out.println("[NanoVG] Initialized without stencil strokes (AMD compatibility mode)");
         loadFonts();
         initialized = true;
+    }
+
+    public static void setPerDrawStateIsolation(boolean enabled) {
+        usePerDrawStateIsolation = enabled;
+        System.out.println("[NanoVG] Per-draw state isolation " + (enabled ? "enabled" : "disabled"));
+    }
+
+    public static boolean isPerDrawStateIsolationEnabled() {
+        return usePerDrawStateIsolation;
     }
 
     private static void loadFonts() {
@@ -166,15 +184,37 @@ public class NanoVGRenderer {
             return;
 
         MinecraftClient mc = MinecraftClient.getInstance();
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-        float pixelRatio = (float) mc.getWindow().getFramebufferWidth() / (float) mc.getWindow().getScaledWidth();
 
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        int framebufferWidth = mc.getWindow().getFramebufferWidth();
+        int framebufferHeight = mc.getWindow().getFramebufferHeight();
+        int scaledWidth = mc.getWindow().getScaledWidth();
+        int scaledHeight = mc.getWindow().getScaledHeight();
+
+        if (framebufferWidth <= 0 || framebufferHeight <= 0) {
+            System.err.println("[NanoVG] Invalid framebuffer dimensions: " +
+                    framebufferWidth + "x" + framebufferHeight);
+            return;
+        }
+
+        savedDepthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+        savedBlend = GL11.glIsEnabled(GL11.GL_BLEND);
+        savedCull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        savedBlendSrc = GL11.glGetInteger(GL11.GL_BLEND_SRC);
+        savedBlendDst = GL11.glGetInteger(GL11.GL_BLEND_DST);
+
+        RenderSystem.glBindVertexArray(0);
+        RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.disableCull();
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
-        nvgBeginFrame(vg, width, height, pixelRatio);
+        nvgBeginFrame(vg, framebufferWidth, framebufferHeight, 1f);
+
+        float scaleX = (float) framebufferWidth / (float) scaledWidth;
+        float scaleY = (float) framebufferHeight / (float) scaledHeight;
+        nvgScale(vg, scaleX, scaleY);
+
         inFrame = true;
     }
 
@@ -184,6 +224,26 @@ public class NanoVGRenderer {
 
         nvgEndFrame(vg);
         inFrame = false;
+
+        if (savedDepthTest) {
+            RenderSystem.enableDepthTest();
+        } else {
+            RenderSystem.disableDepthTest();
+        }
+
+        if (savedBlend) {
+            RenderSystem.enableBlend();
+        } else {
+            RenderSystem.disableBlend();
+        }
+
+        if (savedCull) {
+            RenderSystem.enableCull();
+        } else {
+            RenderSystem.disableCull();
+        }
+
+        GL11.glBlendFunc(savedBlendSrc, savedBlendDst);
 
         restoreMinecraftState();
     }
@@ -196,11 +256,15 @@ public class NanoVGRenderer {
         RenderSystem.depthFunc(515);
         RenderSystem.enableCull();
         RenderSystem.disableScissor();
+        RenderSystem.resetTextureMatrix();
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.depthMask(true);
+        RenderSystem.applyModelViewMatrix();
     }
 
     public static void drawRoundedRect(float x, float y, float width, float height, float radius, Color color) {
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -212,11 +276,16 @@ public class NanoVGRenderer {
             nvgRoundedRect(vg, x, y, width, height, radius);
             nvgFillColor(vg, nvgColor);
             nvgFill(vg);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
     public static void drawRoundedRectOutline(float x, float y, float width, float height, float radius,
             float strokeWidth, Color color) {
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -229,11 +298,16 @@ public class NanoVGRenderer {
             nvgStrokeColor(vg, nvgColor);
             nvgStrokeWidth(vg, strokeWidth);
             nvgStroke(vg);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
     public static void drawRoundedRectGradient(float x, float y, float width, float height, float radius,
             Color colorTop, Color colorBottom) {
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor color1 = NVGColor.malloc(stack);
             color1.r(colorTop.getRed() / 255f);
@@ -253,10 +327,15 @@ public class NanoVGRenderer {
             nvgRoundedRect(vg, x, y, width, height, radius);
             nvgFillPaint(vg, paint);
             nvgFill(vg);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
     public static void drawCircle(float x, float y, float radius, Color color) {
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -268,6 +347,9 @@ public class NanoVGRenderer {
             nvgCircle(vg, x, y, radius);
             nvgFillColor(vg, nvgColor);
             nvgFill(vg);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
@@ -280,6 +362,8 @@ public class NanoVGRenderer {
 
         int fontId = getFontId(bold);
 
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -292,6 +376,9 @@ public class NanoVGRenderer {
             nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
             nvgFillColor(vg, nvgColor);
             nvgText(vg, x, y, text);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
@@ -306,6 +393,8 @@ public class NanoVGRenderer {
         if (!initialized)
             init();
 
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -318,6 +407,9 @@ public class NanoVGRenderer {
             nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
             nvgFillColor(vg, nvgColor);
             nvgText(vg, x, y, text);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
@@ -364,6 +456,8 @@ public class NanoVGRenderer {
 
         int fontId = iconFont > 0 ? iconFont : regularFont;
 
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -376,6 +470,9 @@ public class NanoVGRenderer {
             nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgFillColor(vg, nvgColor);
             nvgText(vg, x, y, icon);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
@@ -405,6 +502,8 @@ public class NanoVGRenderer {
     }
 
     public static void drawRect(float x, float y, float width, float height, Color color) {
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -416,10 +515,15 @@ public class NanoVGRenderer {
             nvgRect(vg, x, y, width, height);
             nvgFillColor(vg, nvgColor);
             nvgFill(vg);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
     public static void drawLine(float x1, float y1, float x2, float y2, float strokeWidth, Color color) {
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
             nvgColor.r(color.getRed() / 255f);
@@ -433,6 +537,9 @@ public class NanoVGRenderer {
             nvgStrokeColor(vg, nvgColor);
             nvgStrokeWidth(vg, strokeWidth);
             nvgStroke(vg);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 
@@ -464,6 +571,7 @@ public class NanoVGRenderer {
         if (!initialized)
             init();
 
+        ByteBuffer buffer = null;
         try {
             InputStream is = NanoVGRenderer.class.getClassLoader().getResourceAsStream(path);
             if (is == null)
@@ -478,7 +586,7 @@ public class NanoVGRenderer {
                 return -1;
             }
 
-            ByteBuffer buffer = MemoryUtil.memAlloc(8192);
+            buffer = MemoryUtil.memAlloc(8192);
             ReadableByteChannel rbc = Channels.newChannel(is);
 
             while (rbc.read(buffer) != -1) {
@@ -493,21 +601,26 @@ public class NanoVGRenderer {
 
             buffer.flip();
             System.out.println("[NanoVG] Loading image: " + path + " (buffer size: " + buffer.remaining() + " bytes)");
+
             int image = nvgCreateImageMem(vg, NVG_IMAGE_GENERATE_MIPMAPS, buffer);
 
             if (image == -1) {
                 System.err.println("[NanoVG] Failed to create image: " + path);
-                MemoryUtil.memFree(buffer);
                 return -1;
             }
 
             System.out.println("[NanoVG] Successfully loaded image: " + path + " (ID: " + image + ")");
             is.close();
+
             return image;
         } catch (Exception e) {
             System.err.println("[NanoVG] Error loading image: " + path);
             e.printStackTrace();
             return -1;
+        } finally {
+            if (buffer != null) {
+                MemoryUtil.memFree(buffer);
+            }
         }
     }
 
@@ -520,6 +633,8 @@ public class NanoVGRenderer {
             return;
         }
 
+        if (usePerDrawStateIsolation)
+            nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             float alpha = tint.getAlpha() / 255f;
 
@@ -529,6 +644,9 @@ public class NanoVGRenderer {
             nvgRect(vg, x, y, width, height);
             nvgFillPaint(vg, paint);
             nvgFill(vg);
+        } finally {
+            if (usePerDrawStateIsolation)
+                nvgRestore(vg);
         }
     }
 

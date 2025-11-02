@@ -6,11 +6,9 @@ import cc.silk.event.impl.render.EventRender3D;
 import cc.silk.module.modules.render.ShaderTest;
 import cc.silk.utils.render.font.util.RendererUtils;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.OutlineVertexConsumerProvider;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -49,5 +47,9 @@ public class WorldRendererMixin {
                 RenderSystem.lineWidth(1.0f);
             }
         }
+    }
+    
+    @Inject(method = "render", at = @At("RETURN"))
+    private void afterWorldRender(CallbackInfo ci) {
     }
 }
