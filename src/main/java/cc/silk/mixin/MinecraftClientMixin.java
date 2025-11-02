@@ -70,8 +70,11 @@ public class MinecraftClientMixin implements IMinecraft {
         var optionalClickGuiModule = SilkClient.INSTANCE.getModuleManager().getModule(ClickGUIModule.class);
         if (optionalClickGuiModule.isPresent()) {
             ClickGUIModule clickGuiModule = optionalClickGuiModule.get();
-            if (clickGuiModule.isEnabled() && !(SilkClient.mc.currentScreen instanceof ClickGui) && world != null) {
+            if (clickGuiModule.isEnabled() && SilkClient.mc.currentScreen == null && world != null) {
                 SilkClient.mc.setScreen(new ClickGui());
+            }
+            else if (!clickGuiModule.isEnabled() && SilkClient.mc.currentScreen instanceof ClickGui) {
+                SilkClient.mc.setScreen(null);
             }
         }
     }

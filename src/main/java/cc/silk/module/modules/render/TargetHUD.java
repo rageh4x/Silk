@@ -40,7 +40,7 @@ public final class TargetHUD extends Module {
 
     private final DraggableComponent draggable;
     private final Deque<HUDParticle> hudParticles = new ArrayDeque<>();
-    
+
     private float animatedHealthPercent = 1.0f;
     private float lastHealthPercent = 1.0f;
 
@@ -106,20 +106,20 @@ public final class TargetHUD extends Module {
         float maxHealth = target != null ? Math.max(target.getMaxHealth(), 1f) : 20f;
         float health = target != null ? MathHelper.clamp(target.getHealth(), 0f, maxHealth) : 15f;
         float healthPercent = MathHelper.clamp(health / maxHealth, 0f, 1f);
-        
+
         float deltaTime = mc.getRenderTickCounter().getTickDelta(true) / 20f;
         float animationSpeed = 3.0f;
-        
+
         if (Math.abs(healthPercent - lastHealthPercent) > 0.001f) {
             lastHealthPercent = healthPercent;
         }
-        
+
         if (animatedHealthPercent > lastHealthPercent) {
             animatedHealthPercent = Math.max(lastHealthPercent, animatedHealthPercent - animationSpeed * deltaTime);
         } else if (animatedHealthPercent < lastHealthPercent) {
             animatedHealthPercent = Math.min(lastHealthPercent, animatedHealthPercent + animationSpeed * deltaTime);
         }
-        
+
         float healthBarWidth = barWidth * animatedHealthPercent;
 
         if (healthBarWidth > 0) {
