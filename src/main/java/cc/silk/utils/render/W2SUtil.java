@@ -31,7 +31,7 @@ public class W2SUtil {
             return null;
         }
         
-        int displayHeight = mc.getWindow().getHeight();
+        int displayHeight = mc.getWindow().getFramebufferHeight();
         int[] viewport = new int[4];
 
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);

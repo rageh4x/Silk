@@ -217,7 +217,7 @@ public class RendererUtils {
     @Contract(value = "_ -> new", pure = true)
     public static Vec3d worldSpaceToScreenSpace(@NonNull Vec3d pos) {
         Camera camera = client.getEntityRenderDispatcher().camera;
-        int displayHeight = client.getWindow().getHeight();
+        int displayHeight = client.getWindow().getFramebufferHeight();
         int[] viewport = new int[4];
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
         Vector3f target = new Vector3f();
