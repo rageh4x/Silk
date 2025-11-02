@@ -28,11 +28,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class TargetHUD extends Module {
 
-    private static final int BOX_WIDTH = 140;
-    private static final int BOX_HEIGHT = 50;
-    private static final int PADDING = 8;
-    private static final int HEAD_SIZE = 34;
-    private static final float CORNER_RADIUS = 8f;
+    private static final int BOX_WIDTH = 120;
+    private static final int BOX_HEIGHT = 40;
+    private static final int PADDING = 6;
+    private static final int HEAD_SIZE = 28;
+    private static final float CORNER_RADIUS = 12f;
 
     private final NumberSetting transparency = new NumberSetting("Transparency", 0, 255, 200, 5);
     private final BooleanSetting particles = new BooleanSetting("Particles", true);
@@ -91,17 +91,18 @@ public final class TargetHUD extends Module {
         NanoVGRenderer.beginFrame();
 
         float barX = headX + HEAD_SIZE + PADDING;
-        float barY = y + PADDING + 4;
+        float barY = y + PADDING + 6;
         float barWidth = BOX_WIDTH - HEAD_SIZE - PADDING * 3;
-        float barHeight = 8;
+        float barHeight = 6;
 
         String name = target != null ? target.getName().getString() : "Target";
-        float nameY = barY - 2;
-        drawPoppinsText(name, barX, nameY, 10f, new Color(255, 255, 255, 255));
+        float nameY = barY;
+        drawPoppinsText(name, barX, nameY, 9f, new Color(255, 255, 255, 255));
 
         int barAlpha = Math.min(255, alpha + 20);
         Color barBgColor = new Color(15, 15, 20, barAlpha);
-        NanoVGRenderer.drawRoundedRect(barX, barY + 10, barWidth, barHeight, 4f, barBgColor);
+        float healthBarY = barY + 10;
+        NanoVGRenderer.drawRoundedRect(barX, healthBarY, barWidth, barHeight, barHeight / 2f, barBgColor);
 
         float maxHealth = target != null ? Math.max(target.getMaxHealth(), 1f) : 20f;
         float health = target != null ? MathHelper.clamp(target.getHealth(), 0f, maxHealth) : 15f;
@@ -124,13 +125,8 @@ public final class TargetHUD extends Module {
 
         if (healthBarWidth > 0) {
             Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
-            NanoVGRenderer.drawRoundedRect(barX, barY + 10, healthBarWidth, barHeight, 4f, accentColor);
+            NanoVGRenderer.drawRoundedRect(barX, healthBarY, healthBarWidth, barHeight, barHeight / 2f, accentColor);
         }
-
-        float targetTotalHealth = target != null ? target.getHealth() + target.getAbsorptionAmount() : 15f;
-        String healthText = formatHealthValue(targetTotalHealth);
-        float healthTextY = barY + 22;
-        drawPoppinsText(healthText, barX, healthTextY, 8f, new Color(200, 200, 200, 255));
 
         if (particles.getValue()) {
             renderParticles(event.getContext().getScaledWindowWidth(), event.getContext().getScaledWindowHeight());
@@ -154,9 +150,9 @@ public final class TargetHUD extends Module {
         float y = draggable.getY();
         float headX = x + PADDING;
         float barX = headX + HEAD_SIZE + PADDING;
-        float barY = y + PADDING + 4;
+        float barY = y + PADDING + 6;
         float barWidth = BOX_WIDTH - HEAD_SIZE - PADDING * 3;
-        float barHeight = 8;
+        float barHeight = 6;
 
         float maxHealth = Math.max(target.getMaxHealth(), 1f);
         float health = MathHelper.clamp(target.getHealth(), 0f, maxHealth);
@@ -259,7 +255,7 @@ public final class TargetHUD extends Module {
                 accentColor.getRed(),
                 accentColor.getGreen(),
                 accentColor.getBlue(),
-                100);
+                80);
 
         NanoVGRenderer.drawCircle(centerX, centerY, radius, headBg);
     }
@@ -267,13 +263,6 @@ public final class TargetHUD extends Module {
     private void drawPoppinsText(String text, float x, float y, float size, Color color) {
         int poppinsFontId = NanoVGRenderer.getPoppinsFontId();
         NanoVGRenderer.drawTextWithFont(text, x, y, size, color, poppinsFontId);
-    }
-
-    private String formatHealthValue(float value) {
-        if (Math.abs(value - Math.round(value)) < 0.05f) {
-            return Integer.toString(Math.round(value));
-        }
-        return String.format("%.1f", value);
     }
 
     private void renderPlayerHead(DrawContext context, PlayerEntity player, int x, int y) {
@@ -284,7 +273,8 @@ public final class TargetHUD extends Module {
 
         MatrixStack matrices = context.getMatrices();
         matrices.push();
-
+        
+        // this aint working gang :Sob:
         NanoVGRenderer.save();
         NanoVGRenderer.scissor(x, y, HEAD_SIZE, HEAD_SIZE);
 
