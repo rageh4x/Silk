@@ -18,6 +18,9 @@ public class Watermark extends Module {
     private final NumberSetting transparency = new NumberSetting("Transparency", 0, 255, 200, 1);
     private final ModeSetting colorMode = new ModeSetting("Color Mode", "Astolfo", "Astolfo", "Theme", "Custom");
     private final ColorSetting customColor = new ColorSetting("Custom Color", new Color(255, 255, 255));
+    private final BooleanSetting waveAnimation = new BooleanSetting("Wave Animation", false);
+    private final NumberSetting waveSpeed = new NumberSetting("Wave Speed", 0.1, 5.0, 1.5, 0.1);
+    private final NumberSetting waveSpread = new NumberSetting("Wave Spread", 0.1, 5.0, 0.6, 0.1);
 
     private DraggableComponent draggable;
     private boolean needsInitialCenter = true;
@@ -27,7 +30,7 @@ public class Watermark extends Module {
 
     public Watermark() {
         super("Watermark", "Displays client watermark", -1, Category.RENDER);
-        addSettings(mode, text, fontSize, transparency, colorMode, customColor);
+        addSettings(mode, text, fontSize, transparency, colorMode, customColor, waveAnimation, waveSpeed, waveSpread);
     }
 
     @Override
@@ -134,28 +137,50 @@ public class Watermark extends Module {
         float titleY = centerY - titleHeight / 2f;
 
         Color accentColor = getColor(0);
-        NanoVGRenderer.drawText(title, textX, titleY, titleSize, accentColor);
+        if (waveAnimation.getValue()) {
+            drawWaveText(title, textX, titleY, titleSize, accentColor);
+        } else {
+            NanoVGRenderer.drawText(title, textX, titleY, titleSize, accentColor);
+        }
 
         textX += titleWidth + spacing;
 
         float iconY = centerY - iconSize / 2f;
         if (fpsIcon != -1) {
-            NanoVGRenderer.drawImage(fpsIcon, textX, iconY, iconSize, iconSize, new Color(255, 255, 255, 255));
+            if (waveAnimation.getValue()) {
+                drawWaveIcon(fpsIcon, textX, iconY, iconSize, 0, accentColor);
+            } else {
+                NanoVGRenderer.drawImage(fpsIcon, textX, iconY, iconSize, iconSize, new Color(255, 255, 255, 255));
+            }
         }
         textX += iconSize + iconSpacing;
 
         float infoY = centerY - infoHeight / 2f;
         Color infoColor = new Color(200, 200, 200);
-        NanoVGRenderer.drawText(fpsText, textX, infoY, infoSize, infoColor);
+        if (waveAnimation.getValue()) {
+            drawWaveText(fpsText, textX, infoY, infoSize, accentColor, 1);
+        } else {
+            NanoVGRenderer.drawText(fpsText, textX, infoY, infoSize, infoColor);
+        }
 
         textX += NanoVGRenderer.getTextWidth(fpsText, infoSize) + spacing;
 
         iconY = centerY - iconSize / 2f;
         if (pingIcon != -1) {
-            NanoVGRenderer.drawImage(pingIcon, textX, iconY, iconSize, iconSize, new Color(255, 255, 255, 255));
+            if (waveAnimation.getValue()) {
+                int startIndex = 1 + fpsText.length();
+                drawWaveIcon(pingIcon, textX, iconY, iconSize, startIndex, accentColor);
+            } else {
+                NanoVGRenderer.drawImage(pingIcon, textX, iconY, iconSize, iconSize, new Color(255, 255, 255, 255));
+            }
         }
         textX += iconSize + iconSpacing;
-        NanoVGRenderer.drawText(pingText, textX, infoY, infoSize, infoColor);
+        if (waveAnimation.getValue()) {
+            int startIndex = 1 + fpsText.length() + 1;
+            drawWaveText(pingText, textX, infoY, infoSize, accentColor, startIndex);
+        } else {
+            NanoVGRenderer.drawText(pingText, textX, infoY, infoSize, infoColor);
+        }
     }
 
     private void renderGamesense(boolean isInChat) {
@@ -191,7 +216,12 @@ public class Watermark extends Module {
                 new Color(96, 96, 96, alpha));
         NanoVGRenderer.drawRoundedRect(x, y, bgWidth, bgHeight, 2f, new Color(25, 25, 25, alpha));
 
-        NanoVGRenderer.drawText(fullText, x + padding, y + padding, size, getColor(0));
+        Color accentColor = getColor(0);
+        if (waveAnimation.getValue()) {
+            drawWaveText(fullText, x + padding, y + padding, size, accentColor);
+        } else {
+            NanoVGRenderer.drawText(fullText, x + padding, y + padding, size, accentColor);
+        }
     }
 
     private void snapToCenter(float width) {
@@ -219,5 +249,41 @@ public class Watermark extends Module {
         if (mc.isInSingleplayer())
             return "Singleplayer";
         return mc.getCurrentServerEntry().address;
+    }
+
+    private void drawWaveText(String s, float x, float y, float size, Color baseColor) {
+        drawWaveText(s, x, y, size, baseColor, 0);
+    }
+
+    private void drawWaveText(String s, float x, float y, float size, Color baseColor, int startIndex) {
+        double time = (System.currentTimeMillis() / 1000.0) * waveSpeed.getValue();
+        float cursorX = x;
+        for (int i = 0; i < s.length(); i++) {
+            String ch = String.valueOf(s.charAt(i));
+            double phase = time + (startIndex + i) * waveSpread.getValue();
+            double waveValue = (Math.sin(phase) + 1.0) * 0.5;
+            double wave = Math.sin(waveValue * Math.PI * 0.5);
+            int waved = applyWaveColor(baseColor.getRGB(), wave);
+            NanoVGRenderer.drawText(ch, cursorX, y, size, new Color(waved, true));
+            cursorX += NanoVGRenderer.getTextWidth(ch, size);
+        }
+    }
+        // this aint fucking working properly nigger nigger
+    private void drawWaveIcon(int imageId, float x, float y, float size, int index, Color baseColor) {
+        double time = (System.currentTimeMillis() / 1000.0) * waveSpeed.getValue();
+        double phase = time + index * waveSpread.getValue();
+        double waveValue = (Math.sin(phase) + 1.0) * 0.5;
+        double wave = Math.sin(waveValue * Math.PI * 0.5);
+        int waved = applyWaveColor(baseColor.getRGB(), wave);
+        NanoVGRenderer.drawImage(imageId, x, y, size, size, new Color(waved, true));
+    }
+
+    private int applyWaveColor(int baseColor, double waveValue) {
+        Color base = new Color(baseColor, true);
+        double wave = Math.pow(waveValue, 0.5);
+        int r = (int) (base.getRed() + (255 - base.getRed()) * wave);
+        int g = (int) (base.getGreen() + (255 - base.getGreen()) * wave);
+        int b = (int) (base.getBlue() + (255 - base.getBlue()) * wave);
+        return (base.getAlpha() << 24) | (r << 16) | (g << 8) | b;
     }
 }
