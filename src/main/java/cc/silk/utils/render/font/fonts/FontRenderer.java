@@ -174,8 +174,6 @@ public class FontRenderer implements Closeable {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 
         CompatShaders.usePositionTexColor();
         BufferBuilder bb;
@@ -222,6 +220,9 @@ public class FontRenderer implements Closeable {
         }
         for (Identifier identifier : GLYPH_PAGE_CACHE.keySet()) {
             RenderSystem.setShaderTexture(0, identifier);
+
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
             List<DrawEntry> objects = GLYPH_PAGE_CACHE.get(identifier);
 
             bb = Tessellator.getInstance().begin(DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
