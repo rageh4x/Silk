@@ -9,7 +9,6 @@ import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.math.TimerUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ElytraItem;
 import net.minecraft.item.FireworkRocketItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -57,14 +56,28 @@ public final class AutoFirework extends Module {
 
    private boolean shouldUseFirework() {
         if (!isWearingElytra()) return false;
-        if (onlyWhenFlying.getValue() && !mc.player.isFallFlying()) return false;
+        if (onlyWhenFlying.getValue() && !isElytraFlying()) return false;
         if (isHoldingImportantItem()) return false;
         return findFireworkInHotbar() != -1;
     }
 
+    private boolean isElytraFlying() {
+        try {
+            return (Boolean) mc.player.getClass().getMethod("isGliding").invoke(mc.player);
+        } catch (Throwable ignored) {
+            try {
+                return (Boolean) mc.player.getClass().getMethod("isFallFlying").invoke(mc.player);
+            } catch (Throwable ignored2) {
+                return false;
+            }
+        }
+    }
+
     private boolean isWearingElytra() {
         ItemStack chestplate = mc.player.getEquippedStack(EquipmentSlot.CHEST);
-        return chestplate.getItem() instanceof ElytraItem && ElytraItem.isUsable(chestplate);
+        if (!chestplate.isOf(Items.ELYTRA)) return false;
+        // Consider usable if it has durability left
+        return chestplate.getMaxDamage() == 0 || chestplate.getDamage() < chestplate.getMaxDamage() - 1;
     }
 
 

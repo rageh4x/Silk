@@ -11,7 +11,7 @@ import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.render.font.util.RendererUtils;
 import cc.silk.utils.render.RenderUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.render.GameRenderer;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -59,7 +59,7 @@ public final class EntityESP extends Module {
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        CompatShaders.usePositionColor();
 
         float lineWidthValue = Math.max(0.1f, Math.min(10.0f, (float) lineWidth.getValue()));
         if (Math.abs(lineWidthValue - lastLineWidth) > 0.01f) {

@@ -52,7 +52,7 @@ public final class PearlKey extends Module {
         int pearlSlot = findPearlSlot();
         if (pearlSlot == -1) return;
 
-        if (mc.player.getItemCooldownManager().isCoolingDown(Items.ENDER_PEARL)) {
+        if (mc.player.getItemCooldownManager().isCoolingDown(new net.minecraft.item.ItemStack(Items.ENDER_PEARL))) {
             return;
         }
 

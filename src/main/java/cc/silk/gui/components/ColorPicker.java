@@ -8,6 +8,7 @@ import cc.silk.module.modules.client.ClickGUIModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
+import cc.silk.utils.render.CompatShaders;
 import org.joml.Matrix4f;
 
 import java.awt.*;
@@ -181,7 +182,7 @@ public class ColorPicker {
         context.getMatrices().push();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        CompatShaders.usePositionColor();
     }
 
     private void finishRendering(BufferBuilder buffer, DrawContext context, int x, int y, int width, int height) {

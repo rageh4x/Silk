@@ -2,7 +2,7 @@ package cc.silk.utils.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.GameRenderer;
+import cc.silk.utils.render.CompatShaders;
 import org.joml.Matrix4f;
 
 import java.awt.*;
@@ -70,7 +70,7 @@ public final class GuiUtils {
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        CompatShaders.usePositionColor();
 
         context.fillGradient(x, y, x + width, y + height, topLeft.getRGB(), bottomLeft.getRGB());
 

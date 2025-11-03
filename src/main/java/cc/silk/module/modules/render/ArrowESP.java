@@ -10,7 +10,7 @@ import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.render.TextureRenderer;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.GameRenderer;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
@@ -52,7 +52,7 @@ public final class ArrowESP extends Module {
         RenderSystem.depthMask(false);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
+        CompatShaders.usePositionTexColor();
         RenderSystem.setShaderTexture(0, ARROW_TEXTURE);
 
         Color arrowColor = color.getValue();

@@ -54,7 +54,7 @@ public final class WindChargeKey extends Module {
         int windChargeSlot = findWindChargeSlot();
         if (windChargeSlot == -1) return;
 
-        if (mc.player.getItemCooldownManager().isCoolingDown(Items.WIND_CHARGE)) {
+        if (mc.player.getItemCooldownManager().isCoolingDown(new net.minecraft.item.ItemStack(Items.WIND_CHARGE))) {
             return;
         }
 

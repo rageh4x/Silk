@@ -11,6 +11,7 @@ import cc.silk.module.setting.ModeSetting;
 import cc.silk.module.setting.NumberSetting;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.render.*;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
@@ -87,7 +88,7 @@ public final class JumpCircles extends Module {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE);
         RenderSystem.setShaderTexture(0, CIRCLE_TEXTURE);
-        RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
+        CompatShaders.usePositionTexColor();
 
         long now = System.currentTimeMillis();
         long life = (long) (duration.getValue() * 1000.0);

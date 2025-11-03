@@ -18,7 +18,6 @@ public class InGameHudMixin {
     private void onRender(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         RenderUtils.unscaledProjection();
         RenderUtils.scaledProjection();
-        RenderSystem.applyModelViewMatrix();
         
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();

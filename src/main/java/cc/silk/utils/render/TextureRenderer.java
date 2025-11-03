@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
@@ -51,7 +52,7 @@ public final class TextureRenderer {
 
     public static void drawCenteredQuad(MatrixStack matrices, Identifier texture, float width, float height, int color,
             boolean linearFilter) {
-        RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
+        CompatShaders.usePositionTexColor();
         RenderSystem.setShaderTexture(0, texture);
 
         if (linearFilter) {
@@ -109,7 +110,7 @@ public final class TextureRenderer {
             matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotationDeg));
         }
 
-        RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
+        CompatShaders.usePositionTexColor();
         RenderSystem.setShaderTexture(0, texture);
 
         if (linearFilter) {

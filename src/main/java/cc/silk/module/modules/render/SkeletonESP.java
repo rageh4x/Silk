@@ -11,7 +11,7 @@ import cc.silk.utils.render.font.util.RendererUtils;
 import cc.silk.utils.friend.FriendManager;
 import cc.silk.utils.render.RenderUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.render.GameRenderer;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -43,7 +43,7 @@ public final class SkeletonESP extends Module {
             RenderSystem.disableDepthTest();
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+            CompatShaders.usePositionColor();
 
             GL11.glEnable(GL11.GL_LINE_SMOOTH);
             GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);

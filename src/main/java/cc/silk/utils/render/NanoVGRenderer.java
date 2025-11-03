@@ -259,7 +259,6 @@ public class NanoVGRenderer {
         RenderSystem.resetTextureMatrix();
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.depthMask(true);
-        RenderSystem.applyModelViewMatrix();
     }
 
     public static void drawRoundedRect(float x, float y, float width, float height, float radius, Color color) {

@@ -7,6 +7,7 @@ import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.render.*;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -95,7 +96,7 @@ public class Trajectory extends Module {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        CompatShaders.usePositionColor();
 
         Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
         Tessellator tessellator = Tessellator.getInstance();

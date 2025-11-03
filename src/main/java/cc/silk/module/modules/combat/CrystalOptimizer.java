@@ -10,7 +10,8 @@ import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolItem;
+import net.minecraft.item.MiningToolItem;
+import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 
@@ -38,13 +39,12 @@ public final class CrystalOptimizer extends Module {
         boolean canAttack =
                 (weakness == null)
                         || (strength != null && strength.getAmplifier() > weakness.getAmplifier())
-                        || (mainHand.getItem() instanceof ToolItem);
+                        || (mainHand.getItem() instanceof MiningToolItem)
+                        || (mainHand.getItem() instanceof SwordItem);
 
         if (!canAttack) return;
 
 
-        crystal.kill();
-        crystal.setRemoved(Entity.RemovalReason.KILLED);
-        crystal.onRemoved();
+        crystal.discard();
     }
 }

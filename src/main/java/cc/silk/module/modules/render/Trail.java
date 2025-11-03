@@ -10,6 +10,7 @@ import cc.silk.module.setting.ModeSetting;
 import cc.silk.module.setting.NumberSetting;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.render.*;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -76,7 +77,7 @@ public final class Trail extends Module {
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        CompatShaders.usePositionColor();
 
         BufferBuilder buffer = null;
 

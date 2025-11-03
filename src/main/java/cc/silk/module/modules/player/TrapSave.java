@@ -16,6 +16,7 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.render.*;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -143,7 +144,7 @@ public final class TrapSave extends Module {
         final int radiusSquared = radius * radius;
         final boolean infiniteHeight = height == 0;
         final int minY = infiniteHeight ? mc.world.getBottomY() : playerPos.getY() - height;
-        final int maxY = infiniteHeight ? mc.world.getTopY() - 1 : playerPos.getY() + height;
+        final int maxY = infiniteHeight ? mc.world.getTopY(net.minecraft.world.Heightmap.Type.WORLD_SURFACE, playerPos.getX(), playerPos.getZ()) - 1 : playerPos.getY() + height;
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
@@ -234,7 +235,7 @@ public final class TrapSave extends Module {
     private void scanArmorStands(BlockPos playerPos, int radius, int height, List<TrapCluster> clusters) {
         final boolean infiniteHeight = height == 0;
         final int minY = infiniteHeight ? mc.world.getBottomY() : playerPos.getY() - height;
-        final int maxY = infiniteHeight ? mc.world.getTopY() - 1 : playerPos.getY() + height;
+        final int maxY = infiniteHeight ? mc.world.getTopY(net.minecraft.world.Heightmap.Type.WORLD_SURFACE, playerPos.getX(), playerPos.getZ()) - 1 : playerPos.getY() + height;
 
         final Vec3d minPos = new Vec3d(playerPos.getX() - radius, minY, playerPos.getZ() - radius);
         final Vec3d maxPos = new Vec3d(playerPos.getX() + radius, maxY, playerPos.getZ() + radius);
@@ -305,7 +306,7 @@ public final class TrapSave extends Module {
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        CompatShaders.usePositionColor();
 
         for (TrapCluster cluster : detectedTraps) {
             renderTrapCluster(matrices, cluster, cameraPos);

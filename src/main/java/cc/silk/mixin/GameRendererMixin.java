@@ -26,13 +26,12 @@ public class GameRendererMixin {
         RenderSystem.getModelViewStack().pushMatrix().mul(matrixStack.peek().getPositionMatrix());
         matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
         matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0f));
-        RenderSystem.applyModelViewMatrix();
+        // applyModelViewMatrix removed in newer versions; the stack state is used directly
 
         W2SUtil.matrixProject.set(RenderSystem.getProjectionMatrix());
         W2SUtil.matrixModel.set(RenderSystem.getModelViewMatrix());
         W2SUtil.matrixWorldSpace.set(matrixStack.peek().getPositionMatrix());
 
         RenderSystem.getModelViewStack().popMatrix();
-        RenderSystem.applyModelViewMatrix();
     }
 }

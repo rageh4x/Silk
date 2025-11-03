@@ -63,7 +63,7 @@ public final class ShaderESP extends Module {
         double x = entity.prevX + (entity.getX() - entity.prevX) * tickDelta - cam.x;
         double y = entity.prevY + (entity.getY() - entity.prevY) * tickDelta - cam.y;
         double z = entity.prevZ + (entity.getZ() - entity.prevZ) * tickDelta - cam.z;
-        mc.getEntityRenderDispatcher().render(entity, x, y, z, entity.getYaw(tickDelta), tickDelta, matrices, provider, light);
+        cc.silk.utils.render.CompatRenderDispatcher.render(mc.getEntityRenderDispatcher(), entity, x, y, z, entity.getYaw(tickDelta), tickDelta, matrices, provider, light);
     }
 }
 

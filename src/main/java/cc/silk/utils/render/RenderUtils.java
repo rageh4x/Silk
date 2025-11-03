@@ -3,7 +3,6 @@ package cc.silk.utils.render;
 import cc.silk.SilkClient;
 import cc.silk.utils.render.font.fonts.FontRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
@@ -16,17 +15,15 @@ import java.awt.*;
 
 @UtilityClass
 public final class RenderUtils {
-    public static VertexSorter vertexSorter;
     public static boolean rendering3D = true;
 
     public static void unscaledProjection() {
-        vertexSorter = RenderSystem.getVertexSorting();
-        RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0, SilkClient.mc.getWindow().getFramebufferWidth(), SilkClient.mc.getWindow().getFramebufferHeight(), 0, 1000, 21000), VertexSorter.BY_Z);
+        // Projection setup adjusted/handled by Minecraft; keep flag only
         rendering3D = false;
     }
 
     public static void scaledProjection() {
-        RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0, (float) (SilkClient.mc.getWindow().getFramebufferWidth() / SilkClient.mc.getWindow().getScaleFactor()), (float) (SilkClient.mc.getWindow().getFramebufferHeight() / SilkClient.mc.getWindow().getScaleFactor()), 0, 1000, 21000), vertexSorter);
+        // Projection reset handled by Minecraft; keep flag only
         rendering3D = true;
     }
 

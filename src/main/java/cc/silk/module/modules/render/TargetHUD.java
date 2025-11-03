@@ -11,6 +11,8 @@ import cc.silk.utils.render.NanoVGRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.RenderLayer;
+import java.util.function.Function;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.client.util.SkinTextures;
@@ -284,8 +286,8 @@ public final class TargetHUD extends Module {
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        context.drawTexture(texture, 0, 0, 8, 8, 8, 8, 64, 64);
-        context.drawTexture(texture, 0, 0, 40, 8, 8, 8, 64, 64);
+        context.drawTexture(RenderLayer::getGuiTextured, texture, 0, 0, 8f, 8f, 8, 8, 64, 64);
+        context.drawTexture(RenderLayer::getGuiTextured, texture, 0, 0, 40f, 8f, 8, 8, 64, 64);
         RenderSystem.disableBlend();
 
         NanoVGRenderer.resetScissor();

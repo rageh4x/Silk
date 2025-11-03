@@ -10,6 +10,7 @@ import cc.silk.module.setting.ColorSetting;
 import cc.silk.module.setting.NumberSetting;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.render.*;
+import cc.silk.utils.render.CompatShaders;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
@@ -99,7 +100,7 @@ public final class Breadcrumbs extends Module {
         MatrixStack matrices = e.getMatrixStack();
         Vec3d cam = mc.gameRenderer.getCamera().getPos();
 
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        CompatShaders.usePositionColor();
         RenderSystem.disableDepthTest();
         RenderSystem.disableCull();
         RenderSystem.enableBlend();

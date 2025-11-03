@@ -82,7 +82,6 @@ public class ShaderManager {
     public static void useShader(String name) {
         Integer program = shaderPrograms.get(name);
         if (program != null) {
-            RenderSystem.setShader(() -> null);
             GL20.glUseProgram(program);
         }
     }
