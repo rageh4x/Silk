@@ -5,8 +5,6 @@ import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
-import cc.silk.module.setting.NumberSetting;
-import cc.silk.utils.math.TimerUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -111,7 +109,7 @@ public final class AutoCart extends Module {
             return;
         }
 
-        int tntCartSlot = findItemInHotbar(Items.TNT_MINECART);
+        int tntCartSlot = findItemInHotbar();
         if (tntCartSlot == -1) return;
 
         mc.player.getInventory().selectedSlot = tntCartSlot;
@@ -144,10 +142,10 @@ public final class AutoCart extends Module {
         }
     }
 
-    private int findItemInHotbar(Item item) {
+    private int findItemInHotbar() {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty() && stack.getItem() == item) {
+            if (!stack.isEmpty() && stack.getItem() == Items.TNT_MINECART) {
                 return i;
             }
         }

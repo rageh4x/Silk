@@ -2,6 +2,7 @@ package cc.silk.module.modules.combat;
 
 
 import cc.silk.event.impl.player.AttackEvent;
+import cc.silk.event.impl.player.DoAttackEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
@@ -25,7 +26,7 @@ public class WTap extends Module {
     }
 
     @EventHandler
-    private void onAttackEvent(AttackEvent event) {
+    private void onAttackEvent(DoAttackEvent event) {
         if (isNull()) return;
         if (Math.random() * 100 > chance.getValueFloat()) return;
         var target = mc.targetedEntity;

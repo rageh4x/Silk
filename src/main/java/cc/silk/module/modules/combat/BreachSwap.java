@@ -59,6 +59,7 @@ public final class BreachSwap extends Module {
     @EventHandler
     public void onTick(TickEvent event) {
         if (isNull()) return;
+        if (ShieldBreaker.breakingShield) return;
 
         if (shouldSwitchBack && System.currentTimeMillis() - switchTime >= switchDelay.getValue()) {
             if (originalSlot != -1) {

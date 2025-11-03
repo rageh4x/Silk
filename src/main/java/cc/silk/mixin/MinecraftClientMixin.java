@@ -2,6 +2,7 @@ package cc.silk.mixin;
 
 import cc.silk.SilkClient;
 import cc.silk.event.impl.network.EventDisconnect;
+import cc.silk.event.impl.player.DoAttackEvent;
 import cc.silk.utils.IMinecraft;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.event.impl.world.WorldChangeEvent;
@@ -77,6 +78,12 @@ public class MinecraftClientMixin implements IMinecraft {
                 SilkClient.mc.setScreen(null);
             }
         }
+    }
+
+    @Inject(method = "doAttack", at = @At("HEAD"))
+    public final void doAttackInject(CallbackInfoReturnable<Boolean> cir) {
+        DoAttackEvent event = new DoAttackEvent();
+        SilkClient.INSTANCE.getSilkEventBus().post(event);
     }
 
     @Inject(method = "stop", at = @At("HEAD"))
