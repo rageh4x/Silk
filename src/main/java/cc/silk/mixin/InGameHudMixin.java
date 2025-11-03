@@ -23,7 +23,6 @@ public class InGameHudMixin {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
-        RenderSystem.glBindVertexArray(0);
         
         SilkClient.INSTANCE.getSilkEventBus()
                 .post(new EventRender2D(context, context.getScaledWindowWidth(), context.getScaledWindowHeight()));

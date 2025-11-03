@@ -23,7 +23,14 @@ public final class EnchantmentUtil {
         if (stack == null || world == null || enchantment == null) return false;
         ItemEnchantmentsComponent ench = stack.get(DataComponentTypes.ENCHANTMENTS);
         if (ench == null) return false;
-        // Try direct via RegistryEntry if available
+        try {
+            Registry<Enchantment> reg = world.getRegistryManager().getOrThrow(RegistryKeys.ENCHANTMENT);
+            net.minecraft.registry.entry.RegistryEntry<Enchantment> entryRef = reg.getEntry(enchantment);
+            if (entryRef != null) {
+                return ench.getLevel(entryRef) > 0;
+            }
+        } catch (Throwable ignored) {
+        }
         try {
             Registry<?> reg = (Registry<?>) world.getRegistryManager().getClass().getMethod("get", RegistryKey.class)
                     .invoke(world.getRegistryManager(), RegistryKeys.ENCHANTMENT);
@@ -32,7 +39,6 @@ public final class EnchantmentUtil {
             return level != null && level > 0;
         } catch (Throwable ignored) {
         }
-        // Fallback: try method accepting Enchantment directly, if present
         try {
             Integer level = (Integer) ench.getClass().getMethod("getLevel", Enchantment.class).invoke(ench, enchantment);
             return level != null && level > 0;
@@ -43,6 +49,20 @@ public final class EnchantmentUtil {
 
     public static boolean hasEnchantment(ItemStack stack, World world, RegistryKey<Enchantment> enchantmentKey) {
         if (stack == null || world == null || enchantmentKey == null) return false;
+        ItemEnchantmentsComponent ench = stack.get(DataComponentTypes.ENCHANTMENTS);
+        if (ench == null) return false;
+        try {
+            Registry<Enchantment> reg = world.getRegistryManager().getOrThrow(RegistryKeys.ENCHANTMENT);
+            Enchantment enchInstance = reg.get(enchantmentKey);
+            if (enchInstance != null) {
+                RegistryEntry<Enchantment> entryRef = reg.getEntry(enchInstance);
+                if (entryRef != null) {
+                    return ench.getLevel(entryRef) > 0;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+
         try {
             Object reg = world.getRegistryManager().getClass().getMethod("get", RegistryKey.class)
                     .invoke(world.getRegistryManager(), RegistryKeys.ENCHANTMENT);

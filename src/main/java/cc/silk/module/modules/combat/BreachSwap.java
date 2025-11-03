@@ -9,7 +9,9 @@ import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.mc.EnchantmentUtil;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.enchantment.Enchantments;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -98,7 +100,8 @@ public final class BreachSwap extends Module {
     }
 
     private boolean hasBreach(ItemStack stack) {
-        return EnchantmentUtil.hasEnchantment(stack, mc.world, Enchantments.BREACH);
+        RegistryKey<net.minecraft.enchantment.Enchantment> breachKey = RegistryKey.of(RegistryKeys.ENCHANTMENT, Identifier.of("minecraft", "breach"));
+        return EnchantmentUtil.hasEnchantment(stack, mc.world, breachKey);
     }
 
     @Override
