@@ -8,5 +8,6 @@
 - Click Simulation
 - Make break/place delay for "Auto Crystal"
 - Make "Key Crystal" use "Auto Crystal" delay when both are enabled
+- Make "Key Crystal" only work with sword/totem (both configurable in settings)
 - Fix key crystal even though not looking at block it enables when eating (only make it when looking directly on the block)
 - Maybe rename "Key Crystal" to "Auto Hit Crystal"/"Hit Crystal"
