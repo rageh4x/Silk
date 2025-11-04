@@ -12,3 +12,4 @@
 - Fix key crystal even though not looking at block it enables when eating (only make it when looking directly on the block)
 - Maybe rename "Key Crystal" to "Auto Hit Crystal"/"Hit Crystal"
 - Make "Key Anchor" only works when holding anchor
+- Fix ping not working in "Watermark"
