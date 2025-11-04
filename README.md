@@ -13,3 +13,4 @@
 - Maybe rename "Key Crystal" to "Auto Hit Crystal"/"Hit Crystal"
 - Make "Key Anchor" only works when holding anchor
 - Fix ping not working in "Watermark"
+- Fix "Notification" is full black
