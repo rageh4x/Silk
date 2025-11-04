@@ -4,7 +4,7 @@
 - Make hud editor
 - FullBright: Is it just me or the full bright isn't really working
 - Improve arraylist cuz what the helly
-- Fix left clicking enables "Auto Mace"
+- ~~Fix left clicking enables "Auto Mace"~~
 - Click Simulation
 - Make break/place delay for "Auto Crystal"
 - Make "Key Crystal" use "Auto Crystal" delay when both are enabled
