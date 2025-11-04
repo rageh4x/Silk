@@ -3,7 +3,7 @@
 - GUI: Add a dropdown
 - Make hud editor
 - FullBright: Is it just me or the full bright isn't really working
-- Improve arraylist cuz what the helly
+- ~~Improve arraylist cuz what the helly~~ (NVM, cfg issue)
 - ~~Fix left clicking enables "Auto Mace"~~
 - Click Simulation
 - ~~Make break/place delay for "Auto Crystal"~~
