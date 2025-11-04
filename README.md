@@ -12,5 +12,6 @@
 - Fix key crystal even though not looking at block it enables when eating (only make it when looking directly on the block)
 - Maybe rename "Key Crystal" to "Auto Hit Crystal"/"Hit Crystal"
 - Make "Key Anchor" only works when holding anchor
-- Fix ping not working in "Watermark"
+- ~~Fix ping not working in "Watermark"~~
 - Fix "Notification" is full black
+- Add outline to "Target Hud" like when clicking on it
