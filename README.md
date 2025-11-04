@@ -16,3 +16,4 @@
 - Fix "Notification" is full black
 - Add outline to "Target Hud" like when clicking on it
 - GUI: make the hover animation start from where the cursor is, not always from the top
+- GUI: add some animation when you drag category
