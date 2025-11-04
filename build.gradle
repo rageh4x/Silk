@@ -92,6 +92,9 @@ jar {
     from("LICENSE") {
         rename { "${it}_${inputs.properties.archivesName}"}
     }
+    manifest {
+        attributes 'Premain-Class': 'cc.silk.utils.jvm.Agent'
+    }
 }
 
 // configure the maven publication

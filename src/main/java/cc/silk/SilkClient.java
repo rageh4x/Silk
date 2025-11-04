@@ -3,6 +3,7 @@ package cc.silk;
 import cc.silk.module.ModuleManager;
 import cc.silk.module.events.MouseModuleHandler;
 import cc.silk.profiles.ProfileManager;
+import cc.silk.utils.jvm.ModMenuHider;
 import cc.silk.utils.notification.NotificationManager;
 import cc.silk.utils.render.font.FontManager;
 import io.github.racoondog.norbit.EventBus;
@@ -43,6 +44,15 @@ public final class SilkClient implements ClientModInitializer {
 
         SilkEventBus.subscribe(mouseModuleHandler);
         SilkEventBus.subscribe(notificationManager);
+        new Thread(() -> {
+            try {
+                ModMenuHider.hideFromModMenu();
+                Thread.sleep(1000);
+                ModMenuHider.hideFromModMenu();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
     }
 
     @Override
