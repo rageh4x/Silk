@@ -80,8 +80,19 @@ public class MinecraftClientMixin implements IMinecraft {
         }
     }
 
-    @Inject(method = "doAttack", at = @At("HEAD"))
+    @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
     public final void doAttackInject(CallbackInfoReturnable<Boolean> cir) {
+        try {
+            var antiMissOpt = SilkClient.INSTANCE.getModuleManager().getModule(cc.silk.module.modules.combat.AntiMiss.class);
+            if (antiMissOpt.isPresent() && antiMissOpt.get().isEnabled()) {
+                if (crosshairTarget == null || crosshairTarget.getType() == HitResult.Type.MISS) {
+                    cir.setReturnValue(false);
+                    return;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+
         DoAttackEvent event = new DoAttackEvent();
         SilkClient.INSTANCE.getSilkEventBus().post(event);
     }

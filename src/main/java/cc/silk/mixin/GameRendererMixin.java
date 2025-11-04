@@ -1,5 +1,7 @@
 package cc.silk.mixin;
 
+import cc.silk.SilkClient;
+import cc.silk.event.impl.render.EventRender3D;
 import cc.silk.utils.render.W2SUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
@@ -33,5 +35,10 @@ public class GameRendererMixin {
         W2SUtil.matrixWorldSpace.set(matrixStack.peek().getPositionMatrix());
 
         RenderSystem.getModelViewStack().popMatrix();
+    }
+
+    @Inject(method = "renderWorld", at = @At("TAIL"))
+    private void onRenderWorldTail(RenderTickCounter tickCounter, CallbackInfo ci) {
+        SilkClient.INSTANCE.getSilkEventBus().post(new EventRender3D(new MatrixStack()));
     }
 }
