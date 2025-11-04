@@ -75,11 +75,8 @@ public final class ModuleManager {
         // Render
         add(
                 new ContainerSlots(), new FullBright(), new HUD(), new Watermark(), new TargetHUD(),
-                new SwingSpeed(), new OreESP(), new Trajectory(), new FpsCounter(),
-                new SkeletonESP(), new EntityESP(), new ShaderESP(), new ShaderTest(), new Trail(),
-                new JumpCircles(), new TargetESP(), new HitParticles(), new CircleESP(),
-                new Breadcrumbs(), new Notifications(), new ArrowESP(), new OutlineESP(),
-                new SquareESP(), new ESP2D(), new NanoVGTest(), new PlayerESP());
+                new SwingSpeed(),
+                new Notifications(), new ArrowESP(), new OutlineESP(), new ESP2D());
 
         // Misc
         add(
