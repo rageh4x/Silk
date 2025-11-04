@@ -7,7 +7,7 @@ import cc.silk.module.Module;
 import cc.silk.module.setting.*;
 import cc.silk.utils.render.font.FontManager;
 import cc.silk.utils.render.font.fonts.FontRenderer;
-import cc.silk.utils.render.RenderUtils;
+import cc.silk.utils.render.NanoVGRenderer;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Formatting;
@@ -67,6 +67,8 @@ public class HUD extends Module {
             return;
         }
 
+        NanoVGRenderer.beginFrame();
+
         if (arrayList.getValue()) {
             List<Module> enabledModules = new ArrayList<>();
             for (Module module : SilkClient.INSTANCE.getModuleManager().getModules()) {
@@ -77,25 +79,17 @@ public class HUD extends Module {
                 enabledModules.add(module);
             }
 
-            if (fontMode.getMode().equals("MC")) {
-                enabledModules.sort(Comparator.comparingDouble(ri -> -mc.textRenderer.getWidth(getFullName(ri))));
-            } else {
-                enabledModules.sort(Comparator.comparingDouble(
-                        ri -> -getCustomFontRenderer(fontMode.getMode()).getStringWidth(getFullName(ri))));
-            }
+            int fontSize = (int) (16 * arrayListScale.getValue());
+            int fontId = getFontIdForMode(fontMode.getMode());
+
+            enabledModules.sort(Comparator.comparingDouble(
+                    ri -> -getTextWidthWithFormatting(getFullName(ri), fontSize)));
 
             int i = padding.getValueInt();
             int totalWidth = event.getWidth();
 
             for (Module m : enabledModules) {
-                int moduleHeight;
-
-                if (fontMode.getMode().equals("MC")) {
-                    moduleHeight = mc.textRenderer.fontHeight;
-                } else {
-                    moduleHeight = (int) getCustomFontRenderer(fontMode.getMode()).getStringHeight(getFullName(m));
-                }
-
+                int moduleHeight = (int) NanoVGRenderer.getTextHeight(fontSize);
                 i += moduleHeight + (int) (3 * arrayListScale.getValue());
             }
 
@@ -114,18 +108,8 @@ public class HUD extends Module {
                     default -> 0;
                 };
 
-                int moduleWidth;
-                int moduleHeight;
-                FontRenderer customRenderer = null;
-
-                if (fontMode.getMode().equals("MC")) {
-                    moduleWidth = mc.textRenderer.getWidth(fullName);
-                    moduleHeight = mc.textRenderer.fontHeight;
-                } else {
-                    customRenderer = getCustomFontRenderer(fontMode.getMode());
-                    moduleWidth = (int) customRenderer.getStringWidth(fullName);
-                    moduleHeight = (int) customRenderer.getStringHeight(fullName);
-                }
+                int moduleWidth = (int) Math.ceil(getTextWidthWithFormatting(fullName, fontSize));
+                int moduleHeight = (int) Math.ceil(NanoVGRenderer.getTextHeight(fontSize));
 
                 int scaledPadding1 = (int) (1 * arrayListScale.getValue());
                 int scaledPadding2 = (int) (2 * arrayListScale.getValue());
@@ -150,9 +134,9 @@ public class HUD extends Module {
                 int backgroundBottom = i + moduleHeight + scaledPadding1;
 
                 if (opacity.getValueInt() > 0) {
-                    int backgroundColor = new Color(0, 0, 0, opacity.getValueInt()).getRGB();
-                    event.getContext().fill(backgroundLeft, backgroundTop, backgroundRight, backgroundBottom,
-                            backgroundColor);
+                    Color backgroundColor = new Color(0, 0, 0, opacity.getValueInt());
+                    NanoVGRenderer.drawRect(backgroundLeft, backgroundTop,
+                            backgroundRight - backgroundLeft, backgroundBottom - backgroundTop, backgroundColor);
                 }
 
                 boolean isFirst = moduleIndex == 0;
@@ -171,27 +155,31 @@ public class HUD extends Module {
                 prevBackgroundLeft = backgroundLeft - 1;
 
                 switch (backBarMode.getMode()) {
-                    case "Full" ->
-                        event.getContext().fill(totalWidth - padding.getValueInt() + scaledPadding3, i - scaledPadding2,
-                                totalWidth - padding.getValueInt() + scaledPadding5, i + moduleHeight + scaledPadding1,
-                                color);
-                    case "Rise" ->
-                        event.getContext().fill(totalWidth - padding.getValueInt() + scaledPadding3, i - scaledPadding1,
-                                totalWidth - padding.getValueInt() + scaledPadding5, i + moduleHeight, color);
+                    case "Full" -> {
+                        int x = totalWidth - padding.getValueInt() + scaledPadding3;
+                        int y = i - scaledPadding2;
+                        int width = scaledPadding5 - scaledPadding3;
+                        int height = moduleHeight + scaledPadding1 + scaledPadding2;
+                        NanoVGRenderer.drawRect(x, y, width, height, new Color(color, true));
+                    }
+                    case "Rise" -> {
+                        int x = totalWidth - padding.getValueInt() + scaledPadding3;
+                        int y = i - scaledPadding1;
+                        int width = scaledPadding5 - scaledPadding3;
+                        int height = moduleHeight + scaledPadding1;
+                        NanoVGRenderer.drawRect(x, y, width, height, new Color(color, true));
+                    }
                 }
 
+                String displayText = stripFormatting(fullName);
                 int textX = totalWidth - moduleWidth - padding.getValueInt();
                 int textY = i;
 
                 if (glow.getValue()) {
-                    renderTextWithGlow(event, fullName, textX, textY, textColor, customRenderer);
+                    renderTextWithGlowNanoVG(displayText, textX, textY, textColor, fontId, fontSize);
                 } else {
-                    if (fontMode.getMode().equals("MC")) {
-                        event.getContext().drawText(mc.textRenderer, fullName, textX, textY, textColor, true);
-                    } else {
-                        customRenderer.drawString(event.getContext().getMatrices(), fullName, textX, textY,
-                                new Color(textColor));
-                    }
+                    NanoVGRenderer.drawTextWithFont(displayText, textX, textY, fontSize,
+                            new Color(textColor, true), fontId);
                 }
 
                 i += moduleHeight + (int) (3 * arrayListScale.getValue());
@@ -204,9 +192,9 @@ public class HUD extends Module {
                     Math.hypot(mc.player.getX() - mc.player.prevX, mc.player.getZ() - mc.player.prevZ) * 20.0F));
             String fps = String.valueOf(MinecraftClient.getInstance().getCurrentFps());
 
+            int infoFontSize = (int) (16 * scale.getValue());
             int x = (int) (10 * scale.getValue());
-
-            int lineHeight = (int) (mc.textRenderer.fontHeight * scale.getValue());
+            int lineHeight = (int) (NanoVGRenderer.getTextHeight(infoFontSize) * scale.getValue());
 
             int y = event.getHeight() - (fpsCounter.getValue() && bpsCounter.getValue() ? 2 * lineHeight : lineHeight)
                     - (int) (10 * scale.getValue());
@@ -218,7 +206,7 @@ public class HUD extends Module {
                     case "Custom" -> getCustomColor().getRGB();
                     default -> 0;
                 };
-                event.getContext().drawText(mc.textRenderer, "FPS: " + fps, x, y, color, true);
+                NanoVGRenderer.drawText("FPS: " + fps, x, y, infoFontSize, new Color(color, true));
                 y -= lineHeight;
             }
 
@@ -229,18 +217,29 @@ public class HUD extends Module {
                     case "Custom" -> getCustomColor().getRGB();
                     default -> 0;
                 };
-                event.getContext().drawText(mc.textRenderer, "BPS: " + bps, x, y, color, true);
+                NanoVGRenderer.drawText("BPS: " + bps, x, y, infoFontSize, new Color(color, true));
             }
         }
+
+        NanoVGRenderer.endFrame();
     }
 
-    private FontRenderer getCustomFontRenderer(String name) {
-        int scaledSize = (int) (16 * arrayListScale.getValue());
-        return switch (name) {
-            case "JetbrainsMono" -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.JetbrainsMono);
-            case "Poppins" -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.Poppins);
-            default -> SilkClient.INSTANCE.fontManager.getSize(scaledSize, FontManager.Type.Inter);
+    private int getFontIdForMode(String mode) {
+        return switch (mode) {
+            case "JetbrainsMono" -> NanoVGRenderer.getJetBrainsFontId();
+            case "Poppins" -> NanoVGRenderer.getPoppinsFontId();
+            default -> NanoVGRenderer.getRegularFontId();
         };
+    }
+
+    private String stripFormatting(String text) {
+        return text.replaceAll("§.", "");
+    }
+
+    private float getTextWidthWithFormatting(String text, int fontSize) {
+        String stripped = stripFormatting(text);
+        int fontId = getFontIdForMode(fontMode.getMode());
+        return NanoVGRenderer.getTextWidthWithFont(stripped, fontSize, fontId);
     }
 
     private String getFullName(Module m) {
@@ -283,25 +282,29 @@ public class HUD extends Module {
     private void renderBorders(EventRender2D event, int backgroundLeft, int backgroundTop,
             int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
             boolean isFirst, boolean isLast, int color) {
+        Color c = new Color(color, true);
+
         if (isFirst) {
-            event.getContext().fill(backgroundLeft - 1, backgroundTop - 1, backgroundRight + 1, backgroundTop, color);
+            NanoVGRenderer.drawRect(backgroundLeft - 1, backgroundTop - 1,
+                    backgroundRight - backgroundLeft + 2, 1, c);
         }
 
-        event.getContext().fill(backgroundLeft - 1, backgroundTop, backgroundLeft, backgroundBottom, color);
-        event.getContext().fill(backgroundRight, backgroundTop, backgroundRight + 1, backgroundBottom, color);
+        NanoVGRenderer.drawRect(backgroundLeft - 1, backgroundTop, 1, backgroundBottom - backgroundTop, c);
+        NanoVGRenderer.drawRect(backgroundRight, backgroundTop, 1, backgroundBottom - backgroundTop, c);
 
         if (prevBackgroundLeft != -1 && prevBackgroundLeft != backgroundLeft - 1) {
             if (prevBackgroundLeft < backgroundLeft - 1) {
-                event.getContext().fill(prevBackgroundLeft, backgroundTop - 1, backgroundLeft, backgroundTop, color);
+                NanoVGRenderer.drawRect(prevBackgroundLeft, backgroundTop - 1,
+                        backgroundLeft - prevBackgroundLeft, 1, c);
             } else {
-                event.getContext().fill(backgroundLeft - 1, backgroundTop - 1, prevBackgroundLeft + 1, backgroundTop,
-                        color);
+                NanoVGRenderer.drawRect(backgroundLeft - 1, backgroundTop - 1,
+                        prevBackgroundLeft - backgroundLeft + 2, 1, c);
             }
         }
 
         if (isLast) {
-            event.getContext().fill(backgroundLeft - 1, backgroundBottom, backgroundRight + 1, backgroundBottom + 1,
-                    color);
+            NanoVGRenderer.drawRect(backgroundLeft - 1, backgroundBottom,
+                    backgroundRight - backgroundLeft + 2, 1, c);
         }
     }
 
@@ -309,42 +312,96 @@ public class HUD extends Module {
             int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
             boolean isFirst, boolean isLast, int color) {
         float intensity = glowIntensity.getValueFloat();
+        Color c = new Color(color, true);
 
         if (isFirst) {
-            RenderUtils.fillWithGlow(event.getContext(), backgroundLeft - 1, backgroundTop - 1,
-                    backgroundRight + 1, backgroundTop, color, intensity);
+            drawRectWithGlow(backgroundLeft - 1, backgroundTop - 1,
+                    backgroundRight - backgroundLeft + 2, 1, c, intensity);
         }
 
-        RenderUtils.fillWithGlow(event.getContext(), backgroundLeft - 1, backgroundTop,
-                backgroundLeft, backgroundBottom, color, intensity);
-        RenderUtils.fillWithGlow(event.getContext(), backgroundRight, backgroundTop,
-                backgroundRight + 1, backgroundBottom, color, intensity);
+        drawRectWithGlow(backgroundLeft - 1, backgroundTop, 1, backgroundBottom - backgroundTop, c, intensity);
+        drawRectWithGlow(backgroundRight, backgroundTop, 1, backgroundBottom - backgroundTop, c, intensity);
 
         if (prevBackgroundLeft != -1 && prevBackgroundLeft != backgroundLeft - 1) {
             if (prevBackgroundLeft < backgroundLeft - 1) {
-                RenderUtils.fillWithGlow(event.getContext(), prevBackgroundLeft, backgroundTop - 1,
-                        backgroundLeft, backgroundTop, color, intensity);
+                drawRectWithGlow(prevBackgroundLeft, backgroundTop - 1,
+                        backgroundLeft - prevBackgroundLeft, 1, c, intensity);
             } else {
-                RenderUtils.fillWithGlow(event.getContext(), backgroundLeft - 1, backgroundTop - 1,
-                        prevBackgroundLeft + 1, backgroundTop, color, intensity);
+                drawRectWithGlow(backgroundLeft - 1, backgroundTop - 1,
+                        prevBackgroundLeft - backgroundLeft + 2, 1, c, intensity);
             }
         }
 
         if (isLast) {
-            RenderUtils.fillWithGlow(event.getContext(), backgroundLeft - 1, backgroundBottom,
-                    backgroundRight + 1, backgroundBottom + 1, color, intensity);
+            drawRectWithGlow(backgroundLeft - 1, backgroundBottom,
+                    backgroundRight - backgroundLeft + 2, 1, c, intensity);
         }
     }
 
-    private void renderTextWithGlow(EventRender2D event, String text, int x, int y, int color,
-            FontRenderer customRenderer) {
-        float intensity = glowIntensity.getValueFloat();
+    private void drawRectWithGlow(int x, int y, int width, int height, Color color, float intensity) {
+        for (int pass = 0; pass < 4; pass++) {
+            int glowExpand = 0;
+            int glowAlpha = 0;
 
-        if (fontMode.getMode().equals("MC")) {
-            RenderUtils.drawTextWithGlow(event.getContext(), mc.textRenderer, text, x, y, color, intensity);
-        } else {
-            RenderUtils.drawCustomTextWithGlow(event.getContext().getMatrices(), customRenderer, text, x, y, color,
-                    intensity);
+            switch (pass) {
+                case 0:
+                    glowExpand = 3;
+                    glowAlpha = (int) (color.getAlpha() * intensity * 0.15f);
+                    break;
+                case 1:
+                    glowExpand = 2;
+                    glowAlpha = (int) (color.getAlpha() * intensity * 0.3f);
+                    break;
+                case 2:
+                    glowExpand = 1;
+                    glowAlpha = (int) (color.getAlpha() * intensity * 0.5f);
+                    break;
+                case 3:
+                    glowExpand = 0;
+                    glowAlpha = color.getAlpha();
+                    break;
+            }
+
+            Color glowColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), glowAlpha);
+            NanoVGRenderer.drawRect(x - glowExpand, y - glowExpand,
+                    width + (glowExpand * 2), height + (glowExpand * 2), glowColor);
+        }
+    }
+
+    private void renderTextWithGlowNanoVG(String text, int x, int y, int color, int fontId, int fontSize) {
+        float intensity = glowIntensity.getValueFloat();
+        Color c = new Color(color, true);
+
+        for (int pass = 0; pass < 4; pass++) {
+            int glowAlpha = 0;
+            int offsetX = 0;
+            int offsetY = 0;
+
+            switch (pass) {
+                case 0:
+                    glowAlpha = (int) (c.getAlpha() * intensity * 0.2f);
+                    offsetX = 1;
+                    offsetY = 1;
+                    break;
+                case 1:
+                    glowAlpha = (int) (c.getAlpha() * intensity * 0.3f);
+                    offsetX = 1;
+                    offsetY = 0;
+                    break;
+                case 2:
+                    glowAlpha = (int) (c.getAlpha() * intensity * 0.3f);
+                    offsetX = 0;
+                    offsetY = 1;
+                    break;
+                case 3:
+                    glowAlpha = c.getAlpha();
+                    offsetX = 0;
+                    offsetY = 0;
+                    break;
+            }
+
+            Color glowColor = new Color(c.getRed(), c.getGreen(), c.getBlue(), glowAlpha);
+            NanoVGRenderer.drawTextWithFont(text, x + offsetX, y + offsetY, fontSize, glowColor, fontId);
         }
     }
 

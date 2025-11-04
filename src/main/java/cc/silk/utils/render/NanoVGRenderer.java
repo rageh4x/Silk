@@ -185,6 +185,8 @@ public class NanoVGRenderer {
 
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        mc.getFramebuffer().beginWrite(true);
+
         int framebufferWidth = mc.getWindow().getFramebufferWidth();
         int framebufferHeight = mc.getWindow().getFramebufferHeight();
         int scaledWidth = mc.getWindow().getScaledWidth();
@@ -245,10 +247,14 @@ public class NanoVGRenderer {
 
         GL11.glBlendFunc(savedBlendSrc, savedBlendDst);
 
+        MinecraftClient mc = MinecraftClient.getInstance();
+        mc.getFramebuffer().beginWrite(true);
+
         restoreMinecraftState();
     }
 
     public static void restoreMinecraftState() {
+        RenderSystem.glBindVertexArray(0);
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -259,6 +265,7 @@ public class NanoVGRenderer {
         RenderSystem.resetTextureMatrix();
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.depthMask(true);
+        RenderSystem.setShaderTexture(0, 0);
     }
 
     public static void drawRoundedRect(float x, float y, float width, float height, float radius, Color color) {
@@ -416,6 +423,18 @@ public class NanoVGRenderer {
         return poppinsFont > 0 ? poppinsFont : regularFont;
     }
 
+    public static int getJetBrainsFontId() {
+        return jetbrainsFont > 0 ? jetbrainsFont : regularFont;
+    }
+
+    public static int getRegularFontId() {
+        return regularFont > 0 ? regularFont : 0;
+    }
+
+    public static int getMonacoFontId() {
+        return monacoFont > 0 ? monacoFont : regularFont;
+    }
+
     private static int getFontId(boolean bold) {
         try {
             String fontStyle = cc.silk.module.modules.client.ClientSettingsModule.getFontStyle();
@@ -490,6 +509,19 @@ public class NanoVGRenderer {
 
     public static float getTextWidth(String text, float size) {
         return getTextWidth(text, size, false);
+    }
+
+    public static float getTextWidthWithFont(String text, float size, int fontId) {
+        if (!initialized)
+            init();
+
+        try (MemoryStack stack = stackPush()) {
+            float[] bounds = new float[4];
+            nvgFontFaceId(vg, fontId);
+            nvgFontSize(vg, size);
+            nvgTextBounds(vg, 0, 0, text, bounds);
+            return bounds[2] - bounds[0];
+        }
     }
 
     public static float getTextHeight(float size) {
