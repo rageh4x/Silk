@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.player.ItemUseEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -11,11 +12,13 @@ import cc.silk.utils.keybinding.KeyUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.InventoryUtil;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.item.Items;
 import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
@@ -171,6 +174,24 @@ public final class AutoCrystal extends Module {
         }
         originalSlot = -1;
     }
+
+    @EventHandler
+    public void onItemUse(ItemUseEvent event) {
+        if (mc.player.getMainHandStack().getItem() == Items.END_CRYSTAL) {
+            if (mc.crosshairTarget instanceof BlockHitResult hit &&
+                    mc.crosshairTarget.getType() == HitResult.Type.BLOCK) {
+
+                var blockPos = hit.getBlockPos();
+                var blockState = mc.world.getBlockState(blockPos);
+                var block = blockState.getBlock();
+
+                if (block == Blocks.OBSIDIAN || block == Blocks.BEDROCK) {
+                    event.cancel();
+                }
+            }
+        }
+    }
+
 
     @Override
     public int getKey() {

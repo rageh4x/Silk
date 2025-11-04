@@ -2,8 +2,8 @@ package cc.silk.module.modules.player;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import cc.silk.event.impl.player.TickEvent;
-import cc.silk.event.impl.render.EventRender2D;
-import cc.silk.event.impl.render.EventRender3D;
+import cc.silk.event.impl.render.Render2DEvent;
+import cc.silk.event.impl.render.Render3DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
@@ -77,14 +77,14 @@ public final class TrapSave extends Module {
     }
 
     @EventHandler
-    private void onEventRender3D(EventRender3D event) {
+    private void onEventRender3D(Render3DEvent event) {
         if (isValidGameState() || detectedTraps.isEmpty()) return;
 
         renderTrapOutlines(event.getMatrixStack(), mc.gameRenderer.getCamera().getPos());
     }
 
     @EventHandler
-    private void onEventRender2D(EventRender2D event) {
+    private void onEventRender2D(Render2DEvent event) {
         if (isValidGameState() || !showWarning.getValue() || !trapDetected) return;
 
         renderWarningOverlay(event);
@@ -286,7 +286,7 @@ public final class TrapSave extends Module {
         ChatUtil.addChatMessage(CHAT_PREFIX + "Trap detected: " + detectedTrapType + " (" + trapCount + " traps)");
     }
 
-    private void renderWarningOverlay(EventRender2D event) {
+    private void renderWarningOverlay(Render2DEvent event) {
         final int centerX = event.getWidth() / 2;
         final int warningY = 50;
         final int warningWidth = 210;

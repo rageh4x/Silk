@@ -1,7 +1,7 @@
 package cc.silk.module.modules.player;
 
 
-import cc.silk.event.impl.render.EventRender2D;
+import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
@@ -19,7 +19,7 @@ public final class Eagle extends Module {
     }
 
     @EventHandler
-    private void onEventRender2D(EventRender2D event) {
+    private void onEventRender2D(Render2DEvent event) {
         if (isNull() || !mc.player.isOnGround()) {
             mc.options.sneakKey.setPressed(false);
             return;

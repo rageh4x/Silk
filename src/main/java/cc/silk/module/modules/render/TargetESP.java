@@ -2,7 +2,7 @@ package cc.silk.module.modules.render;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import cc.silk.event.impl.render.EventRender3D;
+import cc.silk.event.impl.render.Render3DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.ColorSetting;
@@ -43,7 +43,7 @@ public final class TargetESP extends Module {
     }
 
     @EventHandler
-    private void onRender3D(EventRender3D e) {
+    private void onRender3D(Render3DEvent e) {
         if (isNull())
             return;
 

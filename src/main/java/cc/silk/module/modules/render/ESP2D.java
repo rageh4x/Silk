@@ -1,6 +1,6 @@
 package cc.silk.module.modules.render;
 
-import cc.silk.event.impl.render.EventRender2D;
+import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.mixin.WorldRendererAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
@@ -45,7 +45,7 @@ public class ESP2D extends Module {
         }
 
         @EventHandler
-        private void onRender2D(EventRender2D event) {
+        private void onRender2D(Render2DEvent event) {
                 if (isNull() || mc.world == null || mc.player == null)
                         return;
 

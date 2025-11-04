@@ -1,8 +1,8 @@
 package cc.silk.mixin;
 
 import cc.silk.SilkClient;
-import cc.silk.event.impl.network.EventDisconnect;
-import cc.silk.event.impl.network.EventPacket;
+import cc.silk.event.impl.network.DisconnectEvent;
+import cc.silk.event.impl.network.PacketEvent;
 import cc.silk.event.types.TransferOrder;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.listener.PacketListener;
@@ -22,7 +22,7 @@ public class MixinClientConnection {
 
     private static void postPacketEvent(Packet<?> packet, TransferOrder order, CallbackInfo ci) {
         if (SilkClient.INSTANCE == null) return;
-        EventPacket eventPacket = new EventPacket(packet, order);
+        PacketEvent eventPacket = new PacketEvent(packet, order);
         SilkClient.INSTANCE.getSilkEventBus().post(eventPacket);
         if (eventPacket.isCancelled()) {
             ci.cancel();
@@ -37,7 +37,7 @@ public class MixinClientConnection {
     @Inject(method = "handleDisconnection", at = @At("HEAD"))
     private void handleDisconnectionInject(CallbackInfo ci) {
         if (SilkClient.INSTANCE != null) {
-            SilkClient.INSTANCE.getSilkEventBus().post(new EventDisconnect());
+            SilkClient.INSTANCE.getSilkEventBus().post(new DisconnectEvent());
         }
     }
 }

@@ -1,7 +1,7 @@
 package cc.silk.module.modules.combat;
 
 
-import cc.silk.event.impl.network.EventPacket;
+import cc.silk.event.impl.network.PacketEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
@@ -21,7 +21,7 @@ public final class Velocity extends Module {
     }
 
     @EventHandler
-    private void onPacketEvent(EventPacket event) {
+    private void onPacketEvent(PacketEvent event) {
         if (isNull()) return;
 
         if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
@@ -30,7 +30,6 @@ public final class Velocity extends Module {
                 if (ignoreOnFire.getValue() && mc.player.isOnFire()) return;
                 if (mc.currentScreen != null) return;
                 mc.player.jump();
-                ChatUtil.addChatMessage("Jumped");
             }
         }
     }

@@ -1,16 +1,13 @@
 package cc.silk.event.types;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class CancellableEvent implements Event {
 
     private boolean cancelled;
-
-    public boolean isCancelled() {
-        return cancelled;
-    }
-
-    public void setCancelled(boolean cancelled) {
-        this.cancelled = cancelled;
-    }
 
     public void cancel() {
         setCancelled(true);

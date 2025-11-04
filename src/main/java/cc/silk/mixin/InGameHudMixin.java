@@ -2,7 +2,7 @@ package cc.silk.mixin;
 
 import cc.silk.SilkClient;
 import com.mojang.blaze3d.systems.RenderSystem;
-import cc.silk.event.impl.render.EventRender2D;
+import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.utils.render.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -25,7 +25,7 @@ public class InGameHudMixin {
         RenderSystem.disableCull();
         
         SilkClient.INSTANCE.getSilkEventBus()
-                .post(new EventRender2D(context, context.getScaledWindowWidth(), context.getScaledWindowHeight()));
+                .post(new Render2DEvent(context, context.getScaledWindowWidth(), context.getScaledWindowHeight()));
         
         RenderSystem.enableDepthTest();
         RenderSystem.enableCull();

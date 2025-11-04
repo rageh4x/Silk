@@ -44,7 +44,7 @@ public final class CrystalOptimizer extends Module {
 
         if (!canAttack) return;
 
-
-        crystal.discard();
+        crystal.setRemoved(Entity.RemovalReason.KILLED);
+        crystal.onRemoved();
     }
 }
