@@ -44,11 +44,10 @@ public final class KeyAnchor extends Module {
         if (mc.currentScreen != null) return;
 
         boolean currentKeyState = KeyUtils.isKeyPressed(anchorKeybind.getKeyCode());
-        boolean isHoldingAnchor = isHoldingAnchor();
 
-        if (currentKeyState && !keyPressed && isHoldingAnchor) {
+        if (currentKeyState && !keyPressed) {
             startAnchorPvP();
-        } else if ((!currentKeyState && keyPressed) || (!isHoldingAnchor && isActive)) {
+        } else if (!currentKeyState && keyPressed) {
             stopAnchorPvP();
         } else if (!currentKeyState) {
             hasPlacedThisCycle = false;
@@ -56,7 +55,7 @@ public final class KeyAnchor extends Module {
 
         keyPressed = currentKeyState;
 
-        if (isActive && isHoldingAnchor && timer.hasElapsedTime(delay.getValueInt())) {
+        if (isActive && timer.hasElapsedTime(delay.getValueInt())) {
             processAnchorPvP();
             timer.reset();
         }
@@ -127,12 +126,6 @@ public final class KeyAnchor extends Module {
         }
     }
 
-
-    private boolean isHoldingAnchor() {
-        if (mc.player == null) return false;
-        return mc.player.getMainHandStack().getItem() == Items.RESPAWN_ANCHOR ||
-               mc.player.getOffHandStack().getItem() == Items.RESPAWN_ANCHOR;
-    }
 
     private boolean isValidAnchorPosition(BlockPos pos) {
         if (mc.world == null || mc.player == null) return false;
