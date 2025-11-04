@@ -16,6 +16,8 @@ public class MouseModuleHandler {
             for (Module module : SilkClient.INSTANCE.getModuleManager().getModules()) {
                 int moduleKey = module.getKey();
 
+                if (moduleKey == -1 || moduleKey == 0) continue;
+
                 boolean matches = moduleKey == button ||
                         moduleKey == -(button + 1) ||
                         moduleKey == (-100 - button);
