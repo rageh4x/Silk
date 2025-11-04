@@ -40,16 +40,18 @@ public class NanoVGRenderer {
     private static int poppinsFont = -1;
     private static int monacoFont = -1;
 
+    private static final float INV_255 = 1f / 255f;
+
     public static void init() {
         if (initialized)
             return;
 
-        vg = nvgCreate(NVG_ANTIALIAS);
+        vg = nvgCreate(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
         if (vg == 0) {
             throw new RuntimeException("Failed to initialize NanoVG");
         }
 
-        System.out.println("[NanoVG] Initialized without stencil strokes (AMD compatibility mode)");
+        System.out.println("[NanoVG] Initialized with stencil strokes");
         loadFonts();
         initialized = true;
     }
@@ -266,6 +268,9 @@ public class NanoVGRenderer {
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.depthMask(true);
         RenderSystem.setShaderTexture(0, 0);
+
+        while (GL11.glGetError() != GL11.GL_NO_ERROR)
+            ;
     }
 
     public static void drawRoundedRect(float x, float y, float width, float height, float radius, Color color) {
@@ -273,10 +278,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgBeginPath(vg);
             nvgRoundedRect(vg, x, y, width, height, radius);
@@ -294,10 +299,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgBeginPath(vg);
             nvgRoundedRect(vg, x, y, width, height, radius);
@@ -316,16 +321,16 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor color1 = NVGColor.malloc(stack);
-            color1.r(colorTop.getRed() / 255f);
-            color1.g(colorTop.getGreen() / 255f);
-            color1.b(colorTop.getBlue() / 255f);
-            color1.a(colorTop.getAlpha() / 255f);
+            color1.r(colorTop.getRed() * INV_255);
+            color1.g(colorTop.getGreen() * INV_255);
+            color1.b(colorTop.getBlue() * INV_255);
+            color1.a(colorTop.getAlpha() * INV_255);
 
             NVGColor color2 = NVGColor.malloc(stack);
-            color2.r(colorBottom.getRed() / 255f);
-            color2.g(colorBottom.getGreen() / 255f);
-            color2.b(colorBottom.getBlue() / 255f);
-            color2.a(colorBottom.getAlpha() / 255f);
+            color2.r(colorBottom.getRed() * INV_255);
+            color2.g(colorBottom.getGreen() * INV_255);
+            color2.b(colorBottom.getBlue() * INV_255);
+            color2.a(colorBottom.getAlpha() * INV_255);
 
             NVGPaint paint = nvgLinearGradient(vg, x, y, x, y + height, color1, color2, NVGPaint.malloc(stack));
 
@@ -344,10 +349,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgBeginPath(vg);
             nvgCircle(vg, x, y, radius);
@@ -372,10 +377,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgFontFaceId(vg, fontId);
             nvgFontSize(vg, size);
@@ -403,10 +408,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgFontFaceId(vg, fontId);
             nvgFontSize(vg, size);
@@ -435,24 +440,36 @@ public class NanoVGRenderer {
         return monacoFont > 0 ? monacoFont : regularFont;
     }
 
+    private static String cachedFontStyle = null;
+    private static int cachedFontId = -1;
+    private static long lastFontCheck = 0;
+    private static final long FONT_CACHE_TIME = 1000; // Cache for 1 second
+
     private static int getFontId(boolean bold) {
-        try {
-            String fontStyle = cc.silk.module.modules.client.ClientSettingsModule.getFontStyle();
+        long currentTime = System.currentTimeMillis();
 
-            if ("JetbrainsMono.ttf".equals(fontStyle) || "jetbrainsmono.ttf".equals(fontStyle)) {
-                return jetbrainsFont > 0 ? jetbrainsFont : regularFont;
-            } else if ("Poppins-Medium.ttf".equals(fontStyle) || "poppins-medium.ttf".equals(fontStyle)) {
-                return poppinsFont > 0 ? poppinsFont : regularFont;
-            } else if ("monaco.ttf".equals(fontStyle) || "Monaco.ttf".equals(fontStyle)) {
-                return monacoFont > 0 ? monacoFont : regularFont;
-            } else if ("Inter.ttf".equals(fontStyle)) {
-                return regularFont > 0 ? regularFont : 0;
+        if (cachedFontStyle == null || currentTime - lastFontCheck > FONT_CACHE_TIME) {
+            try {
+                cachedFontStyle = cc.silk.module.modules.client.ClientSettingsModule.getFontStyle();
+                lastFontCheck = currentTime;
+
+                if ("JetbrainsMono.ttf".equalsIgnoreCase(cachedFontStyle)) {
+                    cachedFontId = jetbrainsFont > 0 ? jetbrainsFont : regularFont;
+                } else if ("Poppins-Medium.ttf".equalsIgnoreCase(cachedFontStyle)) {
+                    cachedFontId = poppinsFont > 0 ? poppinsFont : regularFont;
+                } else if ("monaco.ttf".equalsIgnoreCase(cachedFontStyle)) {
+                    cachedFontId = monacoFont > 0 ? monacoFont : regularFont;
+                } else if ("Inter.ttf".equals(cachedFontStyle)) {
+                    cachedFontId = regularFont > 0 ? regularFont : 0;
+                } else {
+                    cachedFontId = bold ? boldFont : regularFont;
+                }
+            } catch (Exception e) {
+                cachedFontId = bold ? boldFont : regularFont;
             }
-        } catch (Exception e) {
-
         }
 
-        int fontId = bold ? boldFont : regularFont;
+        int fontId = cachedFontId;
 
         if (fontId <= 0) {
             fontId = regularFont > 0 ? regularFont : boldFont;
@@ -478,10 +495,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgFontFaceId(vg, fontId);
             nvgFontSize(vg, size);
@@ -537,10 +554,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgBeginPath(vg);
             nvgRect(vg, x, y, width, height);
@@ -557,10 +574,10 @@ public class NanoVGRenderer {
             nvgSave(vg);
         try (MemoryStack stack = stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgColor.r(color.getRed() / 255f);
-            nvgColor.g(color.getGreen() / 255f);
-            nvgColor.b(color.getBlue() / 255f);
-            nvgColor.a(color.getAlpha() / 255f);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
 
             nvgBeginPath(vg);
             nvgMoveTo(vg, x1, y1);
