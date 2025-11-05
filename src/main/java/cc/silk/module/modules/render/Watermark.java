@@ -184,7 +184,7 @@ public class Watermark extends Module {
     }
 
     private void renderGamesense(boolean isInChat) {
-        String fullText = text.getValue() + "sense | free (0000) | " + getIP();
+        String fullText = text.getValue() + "sense | release | " + getIP();
 
         float padding = 6;
         float size = 12;
