@@ -1,7 +1,8 @@
 package cc.silk.module.modules.movement;
 
-
+import cc.silk.event.impl.player.ItemUseEvent;
 import cc.silk.event.impl.player.TickEvent;
+import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
@@ -25,6 +26,7 @@ public final class AutoFirework extends Module {
     private boolean pendingSwitchBack = false;
     private int originalSlot = -1;
     private long lastFireworkTime = 0;
+    private boolean shouldCancelNextUse = false;
 
     public AutoFirework() {
         super("Auto Firework", "Automatically uses firework rockets while elytra flying", -1, Category.MOVEMENT);
@@ -32,14 +34,25 @@ public final class AutoFirework extends Module {
     }
 
     @EventHandler
+    private void onItemUse(ItemUseEvent event) {
+        if (shouldCancelNextUse) {
+            event.cancel();
+            shouldCancelNextUse = false;
+        }
+    }
+
+    @EventHandler
     private void onTickEvent(TickEvent event) {
-        if (isNull()) return;
-        if (mc.currentScreen != null) return;
+        if (isNull())
+            return;
+        if (mc.currentScreen != null)
+            return;
 
         boolean currentRightClick = mc.options.useKey.isPressed();
 
-       if (!wasRightClickPressed && currentRightClick && shouldUseFirework() && canUseFirework()) {
+        if (!wasRightClickPressed && currentRightClick && shouldUseFirework() && canUseFirework()) {
             lastFireworkTime = System.currentTimeMillis();
+            shouldCancelNextUse = true;
             useFirework();
         }
 
@@ -54,10 +67,13 @@ public final class AutoFirework extends Module {
         return System.currentTimeMillis() - lastFireworkTime > 200;
     }
 
-   private boolean shouldUseFirework() {
-        if (!isWearingElytra()) return false;
-        if (onlyWhenFlying.getValue() && !isElytraFlying()) return false;
-        if (isHoldingImportantItem()) return false;
+    private boolean shouldUseFirework() {
+        if (!isWearingElytra())
+            return false;
+        if (onlyWhenFlying.getValue() && !isElytraFlying())
+            return false;
+        if (isHoldingImportantItem())
+            return false;
         return findFireworkInHotbar() != -1;
     }
 
@@ -75,17 +91,18 @@ public final class AutoFirework extends Module {
 
     private boolean isWearingElytra() {
         ItemStack chestplate = mc.player.getEquippedStack(EquipmentSlot.CHEST);
-        if (!chestplate.isOf(Items.ELYTRA)) return false;
-        // Consider usable if it has durability left
+        if (!chestplate.isOf(Items.ELYTRA))
+            return false;
         return chestplate.getMaxDamage() == 0 || chestplate.getDamage() < chestplate.getMaxDamage() - 1;
     }
 
-
     private boolean isHoldingImportantItem() {
-        if (respectGapples.getValue() && (isGoldenApple(mc.player.getMainHandStack()) || isGoldenApple(mc.player.getOffHandStack()))) {
+        if (respectGapples.getValue()
+                && (isGoldenApple(mc.player.getMainHandStack()) || isGoldenApple(mc.player.getOffHandStack()))) {
             return true;
         }
-        return respectArmor.getValue() && (isArmor(mc.player.getMainHandStack()) || isArmor(mc.player.getOffHandStack()));
+        return respectArmor.getValue()
+                && (isArmor(mc.player.getMainHandStack()) || isArmor(mc.player.getOffHandStack()));
     }
 
     private boolean isGoldenApple(ItemStack stack) {
@@ -94,7 +111,8 @@ public final class AutoFirework extends Module {
 
     private boolean isArmor(ItemStack stack) {
         String name = stack.getItem().toString().toLowerCase();
-        return name.contains("helmet") || name.contains("chestplate") || name.contains("leggings") || name.contains("boots");
+        return name.contains("helmet") || name.contains("chestplate") || name.contains("leggings")
+                || name.contains("boots");
     }
 
     private int findFireworkInHotbar() {
@@ -109,10 +127,13 @@ public final class AutoFirework extends Module {
 
     private void useFirework() {
         int fireworkSlot = findFireworkInHotbar();
-        if (fireworkSlot == -1) return;
+        if (fireworkSlot == -1)
+            return;
 
         originalSlot = mc.player.getInventory().selectedSlot;
         mc.player.getInventory().selectedSlot = fireworkSlot;
+
+        ((MinecraftClientAccessor) mc).invokeDoItemUse();
 
         if (autoSwitchBack.getValue()) {
             if (switchBackDelay.getValueInt() > 0) {
