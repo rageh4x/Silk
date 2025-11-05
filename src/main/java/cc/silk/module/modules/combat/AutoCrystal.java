@@ -138,4 +138,4 @@ public final class AutoCrystal extends Module {
     public int getKey() {
         return -1;
     }
-}
+}// reverted
