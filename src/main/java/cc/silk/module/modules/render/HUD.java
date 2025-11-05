@@ -67,7 +67,11 @@ public class HUD extends Module {
             return;
         }
 
-        NanoVGRenderer.beginFrame();
+        try {
+            NanoVGRenderer.beginFrame();
+        } catch (Exception e) {
+            return;
+        }
 
         if (arrayList.getValue()) {
             List<Module> enabledModules = new ArrayList<>();
@@ -221,11 +225,16 @@ public class HUD extends Module {
             }
         }
 
-        NanoVGRenderer.endFrame();
+        try {
+            NanoVGRenderer.endFrame();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private int getFontIdForMode(String mode) {
         return switch (mode) {
+            case "Inter" -> NanoVGRenderer.getRegularFontId();
             case "JetbrainsMono" -> NanoVGRenderer.getJetBrainsFontId();
             case "Poppins" -> NanoVGRenderer.getPoppinsFontId();
             default -> NanoVGRenderer.getRegularFontId();
