@@ -60,7 +60,7 @@ public final class ModuleManager {
                 new ShieldBreaker(), new ThrowPot(), new ElytraHotSwap(),
                 new AntiMiss(), new WTap(), new STap(),
                 new AimAssist(), new SwordHotSwap(), new AutoCrystal(), new SwordSwap(), new BreachSwap(),
-                new KeyCrystal(), new KeyAnchor(), new KeyLava(), new ShieldBreakerOLD(), new AutoPot(), new StunCob(),
+                new KeyCrystal(), new KeyAnchor(), new KeyLava(), new AutoPot(), new StunCob(),
                 new AutoCart(), new CrystalOptimizer());
         // Movement
         add(new Sprint(), new AutoFirework(), new AutoHeadHitter(), new KeepSprint());
