@@ -1,11 +1,8 @@
 package cc.silk.gui.theme;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Simple Theme registry. Register default themes here and use ThemeManager.getTheme(name) to retrieve.
@@ -56,11 +53,11 @@ public final class ThemeManager {
         register(purple);
         register(solar);
 
-        DEFAULT_NAME = defaultTheme.name;
+        DEFAULT_NAME = defaultTheme.name();
     }
 
     public static void register(Theme theme) {
-        THEMES.put(theme.name, theme);
+        THEMES.put(theme.name(), theme);
     }
 
     public static Theme getTheme(String name) {

@@ -1,4 +1,4 @@
-package cc.silk.utils.render;
+package cc.silk.utils.render.nanovg;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.experimental.UtilityClass;

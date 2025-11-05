@@ -1,6 +1,9 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.player.AttackEvent;
 import cc.silk.event.impl.player.TickEvent;
+import cc.silk.event.impl.render.Render2DEvent;
+import cc.silk.event.impl.render.Render3DEvent;
 import cc.silk.event.impl.world.WorldChangeEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -10,6 +13,7 @@ import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.ModeSetting;
 import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.friend.FriendManager;
+import cc.silk.utils.keybinding.simulation.ClickSimulator;
 import cc.silk.utils.math.MathUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.CombatUtil;
@@ -53,13 +57,13 @@ public final class TriggerBot extends Module {
     private final TimerUtil timerReactionTime = new TimerUtil();
 
     public boolean waitingForDelay = false;
+
     private boolean waitingForReaction = false;
     private long currentReactionDelay = 0;
     private float randomizedPostDelay = 0;
     private float randomizedThreshold = 0;
     private Entity target;
     private String lastTargetUUID = null;
-
     public TriggerBot() {
         super("Trigger Bot", "Makes you automatically attack once aimed at a target", -1, Category.COMBAT);
         addSettings(
@@ -185,11 +189,13 @@ public final class TriggerBot extends Module {
     private boolean canCrit() {
         assert mc.player != null;
         return !mc.player.isOnGround()
-                && mc.player.fallDistance > 0F
                 && !mc.player.isClimbing()
                 && !mc.player.isTouchingWater()
                 && !mc.player.isInLava()
                 && !mc.player.hasStatusEffect(StatusEffects.BLINDNESS)
+                && !mc.player.isSprinting()
+                && mc.player.fallDistance > 0.065f
+                && mc.player.getVelocity().y < -0.08f
                 && mc.player.getVehicle() == null;
     }
 

@@ -1,7 +1,7 @@
 package cc.silk.gui.newgui.components;
 
 import cc.silk.module.Module;
-import cc.silk.utils.render.NanoVGRenderer;
+import cc.silk.utils.render.nanovg.NanoVGRenderer;
 
 import java.awt.*;
 
@@ -15,6 +15,7 @@ public class ModuleButton {
     private boolean matchesSearch = true;
     private float hoverAlpha = 0f;
     private float targetHoverAlpha = 0f;
+    private String searchQuery = "";
 
     public ModuleButton(Module module, float relativeX, float relativeY, int width, int height) {
         this.module = module;
@@ -126,8 +127,6 @@ public class ModuleButton {
         }
     }
 
-    private String searchQuery = "";
-
     public boolean mouseClicked(float panelX, float panelY, double mouseX, double mouseY, int button) {
         if (searchAlpha <= 0.01f)
             return false;
@@ -141,9 +140,7 @@ public class ModuleButton {
             if (button == 0) {
                 module.toggle();
                 return true;
-            } else if (button == 1) {
-                return true;
-            }
+            } else return button == 1;
         }
         return false;
     }
@@ -168,7 +165,7 @@ public class ModuleButton {
         if (key == 0 || key == -1) {
             return null;
         }
-        
+
         if (key <= -100) {
             int button = -100 - key;
             return switch (button) {
@@ -180,7 +177,7 @@ public class ModuleButton {
                 default -> "M" + (button + 1);
             };
         }
-        
+
         if (key >= 0 && key <= 7) {
             return switch (key) {
                 case 0 -> "M1";

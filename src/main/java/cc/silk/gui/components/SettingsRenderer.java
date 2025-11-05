@@ -35,7 +35,7 @@ public class SettingsRenderer {
 
     Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
     int panelAlpha = (int) (200 * effectiveAnimation);
-    Color panelColor = new Color(theme.panelBg.getRed(), theme.panelBg.getGreen(), theme.panelBg.getBlue(), Math.max(0, Math.min(255, panelAlpha)));
+    Color panelColor = new Color(theme.panelBg().getRed(), theme.panelBg().getGreen(), theme.panelBg().getBlue(), Math.max(0, Math.min(255, panelAlpha)));
     context.fill(x + 18, moduleY, x + width - 18, moduleY + animatedHeight, panelColor.getRGB());
 
         int maxControlWidth = Math.min(100, width - 78);
@@ -49,7 +49,7 @@ public class SettingsRenderer {
             }
             if (smallFont.getStringWidth(settingName) > maxNameWidth) settingName += "...";
 
-            smallFont.drawString(matrices, settingName, x + 28, settingY + 5, theme.text);
+            smallFont.drawString(matrices, settingName, x + 28, settingY + 5, theme.text());
 
             renderSettingControl(context, setting, x, settingY, width, maxControlWidth, null, eventHandler, smallFont);
 
@@ -75,9 +75,9 @@ public class SettingsRenderer {
     private static void renderModeDropdownOverlay(DrawContext context, ModeSetting modeSetting, int x, int y, int width, int height) {
         String currentMode = modeSetting.getMode();
         Theme theme = ThemeManager.getTheme(ClickGUIModule.theme.getMode());
-        context.fill(x, y, x + width, y + height, applyAlpha(theme.panelBg, 200).getRGB());
-        context.drawBorder(x, y, width, height, applyAlpha(theme.muted, 200).getRGB());
-        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, currentMode, x + 4, y + 3, theme.text.getRGB());
+        context.fill(x, y, x + width, y + height, applyAlpha(theme.panelBg(), 200).getRGB());
+        context.drawBorder(x, y, width, height, applyAlpha(theme.muted(), 200).getRGB());
+        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, currentMode, x + 4, y + 3, theme.text().getRGB());
 
         int arrowX = x + width - 12;
         int arrowY = y + height / 2;
@@ -88,13 +88,13 @@ public class SettingsRenderer {
         int optionY = y + height;
         for (String mode : modeSetting.getModes()) {
             boolean isSelected = mode.equals(currentMode);
-            Color bg = isSelected ? applyAlpha(theme.accent, 200) : applyAlpha(theme.panelBg, 200);
+            Color bg = isSelected ? applyAlpha(theme.accent(), 200) : applyAlpha(theme.panelBg(), 200);
 
             context.fill(x, optionY, x + width, optionY + height, bg.getRGB());
-            context.drawBorder(x, optionY, width, height, applyAlpha(theme.muted, 180).getRGB());
+            context.drawBorder(x, optionY, width, height, applyAlpha(theme.muted(), 180).getRGB());
 
             String text = mode.length() > 8 ? mode.substring(0, 8) + "..." : mode;
-            Color textColor = isSelected ? theme.accent : theme.text;
+            Color textColor = isSelected ? theme.accent() : theme.text();
             context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, text, x + 4, optionY + 3, textColor.getRGB());
 
             optionY += height;
@@ -171,8 +171,8 @@ public class SettingsRenderer {
                 float cur = prev + (target - prev) * 0.14f;
                 animatedValues.put(setting, cur);
 
-                Color borderColor = mixColor(theme.muted, theme.accent, cur);
-                Color fillColor = mixColor(applyAlpha(theme.panelBg, 220), applyAlpha(theme.accent, 200), cur);
+                Color borderColor = mixColor(theme.muted(), theme.accent(), cur);
+                Color fillColor = mixColor(applyAlpha(theme.panelBg(), 220), applyAlpha(theme.accent(), 200), cur);
 
                 int checkboxSize = 12;
                 UIRenderer.renderCheckbox(context, controlX, controlY + 2, checkboxSize, enabled, borderColor, fillColor);
@@ -190,7 +190,7 @@ public class SettingsRenderer {
                 int sliderY = controlY + (controlHeight - sliderHeight) / 2;
                 controlWidth = (int) (((double) controlWidth) * .75);
         UIRenderer.renderSlider(context, controlX, sliderY, controlWidth, sliderHeight, cur,
-            applyAlpha(theme.panelBg, 200), theme.accent);
+            applyAlpha(theme.panelBg(), 200), theme.accent());
 
                 boolean isEditing = eventHandler != null && eventHandler.getEditingNumberSetting() == numberSetting;
 
@@ -203,9 +203,9 @@ public class SettingsRenderer {
                     int inputHeight = controlHeight - 2;
 
             context.fill(inputX - 2, inputY, inputX + inputWidth, inputY + inputHeight,
-                applyAlpha(theme.panelBg, 220).getRGB());
+                applyAlpha(theme.panelBg(), 220).getRGB());
             context.drawBorder(inputX - 2, inputY, inputWidth, inputHeight,
-                applyAlpha(theme.accent, 200).getRGB());
+                applyAlpha(theme.accent(), 200).getRGB());
 
                     String displayText = inputText + "|";
                     smallFont.drawString(context.getMatrices(), displayText, inputX, controlY + 2, new Color(255, 255, 255));
@@ -215,7 +215,7 @@ public class SettingsRenderer {
                         valueText = valueText.substring(0, valueText.length() - 2);
                     }
             context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, valueText,
-                controlX + controlWidth + 5, controlY + 2, theme.muted.getRGB());
+                controlX + controlWidth + 5, controlY + 2, theme.muted().getRGB());
                 }
             }
 
@@ -224,36 +224,36 @@ public class SettingsRenderer {
                 String displayText = currentMode.length() > 8 ? currentMode.substring(0, 8) + "..." : currentMode;
 
         context.fill(controlX, controlY, controlX + controlWidth, controlY + controlHeight,
-            applyAlpha(theme.panelBg, 200).getRGB());
+            applyAlpha(theme.panelBg(), 200).getRGB());
         context.drawBorder(controlX, controlY, controlWidth, controlHeight,
-            applyAlpha(theme.muted, 200).getRGB());
+            applyAlpha(theme.muted(), 200).getRGB());
 
         context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, displayText,
-            controlX + 4, controlY + 3, theme.text.getRGB());
+            controlX + 4, controlY + 3, theme.text().getRGB());
 
                 int arrowX = controlX + controlWidth - 12;
                 int arrowY = controlY + controlHeight / 2;
                 boolean isExpanded = dropdownExpanded != null && dropdownExpanded.getOrDefault(modeSetting, false);
 
                 if (isExpanded) {
-                    UIRenderer.renderDropdownArrow(context, arrowX + 2, arrowY, true, theme.text);
+                    UIRenderer.renderDropdownArrow(context, arrowX + 2, arrowY, true, theme.text());
                 } else {
-                    UIRenderer.renderDropdownArrow(context, arrowX, arrowY - 2, false, theme.text);
+                    UIRenderer.renderDropdownArrow(context, arrowX, arrowY - 2, false, theme.text());
                 }
 
                 if (isExpanded) {
                     int optionY = controlY + controlHeight;
                     for (String mode : modeSetting.getModes()) {
                         boolean isSelected = mode.equals(currentMode);
-            Color optionBg = isSelected ? applyAlpha(theme.accent, 200) : applyAlpha(theme.panelBg, 200);
+            Color optionBg = isSelected ? applyAlpha(theme.accent(), 200) : applyAlpha(theme.panelBg(), 200);
 
             context.fill(controlX, optionY, controlX + controlWidth, optionY + controlHeight,
                 optionBg.getRGB());
             context.drawBorder(controlX, optionY, controlWidth, controlHeight,
-                applyAlpha(theme.muted, 180).getRGB());
+                applyAlpha(theme.muted(), 180).getRGB());
 
             String optionText = mode.length() > 8 ? mode.substring(0, 8) + "..." : mode;
-            Color textColor = isSelected ? theme.accent : theme.text;
+            Color textColor = isSelected ? theme.accent() : theme.text();
             context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, optionText,
                 controlX + 4, optionY + 3, textColor.getRGB());
 

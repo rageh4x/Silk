@@ -4,7 +4,7 @@ import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.gui.newgui.components.CategoryPanel;
 import cc.silk.gui.newgui.components.ConfigPanel;
-import cc.silk.utils.render.NanoVGRenderer;
+import cc.silk.utils.render.nanovg.NanoVGRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -113,7 +113,7 @@ public class NewClickGUI extends Screen {
         NanoVGRenderer.scale(scale, scale);
         NanoVGRenderer.translate(-centerX, -centerY);
 
-        renderSearchBar(mouseX, mouseY, alpha);
+        renderSearchBar(alpha);
 
         for (CategoryPanel panel : panels) {
             if (panel != draggedPanel) {
@@ -180,7 +180,7 @@ public class NewClickGUI extends Screen {
         }
     }
 
-    private void renderSearchBar(int mouseX, int mouseY, float alpha) {
+    private void renderSearchBar(float alpha) {
         searchBarY = height - SEARCH_BAR_HEIGHT - 20;
         float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
 

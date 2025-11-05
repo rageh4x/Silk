@@ -1,7 +1,7 @@
 package cc.silk.gui.newgui.components;
 
 import cc.silk.module.Category;
-import cc.silk.utils.render.NanoVGRenderer;
+import cc.silk.utils.render.nanovg.NanoVGRenderer;
 
 import java.awt.*;
 import java.util.HashMap;

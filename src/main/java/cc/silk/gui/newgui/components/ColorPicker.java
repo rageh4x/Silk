@@ -1,21 +1,20 @@
 package cc.silk.gui.newgui.components;
 
 import cc.silk.module.setting.ColorSetting;
-import cc.silk.utils.render.NanoVGRenderer;
+import cc.silk.utils.render.nanovg.NanoVGRenderer;
+
 import java.awt.*;
 
 public class ColorPicker {
-    private final ColorSetting setting;
-    private float x, y;
-    private final int width = 180;
-    private final int height = 250;
-
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
     private static final Color ACCENT_COLOR = new Color(88, 101, 242, 255);
     private static final Color BORDER_COLOR = new Color(40, 40, 46, 255);
     private static final float CORNER_RADIUS = 4f;
-    private static final int PADDING = 8;
-
+    private static final int PADDING = 12;
+    private final ColorSetting setting;
+    private final int width = 180;
+    private final int height = 250;
+    private float x, y;
     private boolean visible = false;
     private float animationProgress = 0f;
 

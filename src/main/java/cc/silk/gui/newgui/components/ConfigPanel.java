@@ -2,7 +2,7 @@ package cc.silk.gui.newgui.components;
 
 import cc.silk.SilkClient;
 import cc.silk.profiles.ProfileManager;
-import cc.silk.utils.render.NanoVGRenderer;
+import cc.silk.utils.render.nanovg.NanoVGRenderer;
 
 import java.awt.*;
 import java.io.File;
@@ -11,32 +11,28 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ConfigPanel {
-    private float x, y;
-    private final int width;
-    private boolean dragging = false;
-    private float dragOffsetX, dragOffsetY;
-
-    private final List<ConfigEntry> configs = new ArrayList<>();
-    private float scrollOffset = 0f;
-    private float targetScrollOffset = 0f;
     private static final float SCROLL_SPEED = 20f;
-
     private static final int HEADER_HEIGHT = 16;
     private static final int CONFIG_ENTRY_HEIGHT = 14;
     private static final int MAX_VISIBLE_CONFIGS = 8;
-
     private static final Color HEADER_COLOR = new Color(28, 28, 32, 255);
     private static final Color PANEL_BG = new Color(18, 18, 22, 255);
     private static final Color ENTRY_HOVER_BG = new Color(40, 40, 45, 255);
     private static final Color TEXT_COLOR = new Color(240, 240, 245, 255);
     private static final float CORNER_RADIUS = 4f;
-
+    private static final long DELETE_CONFIRM_TIMEOUT = 3000;
+    private final int width;
+    private final List<ConfigEntry> configs = new ArrayList<>();
+    private float x, y;
+    private boolean dragging = false;
+    private float dragOffsetX, dragOffsetY;
+    private float scrollOffset = 0f;
+    private float targetScrollOffset = 0f;
     private String newConfigName = "";
     private boolean namingNewConfig = false;
     private String selectedConfig = null;
     private String deleteConfirmConfig = null;
     private long deleteConfirmTime = 0;
-    private static final long DELETE_CONFIRM_TIMEOUT = 3000;
 
     public ConfigPanel(float x, float y, int width) {
         this.x = x;
@@ -101,7 +97,7 @@ public class ConfigPanel {
         Color loadColor = (selectedConfig != null && loadHover)
                 ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
                 : new Color(textColor.getRed(), textColor.getGreen(), textColor.getBlue(),
-                        selectedConfig != null ? (int) (bgAlpha * 0.7f) : (int) (bgAlpha * 0.3f));
+                selectedConfig != null ? (int) (bgAlpha * 0.7f) : (int) (bgAlpha * 0.3f));
         NanoVGRenderer.drawIcon("\uf019", loadIconX, loadIconY, 9f, loadColor);
 
         float saveIconX = Math.round(x + width - 10f);
@@ -143,7 +139,7 @@ public class ConfigPanel {
     }
 
     private void renderConfigEntry(ConfigEntry config, float entryY, int mouseX, int mouseY, float alpha,
-            Color textColor, Color accentColor) {
+                                   Color textColor, Color accentColor) {
         boolean hover = isMouseOver(mouseX, mouseY, x, entryY, width, CONFIG_ENTRY_HEIGHT);
         boolean selected = config.name.equals(selectedConfig);
 
@@ -159,9 +155,9 @@ public class ConfigPanel {
             NanoVGRenderer.drawRect(x, entryY, width, CONFIG_ENTRY_HEIGHT, hoverBg);
         }
 
-        boolean isDeleteConfirm = config.name.equals(deleteConfirmConfig) 
-            && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
-        
+        boolean isDeleteConfirm = config.name.equals(deleteConfirmConfig)
+                && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
+
         if (isDeleteConfirm) {
             int deleteAlpha = (int) (80 * alpha);
             Color deleteBg = new Color(180, 50, 50, deleteAlpha);
@@ -183,11 +179,11 @@ public class ConfigPanel {
         float entryTextY = Math.round(entryY + (CONFIG_ENTRY_HEIGHT - entryFontSize) / 2f);
         NanoVGRenderer.drawText(displayName, entryTextX, entryTextY, entryFontSize, textColor);
 
-        config.bounds = new float[] { x, entryY, width, CONFIG_ENTRY_HEIGHT };
+        config.bounds = new float[]{x, entryY, width, CONFIG_ENTRY_HEIGHT};
     }
 
     private void renderNewConfigEntry(float entryY, int mouseX, int mouseY, float alpha,
-            Color textColor, Color accentColor) {
+                                      Color textColor, Color accentColor) {
         boolean hover = isMouseOver(mouseX, mouseY, x, entryY, width, CONFIG_ENTRY_HEIGHT);
 
         if (hover || namingNewConfig) {
@@ -264,9 +260,9 @@ public class ConfigPanel {
                     selectedConfig = config.name;
                     deleteConfirmConfig = null;
                 } else if (button == 1) {
-                    boolean isAlreadyConfirming = config.name.equals(deleteConfirmConfig) 
-                        && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
-                    
+                    boolean isAlreadyConfirming = config.name.equals(deleteConfirmConfig)
+                            && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
+
                     if (isAlreadyConfirming) {
                         ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
                         if (pm != null) {
