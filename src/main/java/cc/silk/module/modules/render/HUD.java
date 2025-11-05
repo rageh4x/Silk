@@ -1,12 +1,10 @@
 package cc.silk.module.modules.render;
 
 import cc.silk.SilkClient;
-import cc.silk.event.impl.render.EventRender2D;
+import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.*;
-import cc.silk.utils.render.font.FontManager;
-import cc.silk.utils.render.font.fonts.FontRenderer;
 import cc.silk.utils.render.NanoVGRenderer;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
@@ -59,7 +57,7 @@ public class HUD extends Module {
     }
 
     @EventHandler
-    private void onEventRender2D(EventRender2D event) {
+    private void onEventRender2D(Render2DEvent event) {
         if (mc.player == null || mc.world == null) {
             return;
         }
@@ -288,9 +286,9 @@ public class HUD extends Module {
         return "";
     }
 
-    private void renderBorders(EventRender2D event, int backgroundLeft, int backgroundTop,
-            int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
-            boolean isFirst, boolean isLast, int color) {
+    private void renderBorders(Render2DEvent event, int backgroundLeft, int backgroundTop,
+                               int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
+                               boolean isFirst, boolean isLast, int color) {
         Color c = new Color(color, true);
 
         if (isFirst) {
@@ -317,9 +315,9 @@ public class HUD extends Module {
         }
     }
 
-    private void renderBordersWithGlow(EventRender2D event, int backgroundLeft, int backgroundTop,
-            int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
-            boolean isFirst, boolean isLast, int color) {
+    private void renderBordersWithGlow(Render2DEvent event, int backgroundLeft, int backgroundTop,
+                                       int backgroundRight, int backgroundBottom, int prevBackgroundLeft,
+                                       boolean isFirst, boolean isLast, int color) {
         float intensity = glowIntensity.getValueFloat();
         Color c = new Color(color, true);
 

@@ -1,7 +1,7 @@
 package cc.silk.module.modules.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import cc.silk.event.impl.render.EventRender2D;
+import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
@@ -34,7 +34,7 @@ public final class ArrowESP extends Module {
     }
 
     @EventHandler
-    private void onRender2D(EventRender2D event) {
+    private void onRender2D(Render2DEvent event) {
         if (isNull()) return;
 
         DrawContext context = event.getContext();

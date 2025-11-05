@@ -1,6 +1,7 @@
 package cc.silk.module.modules.combat;
 
 import cc.silk.event.impl.player.AttackEvent;
+import cc.silk.event.impl.player.DoAttackEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -47,7 +48,7 @@ public final class ShieldBreaker extends Module {
     }
 
     @EventHandler
-    private void onAttackEvent(AttackEvent event) {
+    private void onAttackEvent(DoAttackEvent event) {
         if (isNull()) return;
         if (mode.getMode().equals("OnHit")) {
             lastAttackPressed = true;
@@ -68,14 +69,13 @@ public final class ShieldBreaker extends Module {
         boolean shouldActivate = mode.getMode().equals("Auto") || (mode.getMode().equals("OnHit") && lastAttackPressed);
 
         if (isBlocking && canBreak && shouldActivate) {
+
             if (!(mc.player.getMainHandStack().getItem() instanceof AxeItem)) {
-                if (reactionTimer.hasElapsedTime(reactionDelay.getValueInt())) {
-                    if (savedSlot == -1 && swapTimer.hasElapsedTime(swapDelay.getValueInt())) {
-                        breakingShield = true;
-                        savedSlot = mc.player.getInventory().selectedSlot;
-                        InventoryUtil.swapToWeapon(AxeItem.class);
-                        attackTimer.reset();
-                    }
+                if (reactionTimer.hasElapsedTime(reactionDelay.getValueInt()) && swapTimer.hasElapsedTime(swapDelay.getValueInt())) {
+                    breakingShield = true;
+                    if (savedSlot == -1) savedSlot = mc.player.getInventory().selectedSlot;
+                    InventoryUtil.swapToWeapon(AxeItem.class);
+                    attackTimer.reset();
                 }
             }
 
@@ -87,22 +87,20 @@ public final class ShieldBreaker extends Module {
                     breakingShield = false;
                 }
             }
-            if (mode.getMode().equals("OnHit")) {
-                lastAttackPressed = false;
-            }
+
+            if (mode.getMode().equals("OnHit")) lastAttackPressed = false;
+
         } else {
-            if (!reactionTimer.hasElapsedTime(reactionDelay.getValueInt() / 2)) {
-                reactionTimer.reset();
-            }
+            if (!reactionTimer.hasElapsedTime(reactionDelay.getValueInt() / 2)) reactionTimer.reset();
 
             if (savedSlot != -1 && swapBackTimer.hasElapsedTime(swapBackDelay.getValueInt())) {
-                if (revertSlot.getValue()) {
-                    mc.player.getInventory().selectedSlot = savedSlot;
-                }
+                if (revertSlot.getValue()) mc.player.getInventory().selectedSlot = savedSlot;
                 savedSlot = -1;
             }
         }
     }
+
+
 
     @Override
     public void onDisable() {

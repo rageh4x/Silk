@@ -103,40 +103,35 @@ public final class HoverTotem extends Module {
     private long generateNormalModeDelay() {
         swapCount++;
 
-        long baseDelay = normalBaseDelay.getValueInt() + random.nextInt(normalVariation.getValueInt());
+        long baseDelay = normalBaseDelay.getValueInt();
+        int variation = normalVariation.getValueInt();
+        double sdThreshold = normalSDThreshold.getValue();
 
-        if (swapCount % 3 == 0) {
-            baseDelay += (normalVariation.getValueInt() / 2) + random.nextInt(normalVariation.getValueInt());
-        } else if (swapCount % 5 == 0) {
-            baseDelay = Math.max(50, normalBaseDelay.getValueInt() / 3);
+        // 1️⃣ Introduce multi-layer randomness (non-Gaussian + time-based)
+        long noise = (long) ((random.nextDouble() - 0.5) * variation * 2); // uniform
+        noise += (System.currentTimeMillis() % 97) - 48; // adds natural clock drift
+
+        // 2️⃣ Occasionally simulate "human inconsistency"
+        if (swapCount % (3 + random.nextInt(3)) == 0) {
+            noise += random.nextBoolean()
+                    ? random.nextInt(variation)
+                    : -random.nextInt(variation / 2);
         }
 
-        double gaussian = random.nextGaussian() * (normalSDThreshold.getValue() / 2);
-        baseDelay += (long) Math.abs(gaussian);
-
-        if (recentIntervals.size() >= 2) {
-            double avgInterval = calculateDoubleAverage(recentIntervals);
-            if (Math.abs(baseDelay - avgInterval) < normalSDThreshold.getValue() / 2) {
-                baseDelay += random.nextBoolean() ?
-                        normalVariation.getValueInt() / 2 + random.nextInt(normalVariation.getValueInt() / 2) :
-                        -(normalBaseDelay.getValueInt() / 2 + random.nextInt(normalBaseDelay.getValueInt() / 2));
-            }
+        double recentSD = recentStandardDeviations.isEmpty() ? 0 : recentStandardDeviations.getLast();
+        if (recentSD < sdThreshold * 0.75) {
+            noise += (long) ((random.nextDouble() - 0.5) * (variation * 1.5));
         }
 
-        updateStandardDeviationTracking();
-        if (recentStandardDeviations.size() >= 3) {
-            double avgSD = calculateAverage(recentStandardDeviations);
-            if (avgSD < normalSDThreshold.getValue()) {
-                baseDelay += random.nextBoolean() ? normalVariation.getValueInt() : -normalVariation.getValueInt() / 2;
-            }
-        }
+        long finalDelay = Math.max(80, Math.min(2000, baseDelay + noise));
 
-        long finalDelay = Math.max(80, Math.min(2000, baseDelay));
         recentIntervals.add(finalDelay);
-        if (recentIntervals.size() > 10) recentIntervals.remove(0);
+        if (recentIntervals.size() > 10) recentIntervals.removeFirst();
+        updateStandardDeviationTracking();
 
         return finalDelay;
     }
+
 
     private double calculateDoubleAverage(List<Long> list) {
         return list.stream().mapToDouble(Long::doubleValue).average().orElse(0);
@@ -158,7 +153,7 @@ public final class HoverTotem extends Module {
         double stdDev = Math.sqrt(variance);
 
         recentStandardDeviations.add(stdDev);
-        if (recentStandardDeviations.size() > 10) recentStandardDeviations.remove(0);
+        if (recentStandardDeviations.size() > 10) recentStandardDeviations.removeFirst();
     }
 
     @Override

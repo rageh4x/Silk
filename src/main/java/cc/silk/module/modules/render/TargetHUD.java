@@ -1,7 +1,7 @@
 package cc.silk.module.modules.render;
 
 import cc.silk.event.impl.player.AttackEvent;
-import cc.silk.event.impl.render.EventRender2D;
+import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
@@ -12,7 +12,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
-import java.util.function.Function;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.client.util.SkinTextures;
@@ -53,7 +52,7 @@ public final class TargetHUD extends Module {
     }
 
     @EventHandler
-    private void onRender2D(EventRender2D event) {
+    private void onRender2D(Render2DEvent event) {
         if (isNull())
             return;
 

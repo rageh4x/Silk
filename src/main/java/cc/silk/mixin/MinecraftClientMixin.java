@@ -1,8 +1,9 @@
 package cc.silk.mixin;
 
 import cc.silk.SilkClient;
-import cc.silk.event.impl.network.EventDisconnect;
+import cc.silk.event.impl.network.DisconnectEvent;
 import cc.silk.event.impl.player.DoAttackEvent;
+import cc.silk.event.impl.player.ItemUseEvent;
 import cc.silk.utils.IMinecraft;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.event.impl.world.WorldChangeEvent;
@@ -113,7 +114,17 @@ public class MinecraftClientMixin implements IMinecraft {
     }
     @Inject(method = "onDisconnected", at = @At("HEAD"))
     public final void onDisconnected(CallbackInfo ci) {
-        EventDisconnect event = new EventDisconnect();
+        DisconnectEvent event = new DisconnectEvent();
         SilkClient.INSTANCE.getSilkEventBus().post(event);
+    }
+    @Inject(method = "doItemUse", at = @At("HEAD"), cancellable = true)
+    public final void doItemUseInject(CallbackInfo ci) {
+        ItemUseEvent event = new ItemUseEvent();
+
+        SilkClient.INSTANCE.getSilkEventBus().post(event);
+
+        if (event.isCancelled()) {
+            ci.cancel();
+        }
     }
 }

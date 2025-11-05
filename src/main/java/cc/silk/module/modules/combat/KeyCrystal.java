@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.player.ItemUseEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -21,6 +22,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
@@ -33,7 +35,6 @@ public final class KeyCrystal extends Module {
     private final KeybindSetting crystalKeybind = new KeybindSetting("Crystal Key", GLFW.GLFW_MOUSE_BUTTON_4, false);
     private final BooleanSetting antiSuicide = new BooleanSetting("Anti Suicide", true);
     private final BooleanSetting antiWeakness = new BooleanSetting("Anti Weakness", true);
-    private final BooleanSetting fakePunch = new BooleanSetting("Fake Punch", false);
     private final BooleanSetting stopOnKill = new BooleanSetting("Stop On Kill", false);
 
     private final NumberSetting placeChance = new NumberSetting("Place Chance (%)", 0, 100, 100, 1);
@@ -60,7 +61,7 @@ public final class KeyCrystal extends Module {
         super("Key Crystal", "Automatically places and explodes crystals and obsidian for PvP", -1, Category.COMBAT);
         this.addSettings(
                 crystalKeybind,
-                placeChance, breakChance, fakePunch, stopOnKill,
+                placeChance, breakChance, stopOnKill,
                 minBreakDelay, maxBreakDelay, minPlaceDelay, maxPlaceDelay,
                 antiSuicide, antiWeakness
         );
@@ -142,7 +143,6 @@ public final class KeyCrystal extends Module {
 
                     ((MinecraftClientAccessor) mc).invokeDoAttack();
 
-                    if (fakePunch.getValue()) mc.player.swingHand(mc.player.getActiveHand());
 
                     breakTimer.reset();
                     currentBreakDelay = random.nextLong(minBreakDelay.getValueInt(), maxBreakDelay.getValueInt());

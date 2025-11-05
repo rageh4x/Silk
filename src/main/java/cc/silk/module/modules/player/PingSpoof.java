@@ -1,7 +1,7 @@
 package cc.silk.module.modules.player;
 
 
-import cc.silk.event.impl.network.EventPacket;
+import cc.silk.event.impl.network.PacketEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.NumberSetting;
@@ -21,7 +21,7 @@ public final class PingSpoof extends Module {
     }
 
     @EventHandler
-    private void onEventPacket(EventPacket event) {
+    private void onEventPacket(PacketEvent event) {
         if (event.getPacket() instanceof KeepAliveS2CPacket packet) {
             if (isNull()) return;
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {

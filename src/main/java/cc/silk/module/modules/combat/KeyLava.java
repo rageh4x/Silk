@@ -8,6 +8,7 @@ import cc.silk.module.setting.KeybindSetting;
 import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.keybinding.KeyUtils;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.Items;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;

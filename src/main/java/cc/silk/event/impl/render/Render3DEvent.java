@@ -5,10 +5,10 @@ import lombok.Getter;
 import net.minecraft.client.util.math.MatrixStack;
 
 @Getter
-public class EventRender3D implements Event {
+public class Render3DEvent implements Event {
     MatrixStack matrixStack;
 
-    public EventRender3D(MatrixStack matrixStack) {
+    public Render3DEvent(MatrixStack matrixStack) {
         this.matrixStack = matrixStack;
     }
 }

@@ -1,6 +1,6 @@
 package cc.silk.module.modules.client;
 
-import cc.silk.event.impl.network.EventPacket;
+import cc.silk.event.impl.network.PacketEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.utils.mc.ChatUtil;
@@ -13,7 +13,7 @@ public class Debugger extends Module {
     }
 
     @EventHandler
-    public void onPacketSend(EventPacket e) {
+    public void onPacketSend(PacketEvent e) {
         if (isNull()) return;
         if (e.getPacket() == null) return;
         if (!(e.getPacket() instanceof ClickSlotC2SPacket packet))

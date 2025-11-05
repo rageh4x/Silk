@@ -3,12 +3,12 @@ package cc.silk.event.impl.render;
 import cc.silk.event.types.Event;
 import net.minecraft.client.gui.DrawContext;
 
-public class EventRender2D implements Event {
+public class Render2DEvent implements Event {
     private DrawContext context;
     private int width;
     private int height;
 
-    public EventRender2D(DrawContext context, int width, int height) {
+    public Render2DEvent(DrawContext context, int width, int height) {
         this.context = context;
         this.width = width;
         this.height = height;

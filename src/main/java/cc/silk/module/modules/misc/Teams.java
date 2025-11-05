@@ -21,14 +21,26 @@ public class Teams extends Module {
             return false;
         }
 
-        if (Objects.isNull(entity) || Objects.isNull(entity.getName())) {
-            return true;
+        // Null checks
+        if (entity == null || entity.getName() == null || !(entity instanceof LivingEntity)) {
+            return false;
         }
 
-        if (!(entity instanceof LivingEntity)) {
-            return true;
-        }
+        try {
+            // Ensure player and scoreboard exist before checking
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == null || client.player.getScoreboardTeam() == null) {
+                return false;
+            }
 
-        return MinecraftClient.getInstance().player.isTeammate(entity);
+            // Safely call isTeammate
+            return client.player.isTeammate(entity);
+        } catch (IllegalStateException e) {
+            // Prevent crash caused by desynced team data
+            return false;
+        } catch (Exception e) {
+            // Any unexpected errors — also ignore teammate check
+            return false;
+        }
     }
 }

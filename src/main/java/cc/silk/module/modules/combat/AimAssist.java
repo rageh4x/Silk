@@ -1,6 +1,6 @@
 package cc.silk.module.modules.combat;
 
-import cc.silk.event.impl.render.EventRender3D;
+import cc.silk.event.impl.render.Render3DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.modules.misc.Teams;
@@ -52,7 +52,7 @@ public class AimAssist extends Module {
     }
 
     @EventHandler
-    private void onRender3D(EventRender3D event) {
+    private void onRender3D(Render3DEvent event) {
         if (isNull()) return;
         if (maxPitchSpeed.getValueFloat() <= minPitchSpeed.getValueFloat()) {
             maxPitchSpeed.setValue(minPitchSpeed.getValue() + 0.1);

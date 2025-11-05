@@ -1,6 +1,6 @@
 package cc.silk.module.modules.render;
 
-import cc.silk.event.impl.render.EventRender2D;
+import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.*;
@@ -48,7 +48,7 @@ public class Watermark extends Module {
     }
 
     @EventHandler
-    private void onRender2D(EventRender2D event) {
+    private void onRender2D(Render2DEvent event) {
         if (mc.player == null || mc.world == null)
             return;
         if (text.getValue().isEmpty())
