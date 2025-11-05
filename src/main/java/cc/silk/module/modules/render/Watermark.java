@@ -5,7 +5,7 @@ import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.*;
 import cc.silk.utils.render.DraggableComponent;
-import cc.silk.utils.render.NanoVGRenderer;
+import cc.silk.utils.render.nanovg.NanoVGRenderer;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ChatScreen;
 
