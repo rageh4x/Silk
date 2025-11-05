@@ -16,7 +16,6 @@ import cc.silk.module.modules.movement.KeepSprint;
 import cc.silk.module.modules.movement.Sprint;
 import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +23,7 @@ import java.util.Optional;
 @Getter
 public final class ModuleManager {
 
-    private final List<Module> modules = new ArrayList<>();
+    private final List<Module> modules = new java.util.ArrayList<>();
 
     public ModuleManager() {
         addModules();
@@ -76,7 +75,8 @@ public final class ModuleManager {
         add(
                 new ContainerSlots(), new FullBright(), new Watermark(), new TargetHUD(),
                 new SwingSpeed(),
-                new Notifications(), new ArrowESP(), new OutlineESP(), new ESP2D(), new TargetESP());
+                new Notifications(), new ArrowESP(), new OutlineESP(), new ESP2D(), new TargetESP(),
+                new ArrayList());
 
         // Misc
         add(

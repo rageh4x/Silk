@@ -33,13 +33,15 @@ public class GuiEventHandler {
     private String searchQuery = "";
     private boolean searchFocused = false;
 
-    public GuiEventHandler(Map<Module, Boolean> moduleExpanded, Map<NumberSetting, Boolean> sliderDragging, Category selectedCategory) {
+    public GuiEventHandler(Map<Module, Boolean> moduleExpanded, Map<NumberSetting, Boolean> sliderDragging,
+            Category selectedCategory) {
         this.moduleExpanded = moduleExpanded;
         this.sliderDragging = sliderDragging;
         this.selectedCategory = selectedCategory;
     }
 
-    public boolean handleMouseClick(double mouseX, double mouseY, int button, int screenWidth, int screenHeight, List<Module> modules) {
+    public boolean handleMouseClick(double mouseX, double mouseY, int button, int screenWidth, int screenHeight,
+            List<Module> modules) {
         if (listeningKeybind != null) {
             wasListeningKeybind = true;
             if (button == 0) {
@@ -56,7 +58,8 @@ public class GuiEventHandler {
             return true;
         }
 
-        if (button < 0 || button > 8) return false;
+        if (button < 0 || button > 8)
+            return false;
 
         int containerX = (screenWidth - CONTAINER_WIDTH) / 2;
         int containerY = (screenHeight - 500) / 2;
@@ -109,12 +112,14 @@ public class GuiEventHandler {
         return false;
     }
 
-    private boolean handleContentClick(double mouseX, double mouseY, int containerX, int containerY, int containerHeight, List<Module> modules, int button) {
+    private boolean handleContentClick(double mouseX, double mouseY, int containerX, int containerY,
+            int containerHeight, List<Module> modules, int button) {
         int contentX = containerX + SIDEBAR_WIDTH;
         int contentY = containerY + HEADER_HEIGHT;
         int contentWidth = CONTAINER_WIDTH - SIDEBAR_WIDTH;
 
-        if (mouseX >= contentX && mouseX <= contentX + contentWidth && mouseY >= contentY && mouseY <= contentY + containerHeight - HEADER_HEIGHT) {
+        if (mouseX >= contentX && mouseX <= contentX + contentWidth && mouseY >= contentY
+                && mouseY <= contentY + containerHeight - HEADER_HEIGHT) {
             int moduleY = contentY + PADDING - scrollOffset;
 
             for (Module module : modules) {
@@ -128,7 +133,8 @@ public class GuiEventHandler {
                     continue;
                 }
 
-                if (moduleY > contentY + containerHeight - HEADER_HEIGHT) break;
+                if (moduleY > contentY + containerHeight - HEADER_HEIGHT)
+                    break;
 
                 if (mouseY >= moduleY && mouseY <= moduleY + MODULE_HEIGHT) {
                     boolean hasSettings = module.getSettings() != null && !module.getSettings().isEmpty();
@@ -140,7 +146,8 @@ public class GuiEventHandler {
                             return true;
                         }
                     } else if (button == 0) {
-                        if (hasSettings && mouseX >= contentX + contentWidth - PADDING - 30 && mouseX <= contentX + contentWidth - PADDING) {
+                        if (hasSettings && mouseX >= contentX + contentWidth - PADDING - 30
+                                && mouseX <= contentX + contentWidth - PADDING) {
                             boolean now = !moduleExpanded.get(module);
                             moduleExpanded.put(module, now);
                             return true;
@@ -155,7 +162,8 @@ public class GuiEventHandler {
                 }
 
                 if (button == 0 && moduleExpanded.get(module) && mouseY > moduleY + MODULE_HEIGHT + 5) {
-                    if (handleSettingClick(mouseX, mouseY, module, contentX, moduleY + MODULE_HEIGHT + 5, contentWidth)) {
+                    if (handleSettingClick(mouseX, mouseY, module, contentX, moduleY + MODULE_HEIGHT + 5,
+                            contentWidth)) {
                         return true;
                     }
                 }
@@ -167,7 +175,8 @@ public class GuiEventHandler {
         return false;
     }
 
-    private boolean handleSettingClick(double mouseX, double mouseY, Module module, int contentX, int settingsY, int contentWidth) {
+    private boolean handleSettingClick(double mouseX, double mouseY, Module module, int contentX, int settingsY,
+            int contentWidth) {
         if (module.getSettings() == null || module.getSettings().isEmpty()) {
             return false;
         }
@@ -209,7 +218,8 @@ public class GuiEventHandler {
         return false;
     }
 
-    private boolean handleSpecificSettingClick(Setting setting, double mouseX, double mouseY, int controlX, int controlY, int controlWidth) {
+    private boolean handleSpecificSettingClick(Setting setting, double mouseX, double mouseY, int controlX,
+            int controlY, int controlWidth) {
         switch (setting) {
             case BooleanSetting booleanSetting -> {
                 booleanSetting.setValue(!booleanSetting.getValue());
@@ -224,7 +234,8 @@ public class GuiEventHandler {
                 if (valueText.endsWith(".0")) {
                     valueText = valueText.substring(0, valueText.length() - 2);
                 }
-                int valueTextWidth = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(valueText);
+                int valueTextWidth = net.minecraft.client.MinecraftClient.getInstance().textRenderer
+                        .getWidth(valueText);
 
                 if (mouseX >= valueTextX && mouseX <= valueTextX + valueTextWidth &&
                         mouseY >= controlY && mouseY <= controlY + SETTING_HEIGHT) {
@@ -233,7 +244,8 @@ public class GuiEventHandler {
                 } else {
                     double relativeX = mouseX - controlX;
                     double percentage = Math.max(0, Math.min(1, relativeX / controlWidth));
-                    double newValue = numberSetting.getMin() + percentage * (numberSetting.getMax() - numberSetting.getMin());
+                    double newValue = numberSetting.getMin()
+                            + percentage * (numberSetting.getMax() - numberSetting.getMin());
                     numberSetting.setValue(newValue);
                     sliderDragging.put(numberSetting, true);
                     return true;
@@ -301,7 +313,8 @@ public class GuiEventHandler {
         return false;
     }
 
-    public boolean handleMouseDrag(double mouseX, double mouseY, int button, double deltaX, double deltaY, int screenWidth, int screenHeight) {
+    public boolean handleMouseDrag(double mouseX, double mouseY, int button, double deltaX, double deltaY,
+            int screenWidth, int screenHeight) {
         if (button == 0) {
             for (Map.Entry<NumberSetting, Boolean> entry : sliderDragging.entrySet()) {
                 if (entry.getValue()) {
@@ -318,7 +331,8 @@ public class GuiEventHandler {
 
                     double relativeX = mouseX - controlX;
                     double percentage = Math.max(0, Math.min(1, relativeX / controlWidth));
-                    double newValue = numberSetting.getMin() + percentage * (numberSetting.getMax() - numberSetting.getMin());
+                    double newValue = numberSetting.getMin()
+                            + percentage * (numberSetting.getMax() - numberSetting.getMin());
                     numberSetting.setValue(newValue);
 
                     return true;
@@ -442,13 +456,15 @@ public class GuiEventHandler {
         return false;
     }
 
-    public boolean handleScroll(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, List<Module> modules) {
+    public boolean handleScroll(double mouseX, double mouseY, double horizontalAmount, double verticalAmount,
+            List<Module> modules) {
         scrollOffset -= (int) (verticalAmount * 20);
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
         return true;
     }
 
-    public boolean handleMouseScroll(double mouseX, double mouseY, double horizontalAmount, double verticalAmount, int screenHeight) {
+    public boolean handleMouseScroll(double mouseX, double mouseY, double horizontalAmount, double verticalAmount,
+            int screenHeight) {
         scrollOffset -= (int) (verticalAmount * 20);
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
         return true;
@@ -519,7 +535,8 @@ public class GuiEventHandler {
         int optionHeight = 15;
         int relativeY = (int) (mouseY - dropdownStartY);
 
-        if (relativeY < 0) return -1;
+        if (relativeY < 0)
+            return -1;
 
         int optionIndex = relativeY / optionHeight;
         return optionIndex < modeSetting.getModes().size() ? optionIndex : -1;

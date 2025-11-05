@@ -42,13 +42,16 @@ public class FontManager {
     }
 
     @Getter
-    @RequiredArgsConstructor
     public enum Type {
         Inter("Inter"),
         JetbrainsMono("JetbrainsMono"),
         Poppins("Poppins-Medium");
 
         private final String type;
+
+        Type(String type) {
+            this.type = type;
+        }
     }
 
     private record FontKey(int size, Type type) {
