@@ -219,6 +219,8 @@ public class ArrayList extends Module {
                 }
             }
 
+            NanoVGRenderer.scissor(x, y, animatedWidth, bgHeight);
+
             if (colorMode.getMode().equals("Gradient")) {
                 drawGradientText(displayText, x + pad + (isRight ? 0 : (showBar.getValue() ? barW : 0)),
                         y + pad, size, animProgress, fontId);
@@ -230,6 +232,8 @@ public class ArrayList extends Module {
                 float textY = y + pad;
                 NanoVGRenderer.drawTextWithFont(displayText, textX, textY, size, textColor, fontId);
             }
+
+            NanoVGRenderer.resetScissor();
 
             previousWidth = animatedWidth;
             if (isBottom) {
@@ -243,8 +247,17 @@ public class ArrayList extends Module {
     private Color getModuleColor(int index, int total) {
         return switch (colorMode.getMode()) {
             case "Custom" -> customColor.getValue();
+            case "Gradient" -> getGradientColor(index);
             default -> cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
         };
+    }
+
+    private Color getGradientColor(int index) {
+        double time = (System.currentTimeMillis() / 1000.0) * gradientSpeed.getValue();
+        double phase = time + index * gradientSpread.getValue();
+        double waveValue = (Math.sin(phase) + 1.0) * 0.5;
+        double wave = Math.sin(waveValue * Math.PI * 0.5);
+        return new Color(applyWaveColor(gradientColor.getValue().getRGB(), wave, 1.0f), true);
     }
 
     private String getModuleDisplayText(Module module) {
