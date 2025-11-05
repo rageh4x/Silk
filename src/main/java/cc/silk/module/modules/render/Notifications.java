@@ -1,15 +1,12 @@
 package cc.silk.module.modules.render;
 
-import cc.silk.SilkClient;
 import cc.silk.event.impl.render.Render2DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
-import cc.silk.utils.render.font.FontManager;
-import cc.silk.utils.render.font.fonts.FontRenderer;
 import cc.silk.utils.notification.Notification;
 import cc.silk.utils.notification.NotificationManager;
+import cc.silk.utils.render.nanovg.NanoVGRenderer;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
@@ -18,14 +15,14 @@ import java.util.List;
 
 public class Notifications extends Module {
 
-    private static final int NOTIFICATION_WIDTH = 150;
-    private static final int NOTIFICATION_HEIGHT = 40;
-    private static final int NOTIFICATION_SPACING = 3;
+    private static final int NOTIFICATION_WIDTH = 160;
+    private static final int NOTIFICATION_HEIGHT = 35;
+    private static final int NOTIFICATION_SPACING = 5;
     private static final int MARGIN_RIGHT = 8;
     private static final int MARGIN_BOTTOM = 8;
+    private static final int ICON_SIZE = 20;
+    private static final int CORNER_RADIUS = 6;
 
-    private static final Color PURPLE_COLOR = new Color(128, 0, 128);
-    private static final Color BLACK_COLOR = new Color(20, 20, 20, 255);
     private static final Color ENABLED_COLOR = new Color(0, 255, 0);
     private static final Color DISABLED_COLOR = new Color(255, 0, 0);
     private static final Color BUFF_EXPIRED_COLOR = new Color(255, 165, 0);
@@ -46,7 +43,9 @@ public class Notifications extends Module {
         }
 
         updateNotifications(notifications);
-        renderNotifications(event.getContext(), event.getWidth(), event.getHeight(), notifications);
+        NanoVGRenderer.beginFrame();
+        renderNotifications(event.getWidth(), event.getHeight(), notifications);
+        NanoVGRenderer.endFrame();
     }
 
     private void updateNotifications(List<Notification> notifications) {
@@ -59,7 +58,8 @@ public class Notifications extends Module {
             }
 
             float targetProgress = notification.isRemoving() ? 0f : 1f;
-            notification.setAnimationProgress(MathHelper.lerp(0.15f, notification.getAnimationProgress(), targetProgress));
+            notification
+                    .setAnimationProgress(MathHelper.lerp(0.15f, notification.getAnimationProgress(), targetProgress));
 
             if (notification.isRemoving() && notification.getAnimationProgress() < 0.05f) {
                 iterator.remove();
@@ -67,56 +67,70 @@ public class Notifications extends Module {
         }
     }
 
-    private void renderNotifications(DrawContext context, int screenWidth, int screenHeight, List<Notification> notifications) {
-        int yOffset = 0;
+    private void renderNotifications(int screenWidth, int screenHeight, List<Notification> notifications) {
+        float yOffset = 0;
 
         for (int i = notifications.size() - 1; i >= 0; i--) {
             Notification notification = notifications.get(i);
 
-            int x = screenWidth - NOTIFICATION_WIDTH - MARGIN_RIGHT;
-            int y = screenHeight - MARGIN_BOTTOM - NOTIFICATION_HEIGHT - yOffset;
+            float x = screenWidth - NOTIFICATION_WIDTH - MARGIN_RIGHT;
+            float y = screenHeight - MARGIN_BOTTOM - NOTIFICATION_HEIGHT - yOffset;
 
             float slideProgress = notification.getAnimationProgress();
-            int slideOffset = (int) ((1f - slideProgress) * (NOTIFICATION_WIDTH + 20));
+            float slideOffset = (1f - slideProgress) * (NOTIFICATION_WIDTH + 20);
             x += slideOffset;
 
-            renderNotification(context, notification, x, y);
+            renderNotification(notification, x, y);
 
-            yOffset += (int) ((NOTIFICATION_HEIGHT + NOTIFICATION_SPACING) * slideProgress);
+            yOffset += (NOTIFICATION_HEIGHT + NOTIFICATION_SPACING) * slideProgress;
         }
     }
 
-    private void renderNotification(DrawContext context, Notification notification, int x, int y) {
-        int alpha = (int) (notification.getAnimationProgress() * 255);
-
-        context.fill(x, y, x + NOTIFICATION_WIDTH, y + NOTIFICATION_HEIGHT, BLACK_COLOR.getRGB());
-
-        Color accentColor = new Color(PURPLE_COLOR.getRed(), PURPLE_COLOR.getGreen(),
-                PURPLE_COLOR.getBlue(), alpha);
-        context.fill(x, y, x + 3, y + NOTIFICATION_HEIGHT, accentColor.getRGB());
+    private void renderNotification(Notification notification, float x, float y) {
+        float alpha = notification.getAnimationProgress();
 
         Color statusColor = switch (notification.getType()) {
-            case MODULE_ENABLED ->
-                    new Color(ENABLED_COLOR.getRed(), ENABLED_COLOR.getGreen(), ENABLED_COLOR.getBlue(), alpha);
-            case MODULE_DISABLED ->
-                    new Color(DISABLED_COLOR.getRed(), DISABLED_COLOR.getGreen(), DISABLED_COLOR.getBlue(), alpha);
-            case BUFF_EXPIRED ->
-                    new Color(BUFF_EXPIRED_COLOR.getRed(), BUFF_EXPIRED_COLOR.getGreen(), BUFF_EXPIRED_COLOR.getBlue(), alpha);
+            case MODULE_ENABLED -> ENABLED_COLOR;
+            case MODULE_DISABLED -> DISABLED_COLOR;
+            case BUFF_EXPIRED -> BUFF_EXPIRED_COLOR;
         };
 
-        FontRenderer interFont = SilkClient.INSTANCE.fontManager.getSize(12, FontManager.Type.Inter);
+        Color bgColor = new Color(25, 25, 30, (int) (200 * alpha));
+        NanoVGRenderer.drawRoundedRect(x, y, NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT, CORNER_RADIUS, bgColor);
 
-        interFont.drawString(context.getMatrices(), notification.getTitle(), x + 8f, y + 8f,
-                new Color(255, 255, 255, alpha));
-        interFont.drawString(context.getMatrices(), notification.getMessage(), x + 8f, y + 24f,
-                statusColor);
+        float iconCenterX = x + 18;
+        float iconCenterY = y + NOTIFICATION_HEIGHT / 2f;
+        float iconRadius = ICON_SIZE / 2f;
+
+        Color iconBgColor = new Color(35, 35, 40, (int) (255 * alpha));
+        NanoVGRenderer.drawCircle(iconCenterX, iconCenterY, iconRadius, iconBgColor);
+
+        Color iconOutlineColor = new Color(statusColor.getRed(), statusColor.getGreen(), statusColor.getBlue(),
+                (int) (255 * alpha));
+        NanoVGRenderer.drawCircle(iconCenterX, iconCenterY, iconRadius + 1, iconOutlineColor);
+        NanoVGRenderer.drawCircle(iconCenterX, iconCenterY, iconRadius - 1, iconBgColor);
+
+        int fontId = NanoVGRenderer.getRegularFontId();
+        Color iconTextColor = new Color(255, 255, 255, (int) (255 * alpha));
+        float iconTextSize = 11f;
+        String iconSymbol = "i";
+        float iconTextWidth = NanoVGRenderer.getTextWidthWithFont(iconSymbol, iconTextSize, fontId);
+        NanoVGRenderer.drawTextWithFont(iconSymbol, iconCenterX - iconTextWidth / 2, iconCenterY - iconTextSize / 2 + 1,
+                iconTextSize, iconTextColor, fontId);
+
+        float textX = x + 35;
+
+        Color titleColor = new Color(255, 255, 255, (int) (255 * alpha));
+        NanoVGRenderer.drawTextWithFont(notification.getTitle(), textX, y + 8, 11f, titleColor, fontId);
+
+        Color messageColor = new Color(180, 180, 180, (int) (255 * alpha));
+        NanoVGRenderer.drawTextWithFont(notification.getMessage(), textX, y + 21, 9f, messageColor, fontId);
 
         float progressWidth = NOTIFICATION_WIDTH * (1f - notification.getLifetimeProgress());
         if (progressWidth > 0) {
-            Color progressColor = new Color(accentColor.getRed(), accentColor.getGreen(),
-                    accentColor.getBlue(), alpha / 3);
-            context.fill(x, y + NOTIFICATION_HEIGHT - 2,
-                    x + (int) progressWidth, y + NOTIFICATION_HEIGHT, progressColor.getRGB());
+            Color progressColor = new Color(statusColor.getRed(), statusColor.getGreen(), statusColor.getBlue(),
+                    (int) (100 * alpha));
+            NanoVGRenderer.drawRoundedRect(x, y + NOTIFICATION_HEIGHT - 3, progressWidth, 3, 1.5f, progressColor);
         }
     }
 }

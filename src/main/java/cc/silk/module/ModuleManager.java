@@ -1,6 +1,5 @@
 package cc.silk.module;
 
-import cc.silk.module.modules.client.ClickGUIModule;
 import cc.silk.module.modules.client.Client;
 import cc.silk.module.modules.client.ClientSettingsModule;
 import cc.silk.module.modules.client.Debugger;
@@ -84,7 +83,7 @@ public final class ModuleManager {
                 new PearlKey(), new PearlCatch(), new WindChargeKey(), new Teams(), new FakePlayer());
 
         // Client
-        add(new ClickGUIModule(), new NewClickGUIModule(), new ClientSettingsModule(), new Client(), new Debugger(),
+        add(new NewClickGUIModule(), new ClientSettingsModule(), new Client(), new Debugger(),
                 new Secret());
     }
 
