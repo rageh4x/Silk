@@ -16,7 +16,7 @@ public class Watermark extends Module {
     private final StringSetting text = new StringSetting("Text", "Silk");
     private final NumberSetting fontSize = new NumberSetting("Font Size", 8, 32, 16, 1);
     private final NumberSetting transparency = new NumberSetting("Transparency", 0, 255, 200, 1);
-    private final ModeSetting colorMode = new ModeSetting("Color Mode", "Astolfo", "Astolfo", "Theme", "Custom");
+    private final ModeSetting colorMode = new ModeSetting("Color Mode", "Theme", "Theme", "Custom");
     private final ColorSetting customColor = new ColorSetting("Custom Color", new Color(255, 255, 255));
     private final BooleanSetting waveAnimation = new BooleanSetting("Wave Animation", false);
     private final NumberSetting waveSpeed = new NumberSetting("Wave Speed", 0.1, 5.0, 1.5, 0.1);
@@ -237,7 +237,6 @@ public class Watermark extends Module {
 
     private Color getColor(int offset) {
         return switch (colorMode.getMode()) {
-            case "Astolfo" -> new Color(HUD.getAstolfo(offset));
             case "Custom" -> customColor.getValue();
             default -> cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
         };
@@ -268,7 +267,8 @@ public class Watermark extends Module {
             cursorX += NanoVGRenderer.getTextWidth(ch, size);
         }
     }
-        // this aint fucking working properly nigger nigger
+
+    // this aint fucking working properly nigger nigger
     private void drawWaveIcon(int imageId, float x, float y, float size, int index, Color baseColor) {
         double time = (System.currentTimeMillis() / 1000.0) * waveSpeed.getValue();
         double phase = time + index * waveSpread.getValue();

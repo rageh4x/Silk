@@ -74,7 +74,7 @@ public final class ModuleManager {
 
         // Render
         add(
-                new ContainerSlots(), new FullBright(), new HUD(), new Watermark(), new TargetHUD(),
+                new ContainerSlots(), new FullBright(), new Watermark(), new TargetHUD(),
                 new SwingSpeed(),
                 new Notifications(), new ArrowESP(), new OutlineESP(), new ESP2D(), new TargetESP());
 

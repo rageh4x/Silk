@@ -1,6 +1,5 @@
 package cc.silk.module.modules.combat;
 
-import cc.silk.event.impl.player.ItemUseEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -12,18 +11,14 @@ import cc.silk.utils.keybinding.KeyUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.InventoryUtil;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.item.Items;
 import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.Random;
 
 /**
  * @author koi
@@ -32,10 +27,7 @@ public final class AutoCrystal extends Module {
 
     private final KeybindSetting crystalKey = new KeybindSetting("Crystal Key", GLFW.GLFW_MOUSE_BUTTON_4, false);
 
-    private final NumberSetting minBreakDelay = new NumberSetting("Min Break Delay (MS)", 1, 500, 10, 1);
-    private final NumberSetting maxBreakDelay = new NumberSetting("Max Break Delay (MS)", 1, 500, 50, 1);
-    private final NumberSetting minPlaceDelay = new NumberSetting("Min Place Delay (MS)", 1, 500, 10, 1);
-    private final NumberSetting maxPlaceDelay = new NumberSetting("Max Place Delay (MS)", 1, 500, 50, 1);
+    private final NumberSetting delay = new NumberSetting("Delay (MS)", 1, 200, 50, 1);
 
     private final BooleanSetting antiSuicide = new BooleanSetting("Anti Suicide", true);
 
@@ -45,19 +37,14 @@ public final class AutoCrystal extends Module {
 
     private final BooleanSetting antiWeakness = new BooleanSetting("Anti Weakness", true);
 
-    private final TimerUtil breakTimer = new TimerUtil();
-    private final TimerUtil placeTimer = new TimerUtil();
-    private final Random random = new Random();
+    private final TimerUtil timer = new TimerUtil();
 
     private int originalSlot = -1;
-    private long currentBreakDelay;
-    private long currentPlaceDelay;
 
     public AutoCrystal() {
         super("Auto Crystal", "Hold key to spam crystals", -1, Category.COMBAT);
-        this.addSettings(crystalKey, minBreakDelay, maxBreakDelay, minPlaceDelay, maxPlaceDelay, antiSuicide, autoSwitch, switchBack, antiWeakness);
+        this.addSettings(crystalKey, delay, antiSuicide, autoSwitch, switchBack, antiWeakness);
         this.getSettings().removeIf(setting -> setting instanceof KeybindSetting && !setting.equals(crystalKey));
-        resetDelays();
     }
 
     @EventHandler
@@ -65,58 +52,32 @@ public final class AutoCrystal extends Module {
         if (isNull()) return;
         if (mc.currentScreen != null) return;
 
-        if (minBreakDelay.getValueFloat() >= maxBreakDelay.getValueFloat())
-            minBreakDelay.setValue(maxBreakDelay.getValueFloat() - 1);
-        if (minPlaceDelay.getValueFloat() >= maxPlaceDelay.getValueFloat())
-            minPlaceDelay.setValue(maxPlaceDelay.getValueFloat() - 1);
-
         if (!KeyUtils.isKeyPressed(crystalKey.getKeyCode())) return;
 
-        processCrystal();
-    }
-
-    private void resetDelays() {
-        breakTimer.reset();
-        placeTimer.reset();
-
-        int minBreak = minBreakDelay.getValueInt();
-        int maxBreak = maxBreakDelay.getValueInt();
-        int minPlace = minPlaceDelay.getValueInt();
-        int maxPlace = maxPlaceDelay.getValueInt();
-
-        if (minBreak >= maxBreak) {
-            maxBreak = minBreak + 1;
-            maxBreakDelay.setValue(maxBreak);
+        if (timer.hasElapsedTime(delay.getValueInt())) {
+            processCrystal();
+            timer.reset();
         }
-        if (minPlace >= maxPlace) {
-            maxPlace = minPlace + 1;
-            maxPlaceDelay.setValue(maxPlace);
-        }
-
-        currentBreakDelay = random.nextLong(minBreak, maxBreak);
-        currentPlaceDelay = random.nextLong(minPlace, maxPlace);
     }
 
     private void processCrystal() {
         if (antiSuicide.getValue() && !mc.player.isOnGround()) return;
-
-        if (mc.crosshairTarget instanceof EntityHitResult entityHit && breakTimer.hasElapsedTime(currentBreakDelay)) {
+        if (mc.crosshairTarget instanceof EntityHitResult entityHit) {
             if (entityHit.getEntity() instanceof EndCrystalEntity crystal) {
                 if (!crystal.isRemoved() && crystal.isAlive() && mc.world.getEntityById(crystal.getId()) != null) {
+
                     if (mc.player.getPos().distanceTo(crystal.getPos()) <= 4.5) {
                         if (antiWeakness.getValue() && mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.WEAKNESS)) {
                             InventoryUtil.swapToWeapon(SwordItem.class);
                         }
                         ((MinecraftClientAccessor) mc).invokeDoAttack();
-                        breakTimer.reset();
-                        currentBreakDelay = random.nextLong(minBreakDelay.getValueInt(), maxBreakDelay.getValueInt());
                     }
                 }
                 return;
             }
         }
 
-        if (mc.crosshairTarget instanceof BlockHitResult blockHit && placeTimer.hasElapsedTime(currentPlaceDelay)) {
+        if (mc.crosshairTarget instanceof BlockHitResult blockHit) {
             BlockPos targetBlock = blockHit.getBlockPos();
             BlockPos placementPos = targetBlock.offset(blockHit.getSide());
 
@@ -127,8 +88,6 @@ public final class AutoCrystal extends Module {
 
                 if (mc.player.getMainHandStack().getItem() == Items.END_CRYSTAL) {
                     ((MinecraftClientAccessor) mc).invokeDoItemUse();
-                    placeTimer.reset();
-                    currentPlaceDelay = random.nextLong(minPlaceDelay.getValueInt(), maxPlaceDelay.getValueInt());
                 }
             }
         }
@@ -163,7 +122,7 @@ public final class AutoCrystal extends Module {
     public void onEnable() {
         super.onEnable();
         if (autoSwitch.getValue()) originalSlot = mc.player.getInventory().selectedSlot;
-        resetDelays();
+        timer.reset();
     }
 
     @Override
@@ -175,26 +134,8 @@ public final class AutoCrystal extends Module {
         originalSlot = -1;
     }
 
-    @EventHandler
-    public void onItemUse(ItemUseEvent event) {
-        if (mc.player.getMainHandStack().getItem() == Items.END_CRYSTAL) {
-            if (mc.crosshairTarget instanceof BlockHitResult hit &&
-                    mc.crosshairTarget.getType() == HitResult.Type.BLOCK) {
-
-                var blockPos = hit.getBlockPos();
-                var blockState = mc.world.getBlockState(blockPos);
-                var block = blockState.getBlock();
-
-                if (block == Blocks.OBSIDIAN || block == Blocks.BEDROCK) {
-                    event.cancel();
-                }
-            }
-        }
-    }
-
-
     @Override
     public int getKey() {
         return -1;
     }
-}
+}// reverted
