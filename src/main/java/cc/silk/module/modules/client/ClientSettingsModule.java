@@ -18,10 +18,16 @@ public class ClientSettingsModule extends Module {
     public static final NumberSetting guiTransparency = new NumberSetting("GUI Transparency", 0, 100, 0, 1);
     public static final BooleanSetting guiBlur = new BooleanSetting("GUI Blur", false);
     public static final BooleanSetting moduleDescriptions = new BooleanSetting("Module Descriptions", true);
+    
+    public static final NumberSetting toggleWidth = new NumberSetting("Toggle Width", 10, 40, 20, 1);
+    public static final NumberSetting toggleHeight = new NumberSetting("Toggle Height", 6, 20, 10, 1);
+    public static final NumberSetting sliderHeight = new NumberSetting("Slider Height", 2, 10, 4, 0.5);
+    public static final NumberSetting sliderHandleSize = new NumberSetting("Slider Handle Size", 3, 12, 5, 0.5);
 
     public ClientSettingsModule() {
         super("ClientSettings", "Customize GUI appearance", 0, Category.CLIENT);
-        this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur, moduleDescriptions);
+        this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur, moduleDescriptions,
+                toggleWidth, toggleHeight, sliderHeight, sliderHandleSize);
         this.setEnabled(true);
     }
 
@@ -47,5 +53,21 @@ public class ClientSettingsModule extends Module {
 
     public static boolean isModuleDescriptionsEnabled() {
         return moduleDescriptions.getValue();
+    }
+    
+    public static float getToggleWidth() {
+        return toggleWidth.getValueFloat();
+    }
+    
+    public static float getToggleHeight() {
+        return toggleHeight.getValueFloat();
+    }
+    
+    public static float getSliderHeight() {
+        return sliderHeight.getValueFloat();
+    }
+    
+    public static float getSliderHandleSize() {
+        return sliderHandleSize.getValueFloat();
     }
 }

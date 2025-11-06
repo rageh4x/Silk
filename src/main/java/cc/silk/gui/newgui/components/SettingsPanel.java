@@ -182,8 +182,8 @@ public class SettingsPanel {
     }
 
     private void renderBooleanSetting(BooleanSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
-        float toggleWidth = 20;
-        float toggleHeight = 10;
+        float toggleWidth = cc.silk.module.modules.client.ClientSettingsModule.getToggleWidth();
+        float toggleHeight = cc.silk.module.modules.client.ClientSettingsModule.getToggleHeight();
         float toggleX = currentX + width - PADDING - toggleWidth;
         float toggleY = settingY + 3;
 
@@ -197,7 +197,7 @@ public class SettingsPanel {
 
         NanoVGRenderer.drawRoundedRect(toggleX, toggleY, toggleWidth, toggleHeight, toggleHeight / 2f, toggleBg);
 
-        float handleSize = 6;
+        float handleSize = toggleHeight - 4;
         float handleX = isOn
                 ? toggleX + toggleWidth - handleSize - 2
                 : toggleX + 2;
@@ -214,7 +214,7 @@ public class SettingsPanel {
     private void renderNumberSetting(NumberSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
         float sliderY = settingY + 13;
         float sliderWidth = width - PADDING * 2;
-        float sliderHeight = 4;
+        float sliderHeight = cc.silk.module.modules.client.ClientSettingsModule.getSliderHeight();
         float sliderRadius = sliderHeight / 2f;
         int bgAlpha = (int) (255 * alpha);
         Color accentColor = getAccentColor();
@@ -228,7 +228,7 @@ public class SettingsPanel {
         if (fillWidth > 0) {
             NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, fillWidth, sliderHeight, sliderRadius, sliderFill);
         }
-        float handleRadius = 5;
+        float handleRadius = cc.silk.module.modules.client.ClientSettingsModule.getSliderHandleSize();
         float handleX = currentX + PADDING + fillWidth;
         float handleY = sliderY + sliderHeight / 2f;
         Color handleGlow = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (60 * alpha));
