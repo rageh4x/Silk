@@ -5,6 +5,7 @@ import cc.silk.module.Module;
 import cc.silk.gui.newgui.components.CategoryPanel;
 import cc.silk.gui.newgui.components.ConfigPanel;
 import cc.silk.utils.render.nanovg.NanoVGRenderer;
+import cc.silk.utils.render.GuiGlowHelper;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -142,6 +143,8 @@ public class NewClickGUI extends Screen {
         NanoVGRenderer.restore();
 
         NanoVGRenderer.endFrame();
+        
+        renderPanelGlows(context, alpha, scale, centerX, centerY, draggedPanel, configDragging);
     }
 
     private void renderTooltips(int mouseX, int mouseY, float alpha) {
@@ -343,6 +346,43 @@ public class NewClickGUI extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
+    private void renderPanelGlows(DrawContext context, float alpha, float scale, int centerX, int centerY, CategoryPanel draggedPanel, boolean configDragging) {
+        if (!cc.silk.module.modules.client.ClientSettingsModule.isGuiGlowEnabled()) {
+            return;
+        }
+        
+        for (CategoryPanel panel : panels) {
+            if (panel != draggedPanel) {
+                panel.renderGlow(context, alpha, scale, centerX, centerY);
+            }
+        }
+        
+        if (configPanel != null && !configDragging) {
+            configPanel.renderGlow(context, alpha, scale, centerX, centerY);
+        }
+        
+        if (draggedPanel != null) {
+            draggedPanel.renderGlow(context, alpha, scale, centerX, centerY);
+        }
+        
+        if (configPanel != null && configDragging) {
+            configPanel.renderGlow(context, alpha, scale, centerX, centerY);
+        }
+        
+        for (CategoryPanel panel : panels) {
+            panel.renderSettingsPanelGlow(context, alpha);
+        }
+        
+        if (searchFocused) {
+            float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
+            float transformedX = (searchBarX - centerX) * scale + centerX;
+            float transformedY = (searchBarY - centerY) * scale + centerY;
+            float transformedWidth = SEARCH_BAR_WIDTH * scale;
+            float transformedHeight = SEARCH_BAR_HEIGHT * scale;
+            GuiGlowHelper.drawGuiGlow(context, transformedX, transformedY, transformedWidth, transformedHeight, 6f * scale);
+        }
+    }
+    
     @Override
     public boolean shouldPause() {
         return false;

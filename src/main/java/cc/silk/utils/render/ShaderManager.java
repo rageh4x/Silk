@@ -118,6 +118,17 @@ public class ShaderManager {
             GL20.glUniform4f(location, x, y, z, w);
         }
     }
+    
+    public static void setUniform1i(String shaderName, String uniformName, int value) {
+        int location = getUniformLocation(shaderName, uniformName);
+        if (location != -1) {
+            GL20.glUniform1i(location, value);
+        }
+    }
+    
+    public static Integer getShaderProgram(String shaderName) {
+        return shaderPrograms.get(shaderName);
+    }
 
     public static void cleanup() {
         for (int program : shaderPrograms.values()) {

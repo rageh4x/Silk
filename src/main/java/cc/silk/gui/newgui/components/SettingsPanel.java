@@ -3,6 +3,8 @@ package cc.silk.gui.newgui.components;
 import cc.silk.module.Module;
 import cc.silk.module.setting.*;
 import cc.silk.utils.render.nanovg.NanoVGRenderer;
+import cc.silk.utils.render.GuiGlowHelper;
+import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
 
@@ -705,5 +707,13 @@ public class SettingsPanel {
                 }
                 return "KEY " + keyCode;
         }
+    }
+    
+    public void renderGlow(DrawContext context, float alpha) {
+        if (animationProgress <= 0f) {
+            return;
+        }
+        
+        GuiGlowHelper.drawGuiGlow(context, currentX, y, width, height, CORNER_RADIUS);
     }
 }

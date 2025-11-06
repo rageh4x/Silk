@@ -23,11 +23,18 @@ public class ClientSettingsModule extends Module {
     public static final NumberSetting toggleHeight = new NumberSetting("Toggle Height", 6, 20, 10, 1);
     public static final NumberSetting sliderHeight = new NumberSetting("Slider Height", 2, 10, 4, 0.5);
     public static final NumberSetting sliderHandleSize = new NumberSetting("Slider Handle Size", 3, 12, 5, 0.5);
+    
+    public static final BooleanSetting guiGlow = new BooleanSetting("GUI Glow", true);
+    public static final ColorSetting glowColor = new ColorSetting("Glow Color", new Color(124, 77, 255, 255));
+    public static final NumberSetting glowIntensity = new NumberSetting("Glow Intensity", 0, 2, 1, 0.1);
+    public static final NumberSetting glowThickness = new NumberSetting("Glow Thickness", 2, 20, 10, 1);
+    public static final NumberSetting bloomRadius = new NumberSetting("Bloom Radius", 5, 30, 15, 1);
 
     public ClientSettingsModule() {
         super("ClientSettings", "Customize GUI appearance", 0, Category.CLIENT);
         this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur, moduleDescriptions,
-                toggleWidth, toggleHeight, sliderHeight, sliderHandleSize);
+                toggleWidth, toggleHeight, sliderHeight, sliderHandleSize,
+                guiGlow, glowColor, glowIntensity, glowThickness, bloomRadius);
         this.setEnabled(true);
     }
 
@@ -69,5 +76,25 @@ public class ClientSettingsModule extends Module {
     
     public static float getSliderHandleSize() {
         return sliderHandleSize.getValueFloat();
+    }
+    
+    public static boolean isGuiGlowEnabled() {
+        return guiGlow.getValue();
+    }
+    
+    public static Color getGlowColor() {
+        return glowColor.getValue();
+    }
+    
+    public static float getGlowIntensity() {
+        return glowIntensity.getValueFloat();
+    }
+    
+    public static float getGlowThickness() {
+        return glowThickness.getValueFloat();
+    }
+    
+    public static float getBloomRadius() {
+        return bloomRadius.getValueFloat();
     }
 }

@@ -3,6 +3,8 @@ package cc.silk.gui.newgui.components;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.utils.render.nanovg.NanoVGRenderer;
+import cc.silk.utils.render.GuiGlowHelper;
+import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -341,5 +343,35 @@ public class CategoryPanel {
 
     public int getTooltipY(int mouseY) {
         return mouseY + 10;
+    }
+    
+    public void renderGlow(DrawContext context, float alpha, float scale, int centerX, int centerY) {
+        int visibleCount = 0;
+        for (ModuleButton button : moduleButtons) {
+            if (button.getSearchAlpha() > 0.01f) {
+                visibleCount++;
+            }
+        }
+        
+        boolean scrollable = cc.silk.module.modules.client.ClientSettingsModule.isScrollable();
+        float expandProgress = 1f - collapseProgress;
+        
+        int displayedModules = scrollable ? Math.min(visibleCount, MAX_VISIBLE_MODULES) : visibleCount;
+        int moduleAreaHeight = (int) ((displayedModules * MODULE_HEIGHT) * expandProgress);
+        
+        int totalHeight = HEADER_HEIGHT + moduleAreaHeight;
+        
+        float transformedX = (x - centerX) * scale + centerX;
+        float transformedY = (y - centerY) * scale + centerY;
+        float transformedWidth = width * scale;
+        float transformedHeight = totalHeight * scale;
+        
+        GuiGlowHelper.drawGuiGlow(context, transformedX, transformedY, transformedWidth, transformedHeight, CORNER_RADIUS * scale);
+    }
+    
+    public void renderSettingsPanelGlow(DrawContext context, float alpha) {
+        if (settingsPanel != null && settingsPanel.isAnimating()) {
+            settingsPanel.renderGlow(context, alpha);
+        }
     }
 }
