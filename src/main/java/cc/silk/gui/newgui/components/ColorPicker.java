@@ -11,9 +11,11 @@ public class ColorPicker {
     private static final Color BORDER_COLOR = new Color(40, 40, 46, 255);
     private static final float CORNER_RADIUS = 4f;
     private static final int PADDING = 12;
+    private static final int BUTTON_HEIGHT = 22;
+    private static final int BUTTON_SPACING = 6;
     private final ColorSetting setting;
     private final int width = 180;
-    private final int height = 250;
+    private final int height = 290;
     private float x, y;
     private boolean visible = false;
     private float animationProgress = 0f;
@@ -26,6 +28,8 @@ public class ColorPicker {
     private boolean draggingSV = false;
     private boolean draggingHue = false;
     private boolean draggingAlpha = false;
+    
+    private static Color clipboard = null;
 
     public ColorPicker(ColorSetting setting, float x, float y) {
         this.setting = setting;
@@ -98,6 +102,9 @@ public class ColorPicker {
         currentY += 20;
 
         renderPreview(currentY, renderAlpha);
+        currentY += 38;
+        
+        renderButtons(currentY, mouseX, mouseY, renderAlpha);
     }
 
     private void renderSVPicker(float startY, float alpha) {
@@ -204,6 +211,41 @@ public class ColorPicker {
         Color textColor = new Color(200, 200, 200, panelAlpha);
         NanoVGRenderer.drawText(hexText, previewX + previewSize + 8, previewY + 10, 9f, textColor);
     }
+    
+    private void renderButtons(float startY, int mouseX, int mouseY, float alpha) {
+        int buttonWidth = (width - PADDING * 2 - BUTTON_SPACING) / 2;
+        float copyButtonX = x + PADDING;
+        float pasteButtonX = copyButtonX + buttonWidth + BUTTON_SPACING;
+        float buttonY = startY;
+        
+        int panelAlpha = (int) (255 * alpha);
+        
+        boolean copyHovered = mouseX >= copyButtonX && mouseX <= copyButtonX + buttonWidth &&
+                              mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT;
+        boolean pasteHovered = mouseX >= pasteButtonX && mouseX <= pasteButtonX + buttonWidth &&
+                               mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT;
+        
+        Color copyBg = copyHovered ? new Color(60, 60, 70, panelAlpha) : new Color(35, 35, 40, panelAlpha);
+        Color pasteBg = pasteHovered ? new Color(60, 60, 70, panelAlpha) : new Color(35, 35, 40, panelAlpha);
+        Color borderColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), 
+                                      (int) (100 * alpha));
+        Color textColor = new Color(200, 200, 200, panelAlpha);
+        
+        NanoVGRenderer.drawRoundedRect(copyButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, copyBg);
+        NanoVGRenderer.drawRoundedRectOutline(copyButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, 1f, borderColor);
+        
+        String copyText = "Copy";
+        float copyTextWidth = NanoVGRenderer.getTextWidth(copyText, 10f);
+        NanoVGRenderer.drawText(copyText, copyButtonX + (buttonWidth - copyTextWidth) / 2f, buttonY + 6, 10f, textColor);
+        
+        Color pasteTextColor = clipboard == null ? new Color(100, 100, 110, panelAlpha) : textColor;
+        NanoVGRenderer.drawRoundedRect(pasteButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, pasteBg);
+        NanoVGRenderer.drawRoundedRectOutline(pasteButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, 1f, borderColor);
+        
+        String pasteText = "Paste";
+        float pasteTextWidth = NanoVGRenderer.getTextWidth(pasteText, 10f);
+        NanoVGRenderer.drawText(pasteText, pasteButtonX + (buttonWidth - pasteTextWidth) / 2f, buttonY + 6, 10f, pasteTextColor);
+    }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (animationProgress <= 0f || button != 0)
@@ -215,6 +257,24 @@ public class ColorPicker {
         int svSize = width - PADDING * 2;
         float svX = x + PADDING;
         float svY = y + PADDING;
+        
+        int buttonWidth = (width - PADDING * 2 - BUTTON_SPACING) / 2;
+        float copyButtonX = x + PADDING;
+        float pasteButtonX = copyButtonX + buttonWidth + BUTTON_SPACING;
+        float buttonY = y + height - PADDING - BUTTON_HEIGHT;
+        
+        if (mouseX >= copyButtonX && mouseX <= copyButtonX + buttonWidth &&
+            mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT) {
+            clipboard = hsvToColor();
+            return true;
+        }
+        
+        if (mouseX >= pasteButtonX && mouseX <= pasteButtonX + buttonWidth &&
+            mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT && clipboard != null) {
+            colorToHSV(clipboard);
+            setting.setValue(clipboard.getRed(), clipboard.getGreen(), clipboard.getBlue(), clipboard.getAlpha());
+            return true;
+        }
 
         if (mouseX >= svX && mouseX <= svX + svSize && mouseY >= svY && mouseY <= svY + svSize) {
             draggingSV = true;
