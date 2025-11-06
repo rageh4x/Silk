@@ -29,13 +29,12 @@ public abstract class EntityMixin {
             Entity self = (Entity) (Object) this;
             if (outlineESP.shouldEntityGlow(self)) {
                 cir.setReturnValue(true);
-                return;
             }
         }
        
     }
 
-    @Inject(method = "getTeamColorValue", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getTeamColorValue", at = @At("HEAD"))
     private void onGetTeamColorValue(CallbackInfoReturnable<Integer> cir) {
       
     }

@@ -24,13 +24,11 @@ public class Teams extends Module {
         }
 
         try {
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client.player == null || client.player.getScoreboardTeam() == null) {
+            if (mc.player == null || mc.player.getScoreboardTeam() == null) {
                 return false;
             }
 
-
-            return client.player.isTeammate(entity);
+            return mc.player.isTeammate(entity);
         } catch (IllegalStateException e) {
             return false;
         } catch (Exception e) {

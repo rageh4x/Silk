@@ -193,7 +193,6 @@ public final class TriggerBot extends Module {
                 && !mc.player.isTouchingWater()
                 && !mc.player.isInLava()
                 && !mc.player.hasStatusEffect(StatusEffects.BLINDNESS)
-                && !mc.player.isSprinting()
                 && mc.player.fallDistance > 0.065f
                 && mc.player.getVelocity().y < -0.08f
                 && mc.player.getVehicle() == null;
