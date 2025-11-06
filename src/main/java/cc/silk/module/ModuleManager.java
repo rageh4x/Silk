@@ -3,6 +3,7 @@ package cc.silk.module;
 import cc.silk.module.modules.client.Client;
 import cc.silk.module.modules.client.ClientSettingsModule;
 import cc.silk.module.modules.client.Debugger;
+import cc.silk.module.modules.client.KeybindsModule;
 import cc.silk.module.modules.client.NewClickGUIModule;
 import cc.silk.module.modules.client.Secret;
 import cc.silk.module.modules.combat.*;
@@ -84,7 +85,7 @@ public final class ModuleManager {
 
         // Client
         add(new NewClickGUIModule(), new ClientSettingsModule(), new Client(), new Debugger(),
-                new Secret());
+                new Secret(), new KeybindsModule());
     }
 
     private void add(Module... mods) {
