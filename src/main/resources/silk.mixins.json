@@ -19,7 +19,6 @@
     "MouseMixin",
     "PlayerEntityMixin",
     "ScreenMixin",
-    "WindowMixin",
     "WorldRendererMixin"
   ],
   "injectors": {
