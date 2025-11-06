@@ -34,6 +34,8 @@ public class NanoVGFrameManager {
         }
 
         try {
+            RenderSystem.assertOnRenderThreadOrInit();
+
             mc.getFramebuffer().beginWrite(true);
 
             GL11.glEnable(GL11.GL_BLEND);
@@ -81,6 +83,14 @@ public class NanoVGFrameManager {
         }
 
         GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glDisable(GL11.GL_STENCIL_TEST);
+
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        org.lwjgl.opengl.GL30.glBindVertexArray(0);
+        org.lwjgl.opengl.GL15.glBindBuffer(org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER, 0);
+        org.lwjgl.opengl.GL15.glBindBuffer(org.lwjgl.opengl.GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     public static boolean isInFrame() {
@@ -91,4 +101,3 @@ public class NanoVGFrameManager {
         inFrame = false;
     }
 }
-
