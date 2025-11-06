@@ -347,9 +347,10 @@ public class NewClickGUI extends Screen {
     public boolean shouldPause() {
         return false;
     }
-
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderBackground(context, mouseX, mouseY, delta);
+        if (cc.silk.module.modules.client.ClientSettingsModule.isGuiBlurEnabled()) {
+            super.renderBackground(context, mouseX, mouseY, delta);
+        }
     }
 }
