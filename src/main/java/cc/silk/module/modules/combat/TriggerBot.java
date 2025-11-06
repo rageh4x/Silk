@@ -1,9 +1,6 @@
 package cc.silk.module.modules.combat;
 
-import cc.silk.event.impl.player.AttackEvent;
 import cc.silk.event.impl.player.TickEvent;
-import cc.silk.event.impl.render.Render2DEvent;
-import cc.silk.event.impl.render.Render3DEvent;
 import cc.silk.event.impl.world.WorldChangeEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -13,7 +10,6 @@ import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.ModeSetting;
 import cc.silk.module.setting.NumberSetting;
 import cc.silk.utils.friend.FriendManager;
-import cc.silk.utils.keybinding.simulation.ClickSimulator;
 import cc.silk.utils.math.MathUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.CombatUtil;
@@ -190,11 +186,9 @@ public final class TriggerBot extends Module {
         assert mc.player != null;
         return !mc.player.isOnGround()
                 && !mc.player.isClimbing()
-                && !mc.player.isTouchingWater()
                 && !mc.player.isInLava()
                 && !mc.player.hasStatusEffect(StatusEffects.BLINDNESS)
                 && mc.player.fallDistance > 0.065f
-                && mc.player.getVelocity().y < -0.08f
                 && mc.player.getVehicle() == null;
     }
 
@@ -204,13 +198,27 @@ public final class TriggerBot extends Module {
 
         if (mode.equals("None")) return false;
         assert mc.player != null;
-        if (mc.player.hasStatusEffect(StatusEffects.LEVITATION)) return false;
+        if (mc.player.hasStatusEffect(StatusEffects.LEVITATION)
+                || mc.player.hasStatusEffect(StatusEffects.SLOW_FALLING)
+                || mc.player.hasStatusEffect(StatusEffects.BLINDNESS)) {
+            return false;
+        }
         if (!(mc.crosshairTarget instanceof EntityHitResult entityHitResult)) return false;
         if (entityHitResult.getEntity() != target) return false;
         if (!hasTarget(entityHitResult.getEntity())) return false;
+        if (mc.player.isTouchingWater() || mc.player.isInLava() || mc.player.isSubmergedInWater()) return false;
 
         assert mc.world != null;
-        if (mc.world.getBlockState(mc.player.getBlockPos()).isOf(Blocks.COBWEB)) return false;
+        var state = mc.world.getBlockState(mc.player.getBlockPos());
+        if (state.isOf(Blocks.COBWEB)
+                || state.isOf(Blocks.SWEET_BERRY_BUSH)
+                || state.isOf(Blocks.VINE)
+                || state.isOf(Blocks.SCAFFOLDING)
+                || state.isOf(Blocks.SLIME_BLOCK)
+                || state.isOf(Blocks.HONEY_BLOCK)
+                || state.isOf(Blocks.POWDER_SNOW)) {
+            return false;
+        }
 
         boolean cooldownCharged = mc.player.getAttackCooldownProgress(0.0f) >= swordThresholdMin.getValue();
 
