@@ -232,24 +232,35 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
-        if (mouseX >= searchBarX && mouseX <= searchBarX + SEARCH_BAR_WIDTH &&
-                mouseY >= searchBarY && mouseY <= searchBarY + SEARCH_BAR_HEIGHT) {
-            searchFocused = true;
-            return true;
-        } else {
-            searchFocused = false;
+        for (CategoryPanel panel : panels) {
+            if (panel.hasActiveSettingsPanel()) {
+                if (panel.getSettingsPanel().mouseClicked(mouseX, mouseY, button)) {
+                    searchFocused = false;
+                    return true;
+                }
+            }
         }
 
         if (configPanel != null && configPanel.mouseClicked(mouseX, mouseY, button)) {
+            searchFocused = false;
             return true;
         }
 
         for (CategoryPanel panel : panels) {
             if (panel.mouseClicked(mouseX, mouseY, button)) {
+                searchFocused = false;
                 return true;
             }
         }
+
+        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
+        if (mouseX >= searchBarX && mouseX <= searchBarX + SEARCH_BAR_WIDTH &&
+                mouseY >= searchBarY && mouseY <= searchBarY + SEARCH_BAR_HEIGHT) {
+            searchFocused = true;
+            return true;
+        }
+
+        searchFocused = false;
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
