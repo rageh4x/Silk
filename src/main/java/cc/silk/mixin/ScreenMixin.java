@@ -1,6 +1,7 @@
 package cc.silk.mixin;
 
 import cc.silk.gui.ClickGui;
+import cc.silk.gui.newgui.NewClickGUI;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -22,22 +23,31 @@ public abstract class ScreenMixin {
     @Inject(method = "renderBackground", at = @At("HEAD"), cancellable = true)
     private void renderBackgroundInject(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (client == null) return;
-        if (client.currentScreen instanceof ClickGui) {
+        Screen currentScreen = client.currentScreen;
+        if (currentScreen instanceof ClickGui) {
+            ci.cancel();
+            return;
+        }
+        if (currentScreen instanceof NewClickGUI && !cc.silk.module.modules.client.ClientSettingsModule.isGuiBlurEnabled()) {
             ci.cancel();
         }
     }
 
-    @Inject(method = "render", at = @At("HEAD"))
-    private void onRenderHead(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthFunc(515);
-        RenderSystem.enableCull();
-        RenderSystem.disableScissor();
-        RenderSystem.resetTextureMatrix();
-        RenderSystem.colorMask(true, true, true, true);
-        RenderSystem.depthMask(true);
+    @Inject(method = "render", at = @At("TAIL"))
+    private void onRenderTail(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        if (client == null) return;
+        Screen currentScreen = client.currentScreen;
+        if (currentScreen instanceof NewClickGUI || currentScreen instanceof ClickGui) {
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthFunc(515);
+            RenderSystem.enableCull();
+            RenderSystem.disableScissor();
+            RenderSystem.resetTextureMatrix();
+            RenderSystem.colorMask(true, true, true, true);
+            RenderSystem.depthMask(true);
+        }
     }
 }
