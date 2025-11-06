@@ -3,11 +3,20 @@ package cc.silk.utils.render.nanovg;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class NanoVGFrameManager {
     private static boolean inFrame = false;
+    private static int savedVAO = 0;
+    private static int savedArrayBuffer = 0;
+    private static int savedElementBuffer = 0;
+    private static int savedProgram = 0;
+    private static int savedTexture = 0;
 
     public static void beginFrame() {
         RenderSystem.assertOnRenderThread();
@@ -37,6 +46,12 @@ public class NanoVGFrameManager {
             RenderSystem.assertOnRenderThreadOrInit();
 
             mc.getFramebuffer().beginWrite(true);
+
+            savedVAO = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING);
+            savedArrayBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
+            savedElementBuffer = GL11.glGetInteger(GL15.GL_ELEMENT_ARRAY_BUFFER_BINDING);
+            savedProgram = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
+            savedTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -88,9 +103,13 @@ public class NanoVGFrameManager {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
-        org.lwjgl.opengl.GL30.glBindVertexArray(0);
-        org.lwjgl.opengl.GL15.glBindBuffer(org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER, 0);
-        org.lwjgl.opengl.GL15.glBindBuffer(org.lwjgl.opengl.GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL30.glBindVertexArray(savedVAO);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, savedArrayBuffer);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, savedElementBuffer);
+        GL20.glUseProgram(savedProgram);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, savedTexture);
+
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
     }
 
     public static boolean isInFrame() {
