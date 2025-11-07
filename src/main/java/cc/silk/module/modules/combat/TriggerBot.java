@@ -192,7 +192,6 @@ public final class TriggerBot extends Module {
                 && mc.player.getVehicle() == null;
     }
 
-
     private boolean setPreferCrits() {
         String mode = critMode.getMode();
 
