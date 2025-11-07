@@ -358,9 +358,14 @@ public class SettingsPanel {
         float fontSize = 9f;
         float keyWidth = NanoVGRenderer.getTextWidth(keyText, fontSize);
 
+        float modeButtonWidth = 30;
+        float modeButtonHeight = 14;
+        float modeButtonX = currentX + width - PADDING - modeButtonWidth;
+        float modeButtonY = settingY + 1;
+
         float buttonWidth = Math.max(keyWidth + 12, 40);
         float buttonHeight = 14;
-        float buttonX = currentX + width - PADDING - buttonWidth;
+        float buttonX = modeButtonX - buttonWidth - 3;
         float buttonY = settingY + 1;
 
         Color accentColor = getAccentColor();
@@ -379,6 +384,22 @@ public class SettingsPanel {
 
         float textX = buttonX + (buttonWidth - keyWidth) / 2f;
         NanoVGRenderer.drawText(keyText, textX, buttonY + 2, fontSize, keyColor);
+
+        String modeText = setting.isHoldMode() ? "Hold" : "Toggle";
+        Color modeBg = setting.isHoldMode()
+                ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (80 * alpha))
+                : new Color(30, 30, 35, bgAlpha);
+        Color modeBorder = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (100 * alpha));
+        Color modeTextColor = setting.isHoldMode()
+                ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
+                : new Color(200, 200, 200, bgAlpha);
+
+        NanoVGRenderer.drawRoundedRect(modeButtonX, modeButtonY, modeButtonWidth, modeButtonHeight, 3f, modeBg);
+        NanoVGRenderer.drawRoundedRectOutline(modeButtonX, modeButtonY, modeButtonWidth, modeButtonHeight, 3f, 1f, modeBorder);
+
+        float modeTextWidth = NanoVGRenderer.getTextWidth(modeText, fontSize);
+        float modeTextX = modeButtonX + (modeButtonWidth - modeTextWidth) / 2f;
+        NanoVGRenderer.drawText(modeText, modeTextX, modeButtonY + 2, fontSize, modeTextColor);
 
         NanoVGRenderer.drawText(setting.getName(), currentX + PADDING, settingY + 3, fontSize, textColor);
     }
@@ -456,8 +477,19 @@ public class SettingsPanel {
                     draggingSlider = setting;
                     updateSliderValue((NumberSetting) setting, mouseX);
                     return true;
-                } else if (setting instanceof KeybindSetting) {
-                    listeningKeybind = (listeningKeybind == setting) ? null : (KeybindSetting) setting;
+                } else if (setting instanceof KeybindSetting keybindSetting) {
+                    float modeButtonWidth = 30;
+                    float modeButtonX = currentX + width - PADDING - modeButtonWidth;
+                    float modeButtonY = settingY + 1;
+                    float modeButtonHeight = 14;
+
+                    if (mouseX >= modeButtonX && mouseX <= modeButtonX + modeButtonWidth &&
+                            mouseY >= modeButtonY && mouseY <= modeButtonY + modeButtonHeight) {
+                        keybindSetting.toggleHoldMode();
+                        return true;
+                    }
+
+                    listeningKeybind = (listeningKeybind == setting) ? null : keybindSetting;
                     return true;
                 } else if (setting instanceof ModeSetting modeSetting) {
                     float dropdownWidth = 60;

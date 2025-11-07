@@ -24,9 +24,17 @@ public class KeyboardMixin {
         if (window == this.client.getWindow().getHandle()) {
             if (this.client.currentScreen == null) {
                 for (Module module : SilkClient.INSTANCE.moduleManager.getModules()) {
-                    if (key == module.getKey() && action == GLFW.GLFW_PRESS) {
-                        if (KeyUtils.isKeyPressed(key)) {
-                            module.toggle();
+                    if (key == module.getKey()) {
+                        if (module.getKeybindSetting().isHoldMode()) {
+                            if (action == GLFW.GLFW_PRESS && !module.isEnabled()) {
+                                module.setEnabled(true);
+                            } else if (action == GLFW.GLFW_RELEASE && module.isEnabled()) {
+                                module.setEnabled(false);
+                            }
+                        } else {
+                            if (action == GLFW.GLFW_PRESS && KeyUtils.isKeyPressed(key)) {
+                                module.toggle();
+                            }
                         }
                     }
                 }
