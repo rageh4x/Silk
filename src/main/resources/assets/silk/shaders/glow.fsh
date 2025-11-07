@@ -35,17 +35,22 @@ void main() {
     
     float distance = roundedBoxSDF(pos, halfSize, u_radius);
     
+    if (distance < 0.0) {
+        fragColor = vec4(0.0);
+        return;
+    }
+    
     float glow = 0.0;
     
-    glow += calculateGlow(abs(distance), u_glowThickness, u_glowIntensity) * 0.6;
-    
+    glow += calculateGlow(distance, u_glowThickness, u_glowIntensity) * 0.6;
+
     for (float i = 1.0; i <= 5.0; i++) {
-        float layerDist = abs(distance) - (i * u_bloomRadius * 0.2);
+        float layerDist = distance - (i * u_bloomRadius * 0.2);
         float layerIntensity = u_glowIntensity * (1.0 - i * 0.15);
         glow += gaussian(layerDist, u_bloomRadius * (1.0 + i * 0.5)) * layerIntensity * 0.3;
     }
     
-    float radialBloom = exp(-abs(distance) * 0.05) * u_glowIntensity * 0.4;
+    float radialBloom = exp(-distance * 0.05) * u_glowIntensity * 0.4;
     glow += radialBloom;
     
     vec2 cornerDist = abs(pos) - (halfSize - u_radius);
@@ -54,7 +59,7 @@ void main() {
         glow += cornerGlow;
     }
     
-    if (abs(distance) < u_glowThickness * 0.3) {
+    if (distance < u_glowThickness * 0.3) {
         glow = max(glow, u_glowIntensity * 1.2);
     }
     
