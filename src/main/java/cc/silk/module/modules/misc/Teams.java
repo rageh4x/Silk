@@ -24,6 +24,7 @@ public class Teams extends Module {
         }
 
         try {
+            MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.player == null || mc.player.getScoreboardTeam() == null) {
                 return false;
             }
