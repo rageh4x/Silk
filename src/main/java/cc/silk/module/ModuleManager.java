@@ -81,7 +81,8 @@ public final class ModuleManager {
         // Misc
         add(
                 new CartKey(), new HoverTotem(), new MiddleClickFriend(),
-                new PearlKey(), new PearlCatch(), new WindChargeKey(), new Teams(), new FakePlayer());
+                new PearlKey(), new PearlCatch(), new WindChargeKey(), new Teams(), new FakePlayer(),
+                new Friends());
 
         // Client
         add(new NewClickGUIModule(), new ClientSettingsModule(), new Client(), new Debugger(),
