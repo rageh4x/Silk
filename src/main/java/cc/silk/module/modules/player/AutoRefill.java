@@ -89,6 +89,7 @@ public final class AutoRefill extends Module {
         
         wasInventoryOpen = mc.currentScreen instanceof InventoryScreen;
         if (!wasInventoryOpen) {
+            assert mc.player != null;
             mc.setScreen(new InventoryScreen(mc.player));
         }
         active = true;
@@ -149,7 +150,7 @@ public final class AutoRefill extends Module {
         if (!isPotionItem(stack.getItem())) return false;
         
         PotionContentsComponent contents = stack.get(DataComponentTypes.POTION_CONTENTS);
-        if (contents == null || !contents.potion().isPresent()) return false;
+        if (contents == null || contents.potion().isEmpty()) return false;
         
         return contents.potion().get().value().getEffects().stream().anyMatch(effect -> 
             (health.getValue() && effect.getEffectType().equals(StatusEffects.INSTANT_HEALTH)) ||
