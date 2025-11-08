@@ -25,7 +25,7 @@ public final class Velocity extends Module {
         if (isNull()) return;
 
         if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
-            if (chanceCheck()) {
+            if (chanceCheck() && mc.player.isOnGround()) {
                 if (ignoreWhenBackwards.getValue() && mc.options.backKey.isPressed()) return;
                 if (ignoreOnFire.getValue() && mc.player.isOnFire()) return;
                 if (mc.currentScreen != null) return;
@@ -35,6 +35,6 @@ public final class Velocity extends Module {
     }
 
     private boolean chanceCheck() {
-        return (Math.random() * 100 <= chance.getValueFloat());
+        return (Math.random() * 100 >= chance.getValueFloat());
     }
 }
