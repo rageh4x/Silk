@@ -14,6 +14,7 @@ import cc.silk.utils.math.MathUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.CombatUtil;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.Tameable;
@@ -27,6 +28,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.EntityHitResult;
 import org.lwjgl.glfw.GLFW;
+
+// Koi touch this and im going to fucking rape you
 
 public final class TriggerBot extends Module {
     public static final NumberSetting swordThresholdMax = new NumberSetting("Sword Threshold Max", 0.1, 1, 0.95, 0.01);
@@ -183,7 +186,8 @@ public final class TriggerBot extends Module {
     }
 
     private boolean canCrit() {
-        assert mc.player != null;
+        if (mc.player == null) return false;
+
         return !mc.player.isOnGround()
                 && !mc.player.isClimbing()
                 && !mc.player.isInLava()
@@ -193,22 +197,29 @@ public final class TriggerBot extends Module {
     }
 
     private boolean setPreferCrits() {
-        String mode = critMode.getMode();
+        if (mc.player == null || mc.world == null) return false;
 
+        String mode = critMode.getMode();
         if (mode.equals("None")) return false;
-        assert mc.player != null;
+
         if (mc.player.hasStatusEffect(StatusEffects.LEVITATION)
                 || mc.player.hasStatusEffect(StatusEffects.SLOW_FALLING)
                 || mc.player.hasStatusEffect(StatusEffects.BLINDNESS)) {
             return false;
         }
-        if (!(mc.crosshairTarget instanceof EntityHitResult entityHitResult)) return false;
-        if (entityHitResult.getEntity() != target) return false;
-        if (!hasTarget(entityHitResult.getEntity())) return false;
-        if (mc.player.isTouchingWater() || mc.player.isInLava() || mc.player.isSubmergedInWater()) return false;
 
-        assert mc.world != null;
-        var state = mc.world.getBlockState(mc.player.getBlockPos());
+        if (!(mc.crosshairTarget instanceof EntityHitResult hitResult)) return false;
+        Entity targetEntity = hitResult.getEntity();
+        if (targetEntity != target || !hasTarget(targetEntity)) return false;
+
+        if (mc.player.isTouchingWater()
+                || mc.player.isInLava()
+                || mc.player.isSubmergedInWater()
+                || mc.player.isClimbing()) {
+            return false;
+        }
+
+        BlockState state = mc.world.getBlockState(mc.player.getBlockPos());
         if (state.isOf(Blocks.COBWEB)
                 || state.isOf(Blocks.SWEET_BERRY_BUSH)
                 || state.isOf(Blocks.VINE)
@@ -219,10 +230,10 @@ public final class TriggerBot extends Module {
             return false;
         }
 
-        boolean cooldownCharged = mc.player.getAttackCooldownProgress(0.0f) >= swordThresholdMin.getValue();
-
-        return mode.equals("Strict") && canCrit() && cooldownCharged;
+        boolean cooldownReady = mc.player.getAttackCooldownProgress(0.0f) >= swordThresholdMin.getValue();
+        return mode.equals("Strict") && cooldownReady && canCrit();
     }
+
 
 
     private boolean hasElapsedDelay() {
