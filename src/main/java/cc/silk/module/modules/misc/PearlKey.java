@@ -1,6 +1,7 @@
 package cc.silk.module.modules.misc;
 
 import cc.silk.event.impl.player.TickEvent;
+import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.KeybindSetting;
@@ -60,7 +61,7 @@ public final class PearlKey extends Module {
         mc.player.getInventory().selectedSlot = pearlSlot;
 
         if (mc.interactionManager != null) {
-            mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+            ((MinecraftClientAccessor)mc).invokeDoItemUse();
         }
 
         needsSwitchBack = true;
