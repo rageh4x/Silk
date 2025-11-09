@@ -17,7 +17,7 @@ import net.minecraft.item.Items;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 
-// TO:DO possibly make a better if in cobweb check but rn AABB is the best i can think of
+ //  possibly make a better if in cobweb check but rn AABB is the best i can think of
 
 
 public final class AutoDrain extends Module {

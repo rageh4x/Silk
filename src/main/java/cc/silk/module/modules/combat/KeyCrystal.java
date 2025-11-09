@@ -1,6 +1,5 @@
 package cc.silk.module.modules.combat;
 
-import cc.silk.event.impl.player.ItemUseEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -22,7 +21,6 @@ import net.minecraft.item.Items;
 import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
@@ -63,15 +61,15 @@ public final class KeyCrystal extends Module {
                 crystalKeybind,
                 placeChance, breakChance, stopOnKill,
                 minBreakDelay, maxBreakDelay, minPlaceDelay, maxPlaceDelay,
-                antiSuicide, antiWeakness
-        );
+                antiSuicide, antiWeakness);
 
         this.getSettings().removeIf(setting -> setting instanceof KeybindSetting && !setting.equals(crystalKeybind));
     }
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
-        if (isNull() || mc.currentScreen != null) return;
+        if (isNull() || mc.currentScreen != null)
+            return;
 
         if (minBreakDelay.getValueFloat() >= maxBreakDelay.getValueFloat())
             minBreakDelay.setValue(maxBreakDelay.getValueFloat() - 1);
@@ -80,16 +78,20 @@ public final class KeyCrystal extends Module {
 
         boolean currentKeyState = KeyUtils.isKeyPressed(crystalKeybind.getKeyCode());
 
-        if (currentKeyState && !keyPressed) startCrystalPvP();
-        else if (!currentKeyState && keyPressed) stopCrystalPvP();
+        if (currentKeyState && !keyPressed)
+            startCrystalPvP();
+        else if (!currentKeyState && keyPressed)
+            stopCrystalPvP();
 
         keyPressed = currentKeyState;
 
-        if (isActive) processCrystalPvP();
+        if (isActive)
+            processCrystalPvP();
     }
 
     private void startCrystalPvP() {
-        if (isActive) return;
+        if (isActive)
+            return;
         isActive = true;
         originalSlot = mc.player.getInventory().selectedSlot;
         hasPlacedObsidian = false;
@@ -97,8 +99,10 @@ public final class KeyCrystal extends Module {
     }
 
     private void stopCrystalPvP() {
-        if (!isActive) return;
-        if (originalSlot != -1) mc.player.getInventory().selectedSlot = originalSlot;
+        if (!isActive)
+            return;
+        if (originalSlot != -1)
+            mc.player.getInventory().selectedSlot = originalSlot;
         isActive = false;
         originalSlot = -1;
         hasPlacedObsidian = false;
@@ -128,8 +132,10 @@ public final class KeyCrystal extends Module {
     }
 
     private void processCrystalPvP() {
-        if (antiSuicide.getValue() && !mc.player.isOnGround()) return;
-        if (stopOnKill.getValue() && isDeadPlayerNearby()) return;
+        if (antiSuicide.getValue() && !mc.player.isOnGround())
+            return;
+        if (stopOnKill.getValue() && isDeadPlayerNearby())
+            return;
 
         int randomInt = random.nextInt(100) + 1;
 
@@ -143,7 +149,6 @@ public final class KeyCrystal extends Module {
 
                     ((MinecraftClientAccessor) mc).invokeDoAttack();
 
-
                     breakTimer.reset();
                     currentBreakDelay = random.nextLong(minBreakDelay.getValueInt(), maxBreakDelay.getValueInt());
                 }
@@ -151,22 +156,24 @@ public final class KeyCrystal extends Module {
             }
         }
 
-
         if (mc.crosshairTarget instanceof BlockHitResult blockHit && placeTimer.hasElapsedTime(currentPlaceDelay)) {
             BlockPos targetBlock = blockHit.getBlockPos();
             BlockPos placementPos = targetBlock.offset(blockHit.getSide());
 
-            if (isObsidianOrBedrock(targetBlock) && isValidCrystalPosition(placementPos)
-                    && randomInt <= placeChance.getValueInt()) {
-                if (hasItemInHotbar(Items.END_CRYSTAL)) {
-                    InventoryUtil.swapToSlot(Items.END_CRYSTAL);
-                    ((MinecraftClientAccessor) mc).invokeDoItemUse();
-                    placeTimer.reset();
-                    currentPlaceDelay = random.nextLong(minPlaceDelay.getValueInt(), maxPlaceDelay.getValueInt());
+            if (!mc.world.getBlockState(targetBlock).isAir() &&
+                    mc.world.getBlockState(targetBlock).isSolidBlock(mc.world, targetBlock)) {
+
+                if (isObsidianOrBedrock(targetBlock) && isValidCrystalPosition(placementPos)
+                        && randomInt <= placeChance.getValueInt()) {
+                    if (hasItemInHotbar(Items.END_CRYSTAL)) {
+                        InventoryUtil.swapToSlot(Items.END_CRYSTAL);
+                        ((MinecraftClientAccessor) mc).invokeDoItemUse();
+                        placeTimer.reset();
+                        currentPlaceDelay = random.nextLong(minPlaceDelay.getValueInt(), maxPlaceDelay.getValueInt());
+                    }
                 }
-            } else if (isValidPosition(placementPos) && !hasPlacedObsidian) {
-                BlockPos below = placementPos.down();
-                if (!mc.world.getBlockState(below).isAir()) {
+                else if (mc.world.getBlockState(placementPos).isAir() &&
+                        isValidObsidianPosition(placementPos) && !hasPlacedObsidian) {
                     if (hasItemInHotbar(Items.OBSIDIAN)) {
                         InventoryUtil.swapToSlot(Items.OBSIDIAN);
                         ((MinecraftClientAccessor) mc).invokeDoItemUse();
@@ -182,31 +189,44 @@ public final class KeyCrystal extends Module {
     private boolean hasItemInHotbar(Item item) {
         for (int i = 0; i < 9; i++) {
             var stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty() && stack.getItem() == item) return true;
+            if (!stack.isEmpty() && stack.getItem() == item)
+                return true;
         }
         return false;
     }
 
-    private boolean isValidPosition(BlockPos pos) {
-        if (mc.world == null) return false;
-        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5) return false;
-        if (!mc.world.getBlockState(pos).isAir()) return false;
+    private boolean isValidObsidianPosition(BlockPos pos) {
+        if (mc.world == null)
+            return false;
+        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5)
+            return false;
+        if (!mc.world.getBlockState(pos).isAir())
+            return false;
 
         BlockPos playerPos = mc.player.getBlockPos();
-        return !pos.equals(playerPos) && !pos.equals(playerPos.up());
+        if (pos.equals(playerPos) || pos.equals(playerPos.up()))
+            return false;
+
+        BlockPos below = pos.down();
+        return mc.world.getBlockState(below).isSolidBlock(mc.world, below);
     }
 
     private boolean isObsidianOrBedrock(BlockPos pos) {
-        if (mc.world == null) return false;
+        if (mc.world == null)
+            return false;
         var block = mc.world.getBlockState(pos).getBlock();
         return block == Blocks.OBSIDIAN || block == Blocks.BEDROCK;
     }
 
     private boolean isValidCrystalPosition(BlockPos pos) {
-        if (mc.world == null) return false;
-        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5) return false;
-        if (!mc.world.getBlockState(pos).isAir()) return false;
-        if (!mc.world.getBlockState(pos.up()).isAir()) return false;
+        if (mc.world == null)
+            return false;
+        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5)
+            return false;
+        if (!mc.world.getBlockState(pos).isAir())
+            return false;
+        if (!mc.world.getBlockState(pos.up()).isAir())
+            return false;
 
         BlockPos playerPos = mc.player.getBlockPos();
         return !pos.equals(playerPos) && !pos.equals(playerPos.up()) &&
@@ -214,17 +234,18 @@ public final class KeyCrystal extends Module {
     }
 
     private boolean isDeadPlayerNearby() {
-        if (mc.world == null) return false;
+        if (mc.world == null)
+            return false;
         List<? extends Entity> players = mc.world.getPlayers();
         for (Entity e : players) {
-            if (e == mc.player) continue;
+            if (e == mc.player)
+                continue;
             if (e.isRemoved() || ((LivingEntity) e).getHealth() <= 0.0f)
                 if (e.squaredDistanceTo(mc.player) < 36)
                     return true;
         }
         return false;
     }
-
 
     @Override
     public void onDisable() {
