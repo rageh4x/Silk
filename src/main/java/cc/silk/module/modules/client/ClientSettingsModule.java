@@ -29,12 +29,15 @@ public class ClientSettingsModule extends Module {
     public static final NumberSetting glowIntensity = new NumberSetting("Glow Intensity", 0, 2, 1, 0.1);
     public static final NumberSetting glowThickness = new NumberSetting("Glow Thickness", 2, 20, 10, 1);
     public static final NumberSetting bloomRadius = new NumberSetting("Bloom Radius", 5, 30, 15, 1);
+    
+    public static final BooleanSetting autoFocusSearch = new BooleanSetting("Auto Focus Search", true);
 
     public ClientSettingsModule() {
         super("ClientSettings", "Customize GUI appearance", 0, Category.CLIENT);
         this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur, moduleDescriptions,
                 toggleWidth, toggleHeight, sliderHeight, sliderHandleSize,
-                guiGlow, glowColor, glowIntensity, glowThickness, bloomRadius);
+                guiGlow, glowColor, glowIntensity, glowThickness, bloomRadius,
+                autoFocusSearch);
         this.setEnabled(true);
     }
 
@@ -96,5 +99,9 @@ public class ClientSettingsModule extends Module {
     
     public static float getBloomRadius() {
         return bloomRadius.getValueFloat();
+    }
+    
+    public static boolean isAutoFocusSearchEnabled() {
+        return autoFocusSearch.getValue();
     }
 }

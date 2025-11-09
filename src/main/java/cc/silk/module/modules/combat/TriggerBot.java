@@ -8,7 +8,7 @@ import cc.silk.module.Module;
 import cc.silk.module.modules.misc.Teams;
 import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.ModeSetting;
-import cc.silk.module.setting.NumberSetting;
+import cc.silk.module.setting.RangeSetting;
 import cc.silk.utils.friend.FriendManager;
 import cc.silk.utils.math.MathUtils;
 import cc.silk.utils.math.TimerUtil;
@@ -32,14 +32,10 @@ import org.lwjgl.glfw.GLFW;
 // Koi touch this and im going to fucking rape you
 
 public final class TriggerBot extends Module {
-    public static final NumberSetting swordThresholdMax = new NumberSetting("Sword Threshold Max", 0.1, 1, 0.95, 0.01);
-    public static final NumberSetting swordThresholdMin = new NumberSetting("Sword Threshold Min", 0.1, 1, 0.90, 0.01);
-    public static final NumberSetting axeThresholdMax = new NumberSetting("Axe Threshold Max", 0.1, 1, 0.95, 0.01);
-    public static final NumberSetting axeThresholdMin = new NumberSetting("Axe Threshold Min", 0.1, 1, 0.90, 0.01);
-    public static final NumberSetting axePostDelayMax = new NumberSetting("Axe Post Max", 1, 500, 120, 0.5);
-    public static final NumberSetting axePostDelayMin = new NumberSetting("Axe Post Min", 1, 500, 120, 0.5);
-    public static final NumberSetting reactionTimeMax = new NumberSetting("Reaction Time Max", 1, 350, 95, 0.5);
-    public static final NumberSetting reactionTimeMin = new NumberSetting("Reaction Time Min", 1, 350, 20, 0.5);
+    public static final RangeSetting swordThreshold = new RangeSetting("Sword Threshold", 0.1, 1, 0.90, 0.95, 0.01);
+    public static final RangeSetting axeThreshold = new RangeSetting("Axe Threshold", 0.1, 1, 0.90, 0.95, 0.01);
+    public static final RangeSetting axePostDelay = new RangeSetting("Axe Post Delay", 1, 500, 120, 120, 0.5);
+    public static final RangeSetting reactionTime = new RangeSetting("Reaction Time", 1, 350, 20, 95, 0.5);
     public static final ModeSetting cooldownMode = new ModeSetting("Cooldown Mode", "Smart", "Smart", "Strict", "None");
     public static final ModeSetting critMode = new ModeSetting("Criticals", "Strict", "None", "Strict");
     public static final BooleanSetting ignorePassiveMobs = new BooleanSetting("No Passive", true);
@@ -66,8 +62,8 @@ public final class TriggerBot extends Module {
     public TriggerBot() {
         super("Trigger Bot", "Makes you automatically attack once aimed at a target", -1, Category.COMBAT);
         addSettings(
-                swordThresholdMax, swordThresholdMin, axeThresholdMax, axeThresholdMin,
-                axePostDelayMax, axePostDelayMin, reactionTimeMax, reactionTimeMin,
+                swordThreshold, axeThreshold,
+                axePostDelay, reactionTime,
                 cooldownMode, critMode, ignorePassiveMobs, ignoreCrystals, respectShields,
                 ignoreInvisible, onlyWhenMouseDown, useOnlySwordOrAxe,
                 disableOnWorldChange, samePlayer
@@ -88,21 +84,6 @@ public final class TriggerBot extends Module {
         if (mc.player.isUsingItem()) return;
         if (mc.currentScreen != null) return;
 
-        if (axeThresholdMin.getValueFloat() >= axeThresholdMax.getValueFloat()) {
-            axeThresholdMin.setValue(axeThresholdMax.getValueFloat() - 0.05f);
-        }
-
-        if (swordThresholdMin.getValueFloat() >= swordThresholdMax.getValueFloat()) {
-            swordThresholdMin.setValue(swordThresholdMax.getValueFloat() - 0.05f);
-        }
-
-        if (axePostDelayMin.getValueFloat() >= axePostDelayMax.getValueFloat()) {
-            axePostDelayMin.setValue(axePostDelayMax.getValueFloat() - 0.5f);
-        }
-
-        if (reactionTimeMin.getValueFloat() >= reactionTimeMax.getValueFloat()) {
-            reactionTimeMin.setValue(reactionTimeMax.getValueFloat() - 0.5f);
-        }
 
         target = mc.targetedEntity;
         if (target == null) return;
@@ -138,12 +119,12 @@ public final class TriggerBot extends Module {
                     double distance = mc.player.distanceTo(target);
                     double maxDistance = 3.0;
                     double multiplier = distance < maxDistance / 2 ? 0.66 : 1.0;
-                    delay = (long) MathUtils.randomDoubleBetween(reactionTimeMin.getValue(), reactionTimeMax.getValue());
+                    delay = (long) MathUtils.randomDoubleBetween(reactionTime.getMinValue(), reactionTime.getMaxValue());
                     delay *= (long) multiplier;
                 }
                 case "None" -> delay = 0;
                 default ->
-                        delay = (long) MathUtils.randomDoubleBetween(reactionTimeMin.getValue(), reactionTimeMax.getValue());
+                        delay = (long) MathUtils.randomDoubleBetween(reactionTime.getMinValue(), reactionTime.getMaxValue());
             }
 
             currentReactionDelay = delay;
@@ -152,7 +133,7 @@ public final class TriggerBot extends Module {
         if (waitingForReaction && timerReactionTime.hasElapsedTime(currentReactionDelay, true)) {
             if (critMode.getMode().equals("Strict")) {
                 if (!mc.player.isOnGround()) {
-                    if (canCrit() && mc.player.getAttackCooldownProgress(0.0f) >= swordThresholdMin.getValue()) {
+                    if (canCrit() && mc.player.getAttackCooldownProgress(0.0f) >= swordThreshold.getMinValue()) {
                         if (hasTarget(target) && samePlayerCheck(target)) {
                             attack();
                             waitingForReaction = false;
@@ -230,7 +211,7 @@ public final class TriggerBot extends Module {
             return false;
         }
 
-        boolean cooldownReady = mc.player.getAttackCooldownProgress(0.0f) >= swordThresholdMin.getValue();
+        boolean cooldownReady = mc.player.getAttackCooldownProgress(0.0f) >= swordThreshold.getMinValue();
         return mode.equals("Strict") && cooldownReady && canCrit();
     }
 
@@ -245,8 +226,8 @@ public final class TriggerBot extends Module {
 
         if (heldItem instanceof AxeItem) {
             if (!waitingForDelay) {
-                randomizedThreshold = (float) MathUtils.randomDoubleBetween(axeThresholdMin.getValueFloat(), axeThresholdMax.getValueFloat());
-                randomizedPostDelay = (float) MathUtils.randomDoubleBetween(axePostDelayMin.getValueFloat(), axePostDelayMax.getValueFloat());
+                randomizedThreshold = (float) MathUtils.randomDoubleBetween(axeThreshold.getMinValue(), axeThreshold.getMaxValue());
+                randomizedPostDelay = (float) MathUtils.randomDoubleBetween(axePostDelay.getMinValue(), axePostDelay.getMaxValue());
                 waitingForDelay = true;
             }
             if (cooldown >= randomizedThreshold) {
@@ -259,7 +240,7 @@ public final class TriggerBot extends Module {
             }
             return false;
         } else {
-            float swordDelay = (float) MathUtils.randomDoubleBetween(swordThresholdMin.getValueFloat(), swordThresholdMax.getValueFloat());
+            float swordDelay = (float) MathUtils.randomDoubleBetween(swordThreshold.getMinValue(), swordThreshold.getMaxValue());
             return cooldown >= swordDelay;
         }
     }

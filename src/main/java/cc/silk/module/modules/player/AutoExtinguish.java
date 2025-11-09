@@ -1,12 +1,11 @@
 package cc.silk.module.modules.player;
 
-
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
-import cc.silk.module.setting.NumberSetting;
+import cc.silk.module.setting.RangeSetting;
 import cc.silk.utils.math.MathUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.InventoryUtil;
@@ -14,8 +13,7 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.item.Items;
 
 public final class AutoExtinguish extends Module {
-    public static final NumberSetting maxMS = new NumberSetting("Max MS", 0, 1200, 250, 0.5);
-    public static final NumberSetting minMS = new NumberSetting("Min MS", 0, 1200, 330, 0.5);
+    public static final RangeSetting delayMS = new RangeSetting("Delay (MS)", 0, 1200, 250, 330, 0.5);
     public static final BooleanSetting pickUP = new BooleanSetting("Pick up after", false);
     public static final BooleanSetting rotateBack = new BooleanSetting("Rotate back", false);
     public static final BooleanSetting toPrevSlot = new BooleanSetting("Goto prev-slot", false);
@@ -30,16 +28,13 @@ public final class AutoExtinguish extends Module {
 
     public AutoExtinguish() {
         super("Auto Extinguish", "Automatically places water to extinguish you", -1, Category.PLAYER);
-        this.addSettings(maxMS, minMS, pickUP, rotateBack, toPrevSlot);
+        this.addSettings(delayMS, pickUP, rotateBack, toPrevSlot);
     }
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
-        if (isNull()) return;
-        if (minMS.getValueFloat() > maxMS.getValueFloat()) {
-            minMS.setValue(maxMS.getValue() - 1);
-        }
-        if (minMS.getValue() == maxMS.getValue()) minMS.setValue(maxMS.getValue());
+        if (isNull())
+            return;
 
         if (mc.player.isOnFire()) {
             if (!isExtinguishing) {
@@ -57,14 +52,10 @@ public final class AutoExtinguish extends Module {
         originalPitch = mc.player.getPitch();
         originalSlot = mc.player.getInventory().selectedSlot;
 
-        long min = minMS.getValueInt();
-        long max = maxMS.getValueInt();
+        long min = (long) delayMS.getMinValue();
+        long max = (long) delayMS.getMaxValue();
 
-        if (min >= max) {
-            currentDelay = min;
-        } else {
-            currentDelay = (long) MathUtils.randomDoubleBetween(min, max);
-        }
+        currentDelay = (long) MathUtils.randomDoubleBetween(min, max);
 
         currentState = State.SWITCHING;
         timer.reset();

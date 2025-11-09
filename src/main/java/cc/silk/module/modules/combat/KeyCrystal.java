@@ -7,6 +7,7 @@ import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.KeybindSetting;
 import cc.silk.module.setting.NumberSetting;
+import cc.silk.module.setting.RangeSetting;
 import cc.silk.utils.keybinding.KeyUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.InventoryUtil;
@@ -38,10 +39,8 @@ public final class KeyCrystal extends Module {
     private final NumberSetting placeChance = new NumberSetting("Place Chance (%)", 0, 100, 100, 1);
     private final NumberSetting breakChance = new NumberSetting("Break Chance (%)", 0, 100, 100, 1);
 
-    private final NumberSetting minBreakDelay = new NumberSetting("Min Break Delay (MS)", 10, 500, 50, 1);
-    private final NumberSetting maxBreakDelay = new NumberSetting("Max Break Delay (MS)", 10, 500, 100, 1);
-    private final NumberSetting minPlaceDelay = new NumberSetting("Min Place Delay (MS)", 10, 500, 30, 1);
-    private final NumberSetting maxPlaceDelay = new NumberSetting("Max Place Delay (MS)", 10, 500, 80, 1);
+    private final RangeSetting breakDelay = new RangeSetting("Break Delay (MS)", 10, 500, 50, 100, 1);
+    private final RangeSetting placeDelay = new RangeSetting("Place Delay (MS)", 10, 500, 30, 80, 1);
 
     private final TimerUtil breakTimer = new TimerUtil();
     private final TimerUtil placeTimer = new TimerUtil();
@@ -60,7 +59,7 @@ public final class KeyCrystal extends Module {
         this.addSettings(
                 crystalKeybind,
                 placeChance, breakChance, stopOnKill,
-                minBreakDelay, maxBreakDelay, minPlaceDelay, maxPlaceDelay,
+                breakDelay, placeDelay,
                 antiSuicide, antiWeakness);
 
         this.getSettings().removeIf(setting -> setting instanceof KeybindSetting && !setting.equals(crystalKeybind));
@@ -71,10 +70,6 @@ public final class KeyCrystal extends Module {
         if (isNull() || mc.currentScreen != null)
             return;
 
-        if (minBreakDelay.getValueFloat() >= maxBreakDelay.getValueFloat())
-            minBreakDelay.setValue(maxBreakDelay.getValueFloat() - 1);
-        if (minPlaceDelay.getValueFloat() >= maxPlaceDelay.getValueFloat())
-            minPlaceDelay.setValue(maxPlaceDelay.getValueFloat() - 1);
 
         boolean currentKeyState = KeyUtils.isKeyPressed(crystalKeybind.getKeyCode());
 
@@ -113,22 +108,13 @@ public final class KeyCrystal extends Module {
         breakTimer.reset();
         placeTimer.reset();
 
-        int minBreak = minBreakDelay.getValueInt();
-        int maxBreak = maxBreakDelay.getValueInt();
-        int minPlace = minPlaceDelay.getValueInt();
-        int maxPlace = maxPlaceDelay.getValueInt();
+        int minBreak = (int) breakDelay.getMinValue();
+        int maxBreak = (int) breakDelay.getMaxValue();
+        int minPlace = (int) placeDelay.getMinValue();
+        int maxPlace = (int) placeDelay.getMaxValue();
 
-        if (minBreak >= maxBreak) {
-            maxBreak = minBreak + 1;
-            maxBreakDelay.setValue(maxBreak);
-        }
-        if (minPlace >= maxPlace) {
-            maxPlace = minPlace + 1;
-            maxPlaceDelay.setValue(maxPlace);
-        }
-
-        currentBreakDelay = minBreak + random.nextInt(maxBreak - minBreak);
-        currentPlaceDelay = minPlace + random.nextInt(maxPlace - minPlace);
+        currentBreakDelay = minBreak + random.nextInt(Math.max(1, maxBreak - minBreak));
+        currentPlaceDelay = minPlace + random.nextInt(Math.max(1, maxPlace - minPlace));
     }
 
     private void processCrystalPvP() {
@@ -150,7 +136,7 @@ public final class KeyCrystal extends Module {
                     ((MinecraftClientAccessor) mc).invokeDoAttack();
 
                     breakTimer.reset();
-                    currentBreakDelay = random.nextLong(minBreakDelay.getValueInt(), maxBreakDelay.getValueInt());
+                    currentBreakDelay = random.nextLong((long) breakDelay.getMinValue(), (long) breakDelay.getMaxValue());
                 }
                 return;
             }
@@ -169,7 +155,7 @@ public final class KeyCrystal extends Module {
                         InventoryUtil.swapToSlot(Items.END_CRYSTAL);
                         ((MinecraftClientAccessor) mc).invokeDoItemUse();
                         placeTimer.reset();
-                        currentPlaceDelay = random.nextLong(minPlaceDelay.getValueInt(), maxPlaceDelay.getValueInt());
+                        currentPlaceDelay = random.nextLong((long) placeDelay.getMinValue(), (long) placeDelay.getMaxValue());
                     }
                 }
                 else if (mc.world.getBlockState(placementPos).isAir() &&
@@ -179,7 +165,7 @@ public final class KeyCrystal extends Module {
                         ((MinecraftClientAccessor) mc).invokeDoItemUse();
                         hasPlacedObsidian = true;
                         placeTimer.reset();
-                        currentPlaceDelay = random.nextLong(minPlaceDelay.getValueInt(), maxPlaceDelay.getValueInt());
+                        currentPlaceDelay = random.nextLong((long) placeDelay.getMinValue(), (long) placeDelay.getMaxValue());
                     }
                 }
             }

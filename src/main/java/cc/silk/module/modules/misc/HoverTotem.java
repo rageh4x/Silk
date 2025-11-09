@@ -6,6 +6,7 @@ import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.NumberSetting;
+import cc.silk.module.setting.RangeSetting;
 import cc.silk.utils.math.TimerUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -19,8 +20,7 @@ import java.util.List;
 import java.util.Random;
 
 public final class HoverTotem extends Module {
-    public static final NumberSetting maxMS = new NumberSetting("Max MS", 1, 1000, 400, 0.5);
-    public static final NumberSetting minMS = new NumberSetting("Min MS", 1, 1000, 200, 0.5);
+    public static final RangeSetting delayMS = new RangeSetting("Delay (MS)", 1, 1000, 200, 400, 0.5);
     public static final BooleanSetting ignoreOffhand = new BooleanSetting("Ignore Offhand", false);
 
     private final NumberSetting normalBaseDelay = new NumberSetting("Base Delay", 50, 1000, 200, 1);
@@ -36,16 +36,13 @@ public final class HoverTotem extends Module {
 
     public HoverTotem() {
         super("Hover Totem", "Puts a totem in your offhand and hotbar once hovered", -1, Category.MISC);
-        this.addSettings(maxMS, minMS, ignoreOffhand, normalBaseDelay, normalVariation, normalSDThreshold);
+        this.addSettings(delayMS, ignoreOffhand, normalBaseDelay, normalVariation, normalSDThreshold);
     }
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
         if (isNull()) return;
 
-        if (minMS.getValueFloat() >= maxMS.getValueFloat()) {
-            minMS.setValue(maxMS.getValueFloat() - 0.5);
-        }
 
         totemHandler();
     }
@@ -106,12 +103,10 @@ public final class HoverTotem extends Module {
         long baseDelay = normalBaseDelay.getValueInt();
         int variation = normalVariation.getValueInt();
         double sdThreshold = normalSDThreshold.getValue();
+// what were these fuck ass comments bro :Sob:
+        long noise = (long) ((random.nextDouble() - 0.5) * variation * 2);
+        noise += (System.currentTimeMillis() % 97) - 48;
 
-        // 1️⃣ Introduce multi-layer randomness (non-Gaussian + time-based)
-        long noise = (long) ((random.nextDouble() - 0.5) * variation * 2); // uniform
-        noise += (System.currentTimeMillis() % 97) - 48; // adds natural clock drift
-
-        // 2️⃣ Occasionally simulate "human inconsistency"
         if (swapCount % (3 + random.nextInt(3)) == 0) {
             noise += random.nextBoolean()
                     ? random.nextInt(variation)

@@ -27,6 +27,13 @@ public class SettingsPanel {
     private float animationProgress = 0f;
     private Setting draggingSlider = null;
     private KeybindSetting listeningKeybind = null;
+    private NumberSetting typingSlider = null;
+    private String sliderInputText = "";
+    private RangeSetting draggingRangeSlider = null;
+    private boolean draggingMinHandle = false;
+    private RangeSetting typingRangeSlider = null;
+    private boolean typingRangeMin = false;
+    private String rangeInputText = "";
     private int screenWidth = 0;
     private int screenHeight = 0;
 
@@ -49,7 +56,7 @@ public class SettingsPanel {
     private void calculateHeight() {
         int totalHeight = HEADER_HEIGHT + PADDING * 2;
         for (Setting setting : module.getSettings()) {
-            if (setting instanceof NumberSetting) {
+            if (setting instanceof NumberSetting || setting instanceof RangeSetting) {
                 totalHeight += NUMBER_SETTING_HEIGHT;
             } else {
                 totalHeight += SETTING_HEIGHT;
@@ -140,7 +147,7 @@ public class SettingsPanel {
         float settingY = y + HEADER_HEIGHT + PADDING;
         for (Setting setting : module.getSettings()) {
             renderSetting(setting, settingY, mouseX, mouseY, renderAlpha, false);
-            if (setting instanceof NumberSetting) {
+            if (setting instanceof NumberSetting || setting instanceof RangeSetting) {
                 settingY += NUMBER_SETTING_HEIGHT;
             } else {
                 settingY += SETTING_HEIGHT;
@@ -155,7 +162,7 @@ public class SettingsPanel {
                     break;
                 }
 
-                if (setting instanceof NumberSetting) {
+                if (setting instanceof NumberSetting || setting instanceof RangeSetting) {
                     settingY += NUMBER_SETTING_HEIGHT;
                 } else {
                     settingY += SETTING_HEIGHT;
@@ -169,9 +176,11 @@ public class SettingsPanel {
     }
 
     private void renderSetting(Setting setting, float settingY, int mouseX, int mouseY, float alpha,
-                               boolean renderDropdownOnly) {
+            boolean renderDropdownOnly) {
         if (setting instanceof BooleanSetting) {
             renderBooleanSetting((BooleanSetting) setting, settingY, mouseX, mouseY, alpha);
+        } else if (setting instanceof RangeSetting) {
+            renderRangeSetting((RangeSetting) setting, settingY, mouseX, mouseY, alpha);
         } else if (setting instanceof NumberSetting) {
             renderNumberSetting((NumberSetting) setting, settingY, mouseX, mouseY, alpha);
         } else if (setting instanceof ModeSetting) {
@@ -181,6 +190,60 @@ public class SettingsPanel {
         } else if (setting instanceof KeybindSetting) {
             renderKeybindSetting((KeybindSetting) setting, settingY, mouseX, mouseY, alpha);
         }
+    }
+
+    private void renderRangeSetting(RangeSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
+        float sliderY = settingY + 13;
+        float sliderWidth = width - PADDING * 2;
+        float sliderHeight = cc.silk.module.modules.client.ClientSettingsModule.getSliderHeight();
+        float sliderRadius = sliderHeight / 2f;
+        int bgAlpha = (int) (255 * alpha);
+        Color accentColor = getAccentColor();
+        Color sliderBg = new Color(30, 30, 35, bgAlpha);
+        Color sliderFill = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
+        Color textColor = new Color(200, 200, 200, bgAlpha);
+        Color valueColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
+
+        NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, sliderWidth, sliderHeight, sliderRadius, sliderBg);
+
+        double minPercentage = (setting.getMinValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
+        double maxPercentage = (setting.getMaxValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
+        float minX = (float) (sliderWidth * minPercentage);
+        float maxX = (float) (sliderWidth * maxPercentage);
+        float fillWidth = maxX - minX;
+
+        if (fillWidth > 0) {
+            NanoVGRenderer.drawRoundedRect(currentX + PADDING + minX, sliderY, fillWidth, sliderHeight, sliderRadius,
+                    sliderFill);
+        }
+
+        float handleRadius = cc.silk.module.modules.client.ClientSettingsModule.getSliderHandleSize();
+        Color handleGlow = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
+                (int) (60 * alpha));
+        Color handleColor = new Color(255, 255, 255, bgAlpha);
+
+        float minHandleX = currentX + PADDING + minX;
+        float handleY = sliderY + sliderHeight / 2f;
+        NanoVGRenderer.drawCircle(minHandleX, handleY, handleRadius + 1.5f, handleGlow);
+        NanoVGRenderer.drawCircle(minHandleX, handleY, handleRadius, handleColor);
+
+        float maxHandleX = currentX + PADDING + maxX;
+        NanoVGRenderer.drawCircle(maxHandleX, handleY, handleRadius + 1.5f, handleGlow);
+        NanoVGRenderer.drawCircle(maxHandleX, handleY, handleRadius, handleColor);
+
+        String displayText = setting.getName();
+        String valueText;
+        if (typingRangeSlider == setting) {
+            valueText = rangeInputText + "_";
+            valueColor = new Color(255, 255, 255, bgAlpha);
+        } else {
+            valueText = formatNumber(setting.getMinValue()) + " - " + formatNumber(setting.getMaxValue());
+        }
+
+        float fontSize = 9f;
+        float valueWidth = NanoVGRenderer.getTextWidth(valueText, fontSize);
+        NanoVGRenderer.drawText(displayText, currentX + PADDING, settingY + 2, fontSize, textColor);
+        NanoVGRenderer.drawText(valueText, currentX + width - PADDING - valueWidth, settingY + 2, fontSize, valueColor);
     }
 
     private void renderBooleanSetting(BooleanSetting setting, float settingY, int mouseX, int mouseY, float alpha) {
@@ -228,17 +291,27 @@ public class SettingsPanel {
         double percentage = (setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
         float fillWidth = (float) (sliderWidth * percentage);
         if (fillWidth > 0) {
-            NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, fillWidth, sliderHeight, sliderRadius, sliderFill);
+            NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, fillWidth, sliderHeight, sliderRadius,
+                    sliderFill);
         }
         float handleRadius = cc.silk.module.modules.client.ClientSettingsModule.getSliderHandleSize();
         float handleX = currentX + PADDING + fillWidth;
         float handleY = sliderY + sliderHeight / 2f;
-        Color handleGlow = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (60 * alpha));
+        Color handleGlow = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
+                (int) (60 * alpha));
         NanoVGRenderer.drawCircle(handleX, handleY, handleRadius + 1.5f, handleGlow);
         Color handleColor = new Color(255, 255, 255, bgAlpha);
         NanoVGRenderer.drawCircle(handleX, handleY, handleRadius, handleColor);
         String displayText = setting.getName();
-        String valueText = formatNumber(setting.getValue());
+
+        String valueText;
+        if (typingSlider == setting) {
+            valueText = sliderInputText + "_";
+            valueColor = new Color(255, 255, 255, bgAlpha);
+        } else {
+            valueText = formatNumber(setting.getValue());
+        }
+
         float fontSize = 9f;
         float valueWidth = NanoVGRenderer.getTextWidth(valueText, fontSize);
         NanoVGRenderer.drawText(displayText, currentX + PADDING, settingY + 2, fontSize, textColor);
@@ -246,7 +319,7 @@ public class SettingsPanel {
     }
 
     private void renderModeSetting(ModeSetting setting, float settingY, int mouseX, int mouseY, float alpha,
-                                   boolean renderDropdownOnly) {
+            boolean renderDropdownOnly) {
         String mode = setting.getMode();
         float fontSize = 9f;
 
@@ -389,13 +462,15 @@ public class SettingsPanel {
         Color modeBg = setting.isHoldMode()
                 ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (80 * alpha))
                 : new Color(30, 30, 35, bgAlpha);
-        Color modeBorder = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (100 * alpha));
+        Color modeBorder = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
+                (int) (100 * alpha));
         Color modeTextColor = setting.isHoldMode()
                 ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
                 : new Color(200, 200, 200, bgAlpha);
 
         NanoVGRenderer.drawRoundedRect(modeButtonX, modeButtonY, modeButtonWidth, modeButtonHeight, 3f, modeBg);
-        NanoVGRenderer.drawRoundedRectOutline(modeButtonX, modeButtonY, modeButtonWidth, modeButtonHeight, 3f, 1f, modeBorder);
+        NanoVGRenderer.drawRoundedRectOutline(modeButtonX, modeButtonY, modeButtonWidth, modeButtonHeight, 3f, 1f,
+                modeBorder);
 
         float modeTextWidth = NanoVGRenderer.getTextWidth(modeText, fontSize);
         float modeTextX = modeButtonX + (modeButtonWidth - modeTextWidth) / 2f;
@@ -418,6 +493,48 @@ public class SettingsPanel {
 
         if (mouseClickedForKeybind(mouseX, mouseY, button)) {
             return true;
+        }
+
+        if (button == 1) {
+            float settingY = y + HEADER_HEIGHT + PADDING;
+            for (Setting setting : module.getSettings()) {
+                int currentHeight = (setting instanceof NumberSetting || setting instanceof RangeSetting)
+                        ? NUMBER_SETTING_HEIGHT
+                        : SETTING_HEIGHT;
+
+                if (setting instanceof NumberSetting && mouseY >= settingY && mouseY <= settingY + currentHeight) {
+                    if (mouseX >= currentX && mouseX <= currentX + width) {
+                        typingSlider = (NumberSetting) setting;
+                        sliderInputText = formatNumber(((NumberSetting) setting).getValue());
+                        return true;
+                    }
+                } else if (setting instanceof RangeSetting && mouseY >= settingY
+                        && mouseY <= settingY + currentHeight) {
+                    if (mouseX >= currentX && mouseX <= currentX + width) {
+                        typingRangeSlider = (RangeSetting) setting;
+                        float sliderY = settingY + 13;
+                        float sliderWidth = width - PADDING * 2;
+                        double minPercentage = (((RangeSetting) setting).getMinValue()
+                                - ((RangeSetting) setting).getMin())
+                                / (((RangeSetting) setting).getMax() - ((RangeSetting) setting).getMin());
+                        double maxPercentage = (((RangeSetting) setting).getMaxValue()
+                                - ((RangeSetting) setting).getMin())
+                                / (((RangeSetting) setting).getMax() - ((RangeSetting) setting).getMin());
+                        float minX = (float) (sliderWidth * minPercentage);
+                        float maxX = (float) (sliderWidth * maxPercentage);
+                        float midX = (minX + maxX) / 2f;
+                        float relativeX = (float) (mouseX - (currentX + PADDING));
+
+                        typingRangeMin = relativeX < midX;
+                        rangeInputText = formatNumber(typingRangeMin ? ((RangeSetting) setting).getMinValue()
+                                : ((RangeSetting) setting).getMaxValue());
+                        return true;
+                    }
+                }
+
+                settingY += currentHeight;
+            }
+            return false;
         }
 
         if (button != 0)
@@ -457,7 +574,9 @@ public class SettingsPanel {
                     return true;
                 }
 
-                int currentHeight = (setting instanceof NumberSetting) ? NUMBER_SETTING_HEIGHT : SETTING_HEIGHT;
+                int currentHeight = (setting instanceof NumberSetting || setting instanceof RangeSetting)
+                        ? NUMBER_SETTING_HEIGHT
+                        : SETTING_HEIGHT;
                 settingY += currentHeight;
             }
         }
@@ -467,11 +586,31 @@ public class SettingsPanel {
 
         float settingY = y + HEADER_HEIGHT + PADDING;
         for (Setting setting : module.getSettings()) {
-            int currentHeight = (setting instanceof NumberSetting) ? NUMBER_SETTING_HEIGHT : SETTING_HEIGHT;
+            int currentHeight = (setting instanceof NumberSetting || setting instanceof RangeSetting)
+                    ? NUMBER_SETTING_HEIGHT
+                    : SETTING_HEIGHT;
 
             if (mouseY >= settingY && mouseY <= settingY + currentHeight) {
                 if (setting instanceof BooleanSetting) {
                     ((BooleanSetting) setting).toggle();
+                    return true;
+                } else if (setting instanceof RangeSetting) {
+                    RangeSetting rangeSetting = (RangeSetting) setting;
+                    float sliderY = settingY + 13;
+                    float sliderWidth = width - PADDING * 2;
+                    double minPercentage = (rangeSetting.getMinValue() - rangeSetting.getMin())
+                            / (rangeSetting.getMax() - rangeSetting.getMin());
+                    double maxPercentage = (rangeSetting.getMaxValue() - rangeSetting.getMin())
+                            / (rangeSetting.getMax() - rangeSetting.getMin());
+                    float minHandleX = currentX + PADDING + (float) (sliderWidth * minPercentage);
+                    float maxHandleX = currentX + PADDING + (float) (sliderWidth * maxPercentage);
+
+                    float distToMin = Math.abs((float) mouseX - minHandleX);
+                    float distToMax = Math.abs((float) mouseX - maxHandleX);
+
+                    draggingRangeSlider = rangeSetting;
+                    draggingMinHandle = distToMin < distToMax;
+                    updateRangeSliderValue(rangeSetting, mouseX, draggingMinHandle);
                     return true;
                 } else if (setting instanceof NumberSetting) {
                     draggingSlider = setting;
@@ -549,6 +688,11 @@ public class SettingsPanel {
             return colorPicker.mouseDragged(mouseX, mouseY, button);
         }
 
+        if (draggingRangeSlider != null && button == 0) {
+            updateRangeSliderValue(draggingRangeSlider, mouseX, draggingMinHandle);
+            return true;
+        }
+
         if (draggingSlider instanceof NumberSetting && button == 0) {
             updateSliderValue((NumberSetting) draggingSlider, mouseX);
             return true;
@@ -559,6 +703,7 @@ public class SettingsPanel {
     public void mouseReleased(double mouseX, double mouseY, int button) {
         if (button == 0) {
             draggingSlider = null;
+            draggingRangeSlider = null;
         }
 
         if (colorPicker != null) {
@@ -573,6 +718,20 @@ public class SettingsPanel {
         double percentage = Math.max(0, Math.min(1, (mouseX - sliderX) / sliderWidth));
         double newValue = setting.getMin() + (setting.getMax() - setting.getMin()) * percentage;
         setting.setValue(newValue);
+    }
+
+    private void updateRangeSliderValue(RangeSetting setting, double mouseX, boolean updateMin) {
+        float sliderWidth = width - PADDING * 2;
+        float sliderX = currentX + PADDING;
+
+        double percentage = Math.max(0, Math.min(1, (mouseX - sliderX) / sliderWidth));
+        double newValue = setting.getMin() + (setting.getMax() - setting.getMin()) * percentage;
+
+        if (updateMin) {
+            setting.setMinValue(newValue);
+        } else {
+            setting.setMaxValue(newValue);
+        }
     }
 
     private boolean isMouseOver(double mouseX, double mouseY) {
@@ -601,6 +760,58 @@ public class SettingsPanel {
     }
 
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (typingRangeSlider != null) {
+            if (keyCode == 256) {
+                typingRangeSlider = null;
+                rangeInputText = "";
+                return true;
+            } else if (keyCode == 257 || keyCode == 335) {
+                try {
+                    double value = Double.parseDouble(rangeInputText);
+                    value = Math.max(typingRangeSlider.getMin(), Math.min(typingRangeSlider.getMax(), value));
+                    if (typingRangeMin) {
+                        typingRangeSlider.setMinValue(value);
+                    } else {
+                        typingRangeSlider.setMaxValue(value);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+                typingRangeSlider = null;
+                rangeInputText = "";
+                return true;
+            } else if (keyCode == 259) {
+                if (!rangeInputText.isEmpty()) {
+                    rangeInputText = rangeInputText.substring(0, rangeInputText.length() - 1);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        if (typingSlider != null) {
+            if (keyCode == 256) {
+                typingSlider = null;
+                sliderInputText = "";
+                return true;
+            } else if (keyCode == 257 || keyCode == 335) {
+                try {
+                    double value = Double.parseDouble(sliderInputText);
+                    value = Math.max(typingSlider.getMin(), Math.min(typingSlider.getMax(), value));
+                    typingSlider.setValue(value);
+                } catch (NumberFormatException ignored) {
+                }
+                typingSlider = null;
+                sliderInputText = "";
+                return true;
+            } else if (keyCode == 259) {
+                if (!sliderInputText.isEmpty()) {
+                    sliderInputText = sliderInputText.substring(0, sliderInputText.length() - 1);
+                }
+                return true;
+            }
+            return false;
+        }
+
         if (listeningKeybind != null) {
             if (keyCode == 256) {
                 listeningKeybind.setKeyCode(0);
@@ -609,6 +820,35 @@ public class SettingsPanel {
             }
             listeningKeybind = null;
             return true;
+        }
+        return false;
+    }
+
+    public boolean charTyped(char chr, int modifiers) {
+        if (typingRangeSlider != null) {
+            if (Character.isDigit(chr) || chr == '.' || chr == '-') {
+                if (chr == '.' && rangeInputText.contains(".")) {
+                    return true;
+                }
+                if (chr == '-' && !rangeInputText.isEmpty()) {
+                    return true;
+                }
+                rangeInputText += chr;
+                return true;
+            }
+        }
+
+        if (typingSlider != null) {
+            if (Character.isDigit(chr) || chr == '.' || chr == '-') {
+                if (chr == '.' && sliderInputText.contains(".")) {
+                    return true;
+                }
+                if (chr == '-' && !sliderInputText.isEmpty()) {
+                    return true;
+                }
+                sliderInputText += chr;
+                return true;
+            }
         }
         return false;
     }
@@ -740,12 +980,12 @@ public class SettingsPanel {
                 return "KEY " + keyCode;
         }
     }
-    
+
     public void renderGlow(DrawContext context, float alpha) {
         if (animationProgress <= 0f) {
             return;
         }
-        
+
         GuiGlowHelper.drawGuiGlow(context, currentX, y, width, height, CORNER_RADIUS);
     }
 }

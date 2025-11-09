@@ -26,9 +26,10 @@ public class NewClickGUI extends Screen {
 
     private String searchQuery = "";
     private boolean searchFocused = false;
+    private float searchExpandProgress = 0f;
     private float searchBarY = 0;
-    private static final int SEARCH_BAR_HEIGHT = 30;
     private static final int SEARCH_BAR_WIDTH = 300;
+    private static final int SEARCH_ICON_SIZE = 35;
     private static final java.awt.Color SEARCH_BG = new java.awt.Color(28, 28, 32, 255);
     private static final java.awt.Color SEARCH_TEXT = new java.awt.Color(240, 240, 245, 255);
     private static final java.awt.Color SEARCH_PLACEHOLDER = new java.awt.Color(130, 130, 140, 255);
@@ -84,6 +85,10 @@ public class NewClickGUI extends Screen {
 
         float scale = easeOutCubic(animationProgress);
         float alpha = animationProgress;
+
+        float targetExpand = (searchFocused || !searchQuery.isEmpty()) ? 1f : 0f;
+        searchExpandProgress += (targetExpand - searchExpandProgress) * deltaTime * 8f;
+        searchExpandProgress = Math.max(0f, Math.min(1f, searchExpandProgress));
 
         for (CategoryPanel panel : panels) {
             panel.update(deltaTime);
@@ -143,7 +148,7 @@ public class NewClickGUI extends Screen {
         NanoVGRenderer.restore();
 
         NanoVGRenderer.endFrame();
-        
+
         renderPanelGlows(context, alpha, scale, centerX, centerY, draggedPanel, configDragging);
     }
 
@@ -184,8 +189,11 @@ public class NewClickGUI extends Screen {
     }
 
     private void renderSearchBar(float alpha) {
-        searchBarY = height - SEARCH_BAR_HEIGHT - 20;
-        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
+        searchBarY = height - SEARCH_ICON_SIZE - 20;
+
+        float currentWidth = SEARCH_ICON_SIZE
+                + (SEARCH_BAR_WIDTH - SEARCH_ICON_SIZE) * easeOutCubic(searchExpandProgress);
+        float searchBarX = (width - currentWidth) / 2f;
 
         int bgAlpha = (int) (255 * alpha);
         Color bgColor = new Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(), bgAlpha);
@@ -195,27 +203,56 @@ public class NewClickGUI extends Screen {
                 searchFocused ? bgAlpha : (int) (100 * alpha));
 
         float cornerRadius = 6f;
-        NanoVGRenderer.drawRoundedRect(searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT, cornerRadius,
-                bgColor);
+        NanoVGRenderer.drawRoundedRect(searchBarX, searchBarY, currentWidth, SEARCH_ICON_SIZE, cornerRadius, bgColor);
 
         float borderThickness = searchFocused ? 2f : 1f;
-        NanoVGRenderer.drawRoundedRectOutline(searchBarX, searchBarY, SEARCH_BAR_WIDTH, SEARCH_BAR_HEIGHT,
+        NanoVGRenderer.drawRoundedRectOutline(searchBarX, searchBarY, currentWidth, SEARCH_ICON_SIZE,
                 cornerRadius, borderThickness, borderColor);
 
-        String displayText = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
-        Color textColor = searchQuery.isEmpty()
-                ? new Color(SEARCH_PLACEHOLDER.getRed(), SEARCH_PLACEHOLDER.getGreen(), SEARCH_PLACEHOLDER.getBlue(),
-                        bgAlpha)
-                : new Color(SEARCH_TEXT.getRed(), SEARCH_TEXT.getGreen(), SEARCH_TEXT.getBlue(), bgAlpha);
+        float iconCenterX = searchBarX + SEARCH_ICON_SIZE / 2f;
+        float iconCenterY = searchBarY + SEARCH_ICON_SIZE / 2f;
+        Color iconColor = new Color(SEARCH_TEXT.getRed(), SEARCH_TEXT.getGreen(), SEARCH_TEXT.getBlue(), bgAlpha);
 
-        float fontSize = 12f;
-        float textX = searchBarX + 10;
-        float textY = searchBarY + (SEARCH_BAR_HEIGHT - fontSize) / 2f;
-        NanoVGRenderer.drawText(displayText, textX, textY, fontSize, textColor);
+        float circleRadius = 5f;
+        float circleX = iconCenterX - 1;
+        float circleY = iconCenterY - 1;
 
-        if (searchFocused && System.currentTimeMillis() % 1000 < 500) {
-            float cursorX = textX + NanoVGRenderer.getTextWidth(searchQuery, fontSize);
-            NanoVGRenderer.drawRect(cursorX, textY - 1, 1, fontSize + 2, textColor);
+        NanoVGRenderer.drawCircle(circleX, circleY, circleRadius + 0.75f, iconColor);
+        Color bgCircle = new Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(), bgAlpha);
+        NanoVGRenderer.drawCircle(circleX, circleY, circleRadius - 0.75f, bgCircle);
+
+        float handleLength = 5f;
+        float handleAngle = (float) Math.toRadians(45);
+        float handleStartX = circleX + circleRadius * (float) Math.cos(handleAngle);
+        float handleStartY = circleY + circleRadius * (float) Math.sin(handleAngle);
+        float handleEndX = handleStartX + handleLength * (float) Math.cos(handleAngle);
+        float handleEndY = handleStartY + handleLength * (float) Math.sin(handleAngle);
+
+        NanoVGRenderer.drawLine(handleStartX, handleStartY, handleEndX, handleEndY, 1.5f, iconColor);
+
+        if (searchExpandProgress > 0.3f) {
+            String displayText = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
+            Color textColor = searchQuery.isEmpty()
+                    ? new Color(SEARCH_PLACEHOLDER.getRed(), SEARCH_PLACEHOLDER.getGreen(),
+                            SEARCH_PLACEHOLDER.getBlue(),
+                            (int) (bgAlpha * searchExpandProgress))
+                    : new Color(SEARCH_TEXT.getRed(), SEARCH_TEXT.getGreen(), SEARCH_TEXT.getBlue(),
+                            (int) (bgAlpha * searchExpandProgress));
+
+            float fontSize = 12f;
+            float textX = searchBarX + SEARCH_ICON_SIZE + 5;
+            float textY = searchBarY + (SEARCH_ICON_SIZE - fontSize) / 2f;
+
+            if (textX < searchBarX + currentWidth - 10) {
+                NanoVGRenderer.drawText(displayText, textX, textY, fontSize, textColor);
+
+                if (searchFocused && System.currentTimeMillis() % 1000 < 500) {
+                    float cursorX = textX + NanoVGRenderer.getTextWidth(searchQuery, fontSize);
+                    if (cursorX < searchBarX + currentWidth - 5) {
+                        NanoVGRenderer.drawRect(cursorX, textY - 1, 1, fontSize + 2, textColor);
+                    }
+                }
+            }
         }
     }
 
@@ -256,9 +293,11 @@ public class NewClickGUI extends Screen {
             }
         }
 
-        float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
-        if (mouseX >= searchBarX && mouseX <= searchBarX + SEARCH_BAR_WIDTH &&
-                mouseY >= searchBarY && mouseY <= searchBarY + SEARCH_BAR_HEIGHT) {
+        float currentWidth = SEARCH_ICON_SIZE
+                + (SEARCH_BAR_WIDTH - SEARCH_ICON_SIZE) * easeOutCubic(searchExpandProgress);
+        float searchBarX = (width - currentWidth) / 2f;
+        if (mouseX >= searchBarX && mouseX <= searchBarX + currentWidth &&
+                mouseY >= searchBarY && mouseY <= searchBarY + SEARCH_ICON_SIZE) {
             searchFocused = true;
             return true;
         }
@@ -272,11 +311,36 @@ public class NewClickGUI extends Screen {
         if (configPanel != null && configPanel.charTyped(chr, modifiers)) {
             return true;
         }
+        
+        for (CategoryPanel panel : panels) {
+            if (panel.hasActiveSettingsPanel()) {
+                if (panel.getSettingsPanel().charTyped(chr, modifiers)) {
+                    return true;
+                }
+            }
+        }
 
         if (searchFocused) {
             searchQuery += chr;
             return true;
         }
+
+        if (cc.silk.module.modules.client.ClientSettingsModule.isAutoFocusSearchEnabled()) {
+            boolean anySettingsPanelActive = false;
+            for (CategoryPanel panel : panels) {
+                if (panel.hasActiveSettingsPanel()) {
+                    anySettingsPanelActive = true;
+                    break;
+                }
+            }
+
+            if (!anySettingsPanelActive && Character.isLetterOrDigit(chr)) {
+                searchFocused = true;
+                searchQuery += chr;
+                return true;
+            }
+        }
+
         return super.charTyped(chr, modifiers);
     }
 
@@ -346,47 +410,52 @@ public class NewClickGUI extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    private void renderPanelGlows(DrawContext context, float alpha, float scale, int centerX, int centerY, CategoryPanel draggedPanel, boolean configDragging) {
+    private void renderPanelGlows(DrawContext context, float alpha, float scale, int centerX, int centerY,
+            CategoryPanel draggedPanel, boolean configDragging) {
         if (!cc.silk.module.modules.client.ClientSettingsModule.isGuiGlowEnabled()) {
             return;
         }
-        
+
         for (CategoryPanel panel : panels) {
             if (panel != draggedPanel) {
                 panel.renderGlow(context, alpha, scale, centerX, centerY);
             }
         }
-        
+
         if (configPanel != null && !configDragging) {
             configPanel.renderGlow(context, alpha, scale, centerX, centerY);
         }
-        
+
         if (draggedPanel != null) {
             draggedPanel.renderGlow(context, alpha, scale, centerX, centerY);
         }
-        
+
         if (configPanel != null && configDragging) {
             configPanel.renderGlow(context, alpha, scale, centerX, centerY);
         }
-        
+
         for (CategoryPanel panel : panels) {
             panel.renderSettingsPanelGlow(context, alpha);
         }
-        
+
         if (searchFocused) {
-            float searchBarX = (width - SEARCH_BAR_WIDTH) / 2f;
+            float currentWidth = SEARCH_ICON_SIZE
+                    + (SEARCH_BAR_WIDTH - SEARCH_ICON_SIZE) * easeOutCubic(searchExpandProgress);
+            float searchBarX = (width - currentWidth) / 2f;
             float transformedX = (searchBarX - centerX) * scale + centerX;
             float transformedY = (searchBarY - centerY) * scale + centerY;
-            float transformedWidth = SEARCH_BAR_WIDTH * scale;
-            float transformedHeight = SEARCH_BAR_HEIGHT * scale;
-            GuiGlowHelper.drawGuiGlow(context, transformedX, transformedY, transformedWidth, transformedHeight, 6f * scale);
+            float transformedWidth = currentWidth * scale;
+            float transformedHeight = SEARCH_ICON_SIZE * scale;
+            GuiGlowHelper.drawGuiGlow(context, transformedX, transformedY, transformedWidth, transformedHeight,
+                    6f * scale);
         }
     }
-    
+
     @Override
     public boolean shouldPause() {
         return false;
     }
+
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         if (cc.silk.module.modules.client.ClientSettingsModule.isGuiBlurEnabled()) {
