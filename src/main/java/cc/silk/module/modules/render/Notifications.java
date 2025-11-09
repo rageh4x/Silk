@@ -130,7 +130,17 @@ public class Notifications extends Module {
         if (progressWidth > 0) {
             Color progressColor = new Color(statusColor.getRed(), statusColor.getGreen(), statusColor.getBlue(),
                     (int) (100 * alpha));
-            NanoVGRenderer.drawRoundedRect(x, y + NOTIFICATION_HEIGHT - 3, progressWidth, 3, 1.5f, progressColor);
+
+            float progressInset = 2f;
+            float progressX = x + progressInset;
+            float progressY = y + NOTIFICATION_HEIGHT - 4;
+            float progressHeight = 2;
+            float adjustedProgressWidth = Math.min(progressWidth - progressInset,
+                    NOTIFICATION_WIDTH - (progressInset * 2));
+
+            float progressRadius = 1f;
+            NanoVGRenderer.drawRoundedRect(progressX, progressY, adjustedProgressWidth, progressHeight, progressRadius,
+                    progressColor);
         }
     }
 }

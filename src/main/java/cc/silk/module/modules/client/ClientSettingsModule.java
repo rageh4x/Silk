@@ -24,7 +24,7 @@ public class ClientSettingsModule extends Module {
     public static final NumberSetting sliderHeight = new NumberSetting("Slider Height", 2, 10, 4, 0.5);
     public static final NumberSetting sliderHandleSize = new NumberSetting("Slider Handle Size", 3, 12, 5, 0.5);
     
-    public static final BooleanSetting guiGlow = new BooleanSetting("GUI Glow", true);
+    public static final BooleanSetting guiGlow = new BooleanSetting("GUI Glow", false);
     public static final ColorSetting glowColor = new ColorSetting("Glow Color", new Color(124, 77, 255, 255));
     public static final NumberSetting glowIntensity = new NumberSetting("Glow Intensity", 0, 2, 1, 0.1);
     public static final NumberSetting glowThickness = new NumberSetting("Glow Thickness", 2, 20, 10, 1);
