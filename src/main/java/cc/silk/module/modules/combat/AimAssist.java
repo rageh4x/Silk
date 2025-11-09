@@ -20,7 +20,6 @@ import net.minecraft.util.math.Vec3d;
 
 public class AimAssist extends Module {
 
-
     private final NumberSetting maxYawSpeed = new NumberSetting("Max Yaw Speed", 0.1, 5.0, 2.0, 0.1);
     private final NumberSetting minYawSpeed = new NumberSetting("Min Yaw Speed", 0.1, 5.0, 2.0, 0.1);
 
@@ -30,12 +29,14 @@ public class AimAssist extends Module {
     private final NumberSetting fov = new NumberSetting("FOV", 10.0, 180.0, 90.0, 1.0);
     private final NumberSetting range = new NumberSetting("Range", 1.0, 10.0, 4.5, 0.1);
     private final NumberSetting smoothing = new NumberSetting("Smoothing", 1.0, 20.0, 10.0, 0.5);
+    private final NumberSetting pitchThreshold = new NumberSetting("Pitch Threshold", 0.0, 90.0, 60.0, 1.0);
 
     private final BooleanSetting targetPlayers = new BooleanSetting("Target Players", true);
     private final BooleanSetting targetMobs = new BooleanSetting("Target Mobs", false);
     private final BooleanSetting weaponsOnly = new BooleanSetting("Weapons Only", false);
     private final BooleanSetting throughWalls = new BooleanSetting("Through Walls", false);
     private final BooleanSetting disableOnTarget = new BooleanSetting("Disable on target", false);
+    private final BooleanSetting ignoreBlocks = new BooleanSetting("Ignore Blocks", true);
 
     private Entity currentTarget = null;
     private long lastUpdateTime = 0;
@@ -46,26 +47,37 @@ public class AimAssist extends Module {
     public AimAssist() {
         super("Aim Assist", "Gives you assistance on your aim", Category.COMBAT);
         addSettings(
-                maxYawSpeed, minYawSpeed, maxPitchSpeed, minPitchSpeed, fov, range, smoothing,
-                targetPlayers, targetMobs, weaponsOnly, throughWalls, disableOnTarget
-        );
+                maxYawSpeed, minYawSpeed, maxPitchSpeed, minPitchSpeed, fov, range, smoothing, pitchThreshold,
+                targetPlayers, targetMobs, weaponsOnly, throughWalls, disableOnTarget, ignoreBlocks);
     }
 
     @EventHandler
     private void onRender3D(Render3DEvent event) {
-        if (isNull()) return;
+        if (isNull())
+            return;
         if (maxPitchSpeed.getValueFloat() <= minPitchSpeed.getValueFloat()) {
             maxPitchSpeed.setValue(minPitchSpeed.getValue() + 0.1);
         }
         if (maxYawSpeed.getValueFloat() <= minYawSpeed.getValueFloat()) {
             maxYawSpeed.setValue(minYawSpeed.getValue() + 0.1);
         }
-        if (weaponsOnly.getValue() && !isHoldingWeapon()) return;
+        if (weaponsOnly.getValue() && !isHoldingWeapon())
+            return;
 
-        if (mc.currentScreen != null) return;
+        if (mc.currentScreen != null)
+            return;
 
         if (mc.crosshairTarget != null && mc.crosshairTarget.getType() == HitResult.Type.BLOCK
                 && mc.options.attackKey.isPressed()) {
+            return;
+        }
+
+        if (mc.player.getPitch() > pitchThreshold.getValueFloat()) {
+            return;
+        }
+
+        if (ignoreBlocks.getValue() && mc.crosshairTarget != null
+                && mc.crosshairTarget.getType() == HitResult.Type.BLOCK) {
             return;
         }
 
@@ -76,7 +88,8 @@ public class AimAssist extends Module {
         }
 
         if (currentTarget != null) {
-            if (!throughWalls.getValue() && !mc.player.canSee(currentTarget)) return;
+            if (!throughWalls.getValue() && !mc.player.canSee(currentTarget))
+                return;
 
             Vec3d chestPos = getChestPosition(currentTarget);
             float[] rotation = calculateRotation(chestPos);
@@ -85,16 +98,19 @@ public class AimAssist extends Module {
     }
 
     private Entity findBestTarget() {
-        if (isNull()) return null;
+        if (isNull())
+            return null;
 
         Entity bestTarget = null;
         double bestScore = Double.MAX_VALUE;
 
         for (Entity entity : mc.world.getEntities()) {
-            if (!isValidTarget(entity)) continue;
+            if (!isValidTarget(entity))
+                continue;
 
             double distance = mc.player.distanceTo(entity);
-            if (distance > range.getValue()) continue;
+            if (distance > range.getValue())
+                continue;
 
             Vec3d chestPos = getChestPosition(entity);
             float[] rotation = calculateRotation(chestPos);
@@ -113,10 +129,14 @@ public class AimAssist extends Module {
     }
 
     private boolean isValidTarget(Entity entity) {
-        if (entity == null || entity == mc.player || !(entity instanceof LivingEntity livingEntity)) return false;
-        if (!livingEntity.isAlive() || livingEntity.isDead()) return false;
-        if (Teams.isTeammate(entity)) return false;
-        if (entity instanceof PlayerEntity player && FriendManager.isFriend(player.getUuid())) return false;
+        if (entity == null || entity == mc.player || !(entity instanceof LivingEntity livingEntity))
+            return false;
+        if (!livingEntity.isAlive() || livingEntity.isDead())
+            return false;
+        if (Teams.isTeammate(entity))
+            return false;
+        if (entity instanceof PlayerEntity player && FriendManager.isFriend(player.getUuid()))
+            return false;
 
         return entity instanceof PlayerEntity ? targetPlayers.getValue() : targetMobs.getValue();
     }
@@ -130,7 +150,7 @@ public class AimAssist extends Module {
         double distance = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
         float yaw = (float) Math.toDegrees(Math.atan2(diff.z, diff.x)) - 90.0f;
         float pitch = (float) -Math.toDegrees(Math.atan2(diff.y, distance));
-        return new float[]{MathHelper.wrapDegrees(yaw), MathHelper.clamp(pitch, -89.0f, 89.0f)};
+        return new float[] { MathHelper.wrapDegrees(yaw), MathHelper.clamp(pitch, -89.0f, 89.0f) };
     }
 
     private double getFOVDistance(float targetYaw, float targetPitch) {
@@ -138,7 +158,6 @@ public class AimAssist extends Module {
         float pitchDiff = targetPitch - mc.player.getPitch();
         return Math.sqrt(yawDiff * yawDiff + pitchDiff * pitchDiff);
     }
-
 
     private void applySmoothAiming(float targetYaw, float targetPitch) {
         long currentTime = System.currentTimeMillis();
@@ -151,7 +170,8 @@ public class AimAssist extends Module {
         float deltaTime = (currentTime - lastUpdateTime) / 1000.0f;
         lastUpdateTime = currentTime;
 
-        if (deltaTime < 0.001f || deltaTime > 0.1f) return;
+        if (deltaTime < 0.001f || deltaTime > 0.1f)
+            return;
         deltaTime *= randomFloat(0.9f, 1.1f);
 
         updateBaseSpeed();
@@ -163,7 +183,8 @@ public class AimAssist extends Module {
         float pitchDiff = targetPitch - currentPitch;
 
         float distance = (float) Math.hypot(yawDiff, pitchDiff);
-        if (distance < 0.3f) return;
+        if (distance < 0.3f)
+            return;
 
         float t = Math.min(distance / 10f, 1f);
         float eased = easeOutCubic(t);
@@ -175,7 +196,6 @@ public class AimAssist extends Module {
         mc.player.setYaw(newYaw);
         mc.player.setPitch(MathHelper.clamp(newPitch, -89f, 89f));
     }
-
 
     private float easeOutCubic(float t) {
         return 1f - (float) Math.pow(1f - t, 3);
@@ -197,10 +217,11 @@ public class AimAssist extends Module {
         return min + (float) Math.random() * (max - min);
     }
 
-
     private boolean isHoldingWeapon() {
-        if (mc.player == null) return false;
-        if (mc.player.getMainHandStack().isEmpty()) return false;
+        if (mc.player == null)
+            return false;
+        if (mc.player.getMainHandStack().isEmpty())
+            return false;
         Item heldItem = mc.player.getMainHandStack().getItem();
         return heldItem instanceof SwordItem || heldItem instanceof AxeItem;
     }
