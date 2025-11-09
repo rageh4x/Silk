@@ -26,6 +26,11 @@ public class DraggableComponent {
         if (mc.mouse == null || mc.getWindow() == null)
             return;
 
+        if (mc.currentScreen == null) {
+            dragging = false;
+            return;
+        }
+
         double mouseX = mc.mouse.getX() * mc.getWindow().getScaledWidth() / (double) mc.getWindow().getWidth();
         double mouseY = mc.mouse.getY() * mc.getWindow().getScaledHeight() / (double) mc.getWindow().getHeight();
 
