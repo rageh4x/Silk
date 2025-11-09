@@ -4,6 +4,7 @@ import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.gui.newgui.components.CategoryPanel;
 import cc.silk.gui.newgui.components.ConfigPanel;
+import cc.silk.gui.FriendsScreen;
 import cc.silk.utils.render.nanovg.NanoVGRenderer;
 import cc.silk.utils.render.GuiGlowHelper;
 import net.minecraft.client.gui.DrawContext;
@@ -34,9 +35,21 @@ public class NewClickGUI extends Screen {
     private static final java.awt.Color SEARCH_TEXT = new java.awt.Color(240, 240, 245, 255);
     private static final java.awt.Color SEARCH_PLACEHOLDER = new java.awt.Color(130, 130, 140, 255);
 
+    private static final int FRIENDS_BUTTON_SIZE = 35;
+    private float friendsButtonX = 0;
+    private float friendsButtonY = 0;
+    private static int contactIconImage = -1;
+
     public NewClickGUI() {
         super(Text.literal("ClickGUI"));
         initPanels();
+        loadContactIcon();
+    }
+
+    private void loadContactIcon() {
+        if (contactIconImage == -1) {
+            contactIconImage = NanoVGRenderer.loadImage("assets/silk/imgs/contact.png");
+        }
     }
 
     private void initPanels() {
@@ -120,6 +133,7 @@ public class NewClickGUI extends Screen {
         NanoVGRenderer.translate(-centerX, -centerY);
 
         renderSearchBar(alpha);
+        renderFriendsButton(alpha);
 
         for (CategoryPanel panel : panels) {
             if (panel != draggedPanel) {
@@ -185,6 +199,32 @@ public class NewClickGUI extends Screen {
 
                 break;
             }
+        }
+    }
+
+    private void renderFriendsButton(float alpha) {
+        friendsButtonX = 20;
+        friendsButtonY = height - FRIENDS_BUTTON_SIZE - 20;
+
+        int bgAlpha = (int) (255 * alpha);
+        Color bgColor = new Color(SEARCH_BG.getRed(), SEARCH_BG.getGreen(), SEARCH_BG.getBlue(), bgAlpha);
+
+        Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
+        Color borderColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
+                (int) (100 * alpha));
+
+        float cornerRadius = 6f;
+        NanoVGRenderer.drawRoundedRect(friendsButtonX, friendsButtonY, FRIENDS_BUTTON_SIZE, FRIENDS_BUTTON_SIZE,
+                cornerRadius, bgColor);
+        NanoVGRenderer.drawRoundedRectOutline(friendsButtonX, friendsButtonY, FRIENDS_BUTTON_SIZE, FRIENDS_BUTTON_SIZE,
+                cornerRadius, 1f, borderColor);
+
+        if (contactIconImage != -1) {
+            float iconPadding = 5f;
+            float iconSize = FRIENDS_BUTTON_SIZE - (iconPadding * 2);
+            Color tint = new Color(255, 255, 255, bgAlpha);
+            NanoVGRenderer.drawImage(contactIconImage, friendsButtonX + iconPadding, friendsButtonY + iconPadding,
+                    iconSize, iconSize, tint);
         }
     }
 
@@ -272,6 +312,14 @@ public class NewClickGUI extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && mouseX >= friendsButtonX && mouseX <= friendsButtonX + FRIENDS_BUTTON_SIZE &&
+                mouseY >= friendsButtonY && mouseY <= friendsButtonY + FRIENDS_BUTTON_SIZE) {
+            if (client != null) {
+                client.setScreen(new FriendsScreen());
+            }
+            return true;
+        }
+
         for (CategoryPanel panel : panels) {
             if (panel.hasActiveSettingsPanel()) {
                 if (panel.getSettingsPanel().mouseClicked(mouseX, mouseY, button)) {
@@ -311,7 +359,7 @@ public class NewClickGUI extends Screen {
         if (configPanel != null && configPanel.charTyped(chr, modifiers)) {
             return true;
         }
-        
+
         for (CategoryPanel panel : panels) {
             if (panel.hasActiveSettingsPanel()) {
                 if (panel.getSettingsPanel().charTyped(chr, modifiers)) {
@@ -449,6 +497,12 @@ public class NewClickGUI extends Screen {
             GuiGlowHelper.drawGuiGlow(context, transformedX, transformedY, transformedWidth, transformedHeight,
                     6f * scale);
         }
+
+        float transformedFriendsX = (friendsButtonX - centerX) * scale + centerX;
+        float transformedFriendsY = (friendsButtonY - centerY) * scale + centerY;
+        float transformedFriendsSize = FRIENDS_BUTTON_SIZE * scale;
+        GuiGlowHelper.drawGuiGlow(context, transformedFriendsX, transformedFriendsY, transformedFriendsSize,
+                transformedFriendsSize, 6f * scale);
     }
 
     @Override
