@@ -96,7 +96,8 @@ public class Notifications extends Module {
         };
 
         Color bgColor = new Color(25, 25, 30, (int) (200 * alpha));
-        NanoVGRenderer.drawRoundedRect(x, y, NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT, CORNER_RADIUS, bgColor);
+        Color shadowColor = new Color(0, 0, 0, (int) (80 * alpha));
+        NanoVGRenderer.drawRoundedRectWithShadow(x, y, NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT, CORNER_RADIUS, bgColor, shadowColor, 12f, 2f);
 
         float iconCenterX = x + 18;
         float iconCenterY = y + NOTIFICATION_HEIGHT / 2f;

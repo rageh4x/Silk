@@ -162,5 +162,50 @@ public class NanoVGDrawing {
             nvgRestore(vg);
         }
     }
+
+    public static void drawRoundedRectWithShadow(float x, float y, float width, float height, float radius, Color color, Color shadowColor, float shadowBlur, float shadowSpread) {
+        if (!NanoVGFrameManager.isInFrame() || !NanoVGContext.isValid()) {
+            return;
+        }
+
+        long vg = NanoVGContext.getHandle();
+        nvgSave(vg);
+        try (MemoryStack stack = stackPush()) {
+            NVGColor shadowNvgColor = NVGColor.malloc(stack);
+            shadowNvgColor.r(shadowColor.getRed() * INV_255);
+            shadowNvgColor.g(shadowColor.getGreen() * INV_255);
+            shadowNvgColor.b(shadowColor.getBlue() * INV_255);
+            shadowNvgColor.a(shadowColor.getAlpha() * INV_255);
+
+            NVGColor transparentColor = NVGColor.malloc(stack);
+            transparentColor.r(0);
+            transparentColor.g(0);
+            transparentColor.b(0);
+            transparentColor.a(0);
+
+            NVGPaint shadowPaint = nvgBoxGradient(vg, x, y + shadowSpread, width, height, 
+                radius, shadowBlur, shadowNvgColor, transparentColor, NVGPaint.malloc(stack));
+
+            nvgBeginPath(vg);
+            nvgRect(vg, x - shadowBlur, y - shadowBlur, width + shadowBlur * 2, height + shadowBlur * 2 + shadowSpread);
+            nvgRoundedRect(vg, x, y, width, height, radius);
+            nvgPathWinding(vg, NVG_HOLE);
+            nvgFillPaint(vg, shadowPaint);
+            nvgFill(vg);
+
+            NVGColor nvgColor = NVGColor.malloc(stack);
+            nvgColor.r(color.getRed() * INV_255);
+            nvgColor.g(color.getGreen() * INV_255);
+            nvgColor.b(color.getBlue() * INV_255);
+            nvgColor.a(color.getAlpha() * INV_255);
+
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, x, y, width, height, radius);
+            nvgFillColor(vg, nvgColor);
+            nvgFill(vg);
+        } finally {
+            nvgRestore(vg);
+        }
+    }
 }
 

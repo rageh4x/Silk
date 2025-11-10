@@ -54,6 +54,10 @@ public class NanoVGRenderer {
         NanoVGDrawing.drawLine(x1, y1, x2, y2, strokeWidth, color);
     }
 
+    public static void drawRoundedRectWithShadow(float x, float y, float width, float height, float radius, Color color, Color shadowColor, float shadowBlur, float shadowSpread) {
+        NanoVGDrawing.drawRoundedRectWithShadow(x, y, width, height, radius, color, shadowColor, shadowBlur, shadowSpread);
+    }
+
     public static void drawText(String text, float x, float y, float size, Color color, boolean bold) {
         NanoVGText.drawText(text, x, y, size, color, bold);
     }
