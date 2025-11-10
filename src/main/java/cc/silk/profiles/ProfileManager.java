@@ -92,6 +92,14 @@ public final class ProfileManager {
             switch (setting) {
                 case BooleanSetting booleanSetting -> booleanSetting.setValue(element.getAsBoolean());
                 case NumberSetting numberSetting -> numberSetting.setValue(element.getAsDouble());
+                case RangeSetting rangeSetting -> {
+                    if (element.isJsonObject()) {
+                        JsonObject rangeObj = element.getAsJsonObject();
+                        double minValue = rangeObj.has("min") ? rangeObj.get("min").getAsDouble() : rangeSetting.getMinValue();
+                        double maxValue = rangeObj.has("max") ? rangeObj.get("max").getAsDouble() : rangeSetting.getMaxValue();
+                        rangeSetting.setRange(minValue, maxValue);
+                    }
+                }
                 case ModeSetting modeSetting -> {
                     String mode = element.getAsString();
                     if (mode != null) modeSetting.setMode(mode);
@@ -194,6 +202,12 @@ public final class ProfileManager {
             switch (setting) {
                 case BooleanSetting booleanSetting -> moduleJson.addProperty(name, booleanSetting.getValue());
                 case NumberSetting numberSetting -> moduleJson.addProperty(name, numberSetting.getValue());
+                case RangeSetting rangeSetting -> {
+                    JsonObject rangeObj = new JsonObject();
+                    rangeObj.addProperty("min", rangeSetting.getMinValue());
+                    rangeObj.addProperty("max", rangeSetting.getMaxValue());
+                    moduleJson.add(name, rangeObj);
+                }
                 case ModeSetting modeSetting -> {
                     String mode = modeSetting.getMode();
                     if (mode != null) moduleJson.addProperty(name, mode);
@@ -231,6 +245,7 @@ public final class ProfileManager {
         try {
             if (setting instanceof BooleanSetting booleanSetting) booleanSetting.setValue(false);
             else if (setting instanceof NumberSetting numberSetting) numberSetting.setValue(numberSetting.getMin());
+            else if (setting instanceof RangeSetting rangeSetting) rangeSetting.setRange(rangeSetting.getMin(), rangeSetting.getMax());
             else if (setting instanceof ModeSetting modeSetting && modeSetting.getModes() != null && !modeSetting.getModes().isEmpty())
                 modeSetting.setMode(modeSetting.getModes().getFirst());
         } catch (Exception ignored) {
