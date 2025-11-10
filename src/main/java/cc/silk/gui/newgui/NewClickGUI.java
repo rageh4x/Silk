@@ -5,6 +5,7 @@ import cc.silk.module.Module;
 import cc.silk.gui.newgui.components.CategoryPanel;
 import cc.silk.gui.newgui.components.ConfigPanel;
 import cc.silk.gui.FriendsScreen;
+import cc.silk.gui.effects.SnowEffect;
 import cc.silk.utils.render.nanovg.NanoVGRenderer;
 import cc.silk.utils.render.GuiGlowHelper;
 import net.minecraft.client.gui.DrawContext;
@@ -24,6 +25,8 @@ public class NewClickGUI extends Screen {
     private float animationProgress = 0f;
     private boolean closing = false;
     private long lastFrameTime = System.currentTimeMillis();
+    
+    private final SnowEffect snowEffect = new SnowEffect();
 
     private String searchQuery = "";
     private boolean searchFocused = false;
@@ -126,6 +129,11 @@ public class NewClickGUI extends Screen {
         boolean configDragging = configPanel != null && configPanel.isDragging();
 
         NanoVGRenderer.beginFrame();
+
+        if (cc.silk.module.modules.client.ClientSettingsModule.isSnowEffectEnabled()) {
+            snowEffect.update(deltaTime, width, height);
+            snowEffect.render(alpha);
+        }
 
         NanoVGRenderer.save();
         NanoVGRenderer.translate(centerX, centerY);

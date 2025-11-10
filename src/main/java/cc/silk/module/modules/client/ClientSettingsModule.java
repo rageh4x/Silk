@@ -31,13 +31,14 @@ public class ClientSettingsModule extends Module {
     public static final NumberSetting bloomRadius = new NumberSetting("Bloom Radius", 5, 30, 15, 1);
     
     public static final BooleanSetting autoFocusSearch = new BooleanSetting("Auto Focus Search", true);
+    public static final BooleanSetting snowEffect = new BooleanSetting("Snow Effect", false);
 
     public ClientSettingsModule() {
         super("ClientSettings", "Customize GUI appearance", 0, Category.CLIENT);
         this.addSettings(accentColor, fontStyle, scrollableCategories, guiTransparency, guiBlur, moduleDescriptions,
                 toggleWidth, toggleHeight, sliderHeight, sliderHandleSize,
                 guiGlow, glowColor, glowIntensity, glowThickness, bloomRadius,
-                autoFocusSearch);
+                autoFocusSearch, snowEffect);
         this.setEnabled(true);
     }
 
@@ -103,5 +104,9 @@ public class ClientSettingsModule extends Module {
     
     public static boolean isAutoFocusSearchEnabled() {
         return autoFocusSearch.getValue();
+    }
+    
+    public static boolean isSnowEffectEnabled() {
+        return snowEffect.getValue();
     }
 }
