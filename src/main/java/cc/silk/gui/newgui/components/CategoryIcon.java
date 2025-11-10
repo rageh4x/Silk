@@ -16,12 +16,12 @@ public class CategoryIcon {
         if (initialized)
             return;
 
-        ICON_MAP.put(Category.COMBAT, NanoVGRenderer.loadImage("assets/silk/imgs/sword.png"));
-        ICON_MAP.put(Category.PLAYER, NanoVGRenderer.loadImage("assets/silk/imgs/user.png"));
-        ICON_MAP.put(Category.MOVEMENT, NanoVGRenderer.loadImage("assets/silk/imgs/accessibility.png"));
-        ICON_MAP.put(Category.MISC, NanoVGRenderer.loadImage("assets/silk/imgs/harddrive.png"));
-        ICON_MAP.put(Category.RENDER, NanoVGRenderer.loadImage("assets/silk/imgs/eye.png"));
-        ICON_MAP.put(Category.CLIENT, NanoVGRenderer.loadImage("assets/silk/imgs/computer.png"));
+        ICON_MAP.put(Category.COMBAT, NanoVGRenderer.loadImage("assets/silk/textures/icons/sword.png"));
+        ICON_MAP.put(Category.PLAYER, NanoVGRenderer.loadImage("assets/silk/textures/icons/user.png"));
+        ICON_MAP.put(Category.MOVEMENT, NanoVGRenderer.loadImage("assets/silk/textures/icons/accessibility.png"));
+        ICON_MAP.put(Category.MISC, NanoVGRenderer.loadImage("assets/silk/textures/icons/harddrive.png"));
+        ICON_MAP.put(Category.RENDER, NanoVGRenderer.loadImage("assets/silk/textures/icons/eye.png"));
+        ICON_MAP.put(Category.CLIENT, NanoVGRenderer.loadImage("assets/silk/textures/icons/computer.png"));
 
         initialized = true;
     }

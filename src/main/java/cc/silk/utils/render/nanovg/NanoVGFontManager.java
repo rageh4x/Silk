@@ -32,14 +32,14 @@ public class NanoVGFontManager {
     public static void loadFonts() {
         NanoVGContext.assertValid();
         try {
-            regularFont = loadFont("inter", "silk/fonts/Inter.ttf");
-            boldFont = loadFont("inter-bold", "silk/fonts/Inter.ttf");
-            jetbrainsFont = loadFont("jetbrains", "silk/fonts/JetbrainsMono.ttf");
-            poppinsFont = loadFont("poppins", "silk/fonts/Poppins-Medium.ttf");
-            monacoFont = loadFont("monaco", "silk/fonts/monaco.ttf");
+            regularFont = loadFont("inter", "assets/silk/fonts/Inter.ttf");
+            boldFont = loadFont("inter-bold", "assets/silk/fonts/Inter.ttf");
+            jetbrainsFont = loadFont("jetbrains", "assets/silk/fonts/JetbrainsMono.ttf");
+            poppinsFont = loadFont("poppins", "assets/silk/fonts/Poppins-Medium.ttf");
+            monacoFont = loadFont("monaco", "assets/silk/fonts/monaco.ttf");
 
             try {
-                iconFont = loadFont("fa-solid", "silk/fonts/font awesome 7 freesolid900.otf");
+                iconFont = loadFont("fa-solid", "assets/silk/fonts/font awesome 7 freesolid900.otf");
             } catch (Exception e) {
                 iconFont = regularFont;
             }

@@ -32,7 +32,7 @@ public class GlowRenderer {
         if (initialized)
             return;
 
-        int shaderProgram = ShaderManager.loadShaderProgram(SHADER_NAME, "shaders/glow.vsh", "shaders/glow.fsh");
+        int shaderProgram = ShaderManager.loadShaderProgram(SHADER_NAME, "shaders/post/glow.vsh", "shaders/post/glow.fsh");
         if (shaderProgram == 0) {
             System.err.println("Failed to load glow shader program");
             return;

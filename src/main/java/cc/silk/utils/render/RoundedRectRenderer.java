@@ -30,7 +30,7 @@ public class RoundedRectRenderer {
     public static void init() {
         if (initialized) return;
 
-        ShaderManager.loadShaderProgram(SHADER_NAME, "shaders/roundedrect.vsh", "shaders/roundedrect.fsh");
+        ShaderManager.loadShaderProgram(SHADER_NAME, "shaders/gui/roundedrect.vsh", "shaders/gui/roundedrect.fsh");
 
         vao = GL30.glGenVertexArrays();
         vbo = GL20.glGenBuffers();

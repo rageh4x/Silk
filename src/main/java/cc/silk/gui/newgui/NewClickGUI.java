@@ -48,7 +48,7 @@ public class NewClickGUI extends Screen {
 
     private void loadContactIcon() {
         if (contactIconImage == -1) {
-            contactIconImage = NanoVGRenderer.loadImage("assets/silk/imgs/contact.png");
+            contactIconImage = NanoVGRenderer.loadImage("assets/silk/textures/icons/contact.png");
         }
     }
 
