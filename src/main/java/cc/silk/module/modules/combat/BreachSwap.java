@@ -23,6 +23,7 @@ public final class BreachSwap extends Module {
 
     private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 10, 100, 30, 1);
     private final BooleanSetting onlyOnGround = new BooleanSetting("Only on ground", true);
+    private final BooleanSetting silentSwap = new BooleanSetting("Silent Swap", true);
 
     private int originalSlot = -1;
     private boolean shouldSwitchBack = false;
@@ -31,37 +32,55 @@ public final class BreachSwap extends Module {
 
     public BreachSwap() {
         super("Breach Swap", "Switches to a Breach enchanted mace when attacking", Category.COMBAT);
-        addSettings(switchDelay, onlyOnGround);
+        addSettings(switchDelay, onlyOnGround, silentSwap);
     }
 
     @EventHandler
     public void onAttack(AttackEvent event) {
-        if (isNull() || isSwappingAttack) return;
-        if (onlyOnGround.getValue() && !mc.player.isOnGround()) return;
-        if (ShieldBreaker.breakingShield) return;
-        if (!(event.getTarget() instanceof LivingEntity)) return;
+        if (isNull() || isSwappingAttack)
+            return;
+        if (onlyOnGround.getValue() && !mc.player.isOnGround())
+            return;
+        if (ShieldBreaker.breakingShield)
+            return;
+        if (!(event.getTarget() instanceof LivingEntity))
+            return;
 
         int maceSlot = findBreachMaceSlot();
-        if (maceSlot == -1) return;
+        if (maceSlot == -1)
+            return;
 
         if (originalSlot == -1) {
             originalSlot = mc.player.getInventory().selectedSlot;
         }
 
-        mc.player.getInventory().selectedSlot = maceSlot;
+        if (silentSwap.getValue()) {
+            int prevSlot = mc.player.getInventory().selectedSlot;
+            mc.player.getInventory().selectedSlot = maceSlot;
 
-        isSwappingAttack = true;
-        ((MinecraftClientAccessor) mc).invokeDoAttack();
-        isSwappingAttack = false;
+            isSwappingAttack = true;
+            ((MinecraftClientAccessor) mc).invokeDoAttack();
+            isSwappingAttack = false;
 
-        shouldSwitchBack = true;
-        switchTime = System.currentTimeMillis();
+            mc.player.getInventory().selectedSlot = prevSlot;
+        } else {
+            mc.player.getInventory().selectedSlot = maceSlot;
+
+            isSwappingAttack = true;
+            ((MinecraftClientAccessor) mc).invokeDoAttack();
+            isSwappingAttack = false;
+
+            shouldSwitchBack = true;
+            switchTime = System.currentTimeMillis();
+        }
     }
 
     @EventHandler
     public void onTick(TickEvent event) {
-        if (isNull()) return;
-        if (ShieldBreaker.breakingShield) return;
+        if (isNull())
+            return;
+        if (ShieldBreaker.breakingShield)
+            return;
 
         if (shouldSwitchBack && System.currentTimeMillis() - switchTime >= switchDelay.getValue()) {
             if (originalSlot != -1) {
@@ -76,13 +95,25 @@ public final class BreachSwap extends Module {
             if (hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity) {
                 int maceSlot = findBreachMaceSlot();
                 if (maceSlot != -1) {
-                    originalSlot = mc.player.getInventory().selectedSlot;
-                    mc.player.getInventory().selectedSlot = maceSlot;
+                    if (originalSlot == -1) {
+                        originalSlot = mc.player.getInventory().selectedSlot;
+                    }
 
-                    ((MinecraftClientAccessor) mc).invokeDoAttack();
+                    if (silentSwap.getValue()) {
+                        int prevSlot = mc.player.getInventory().selectedSlot;
+                        mc.player.getInventory().selectedSlot = maceSlot;
 
-                    switchTime = System.currentTimeMillis();
-                    shouldSwitchBack = true;
+                        ((MinecraftClientAccessor) mc).invokeDoAttack();
+
+                        mc.player.getInventory().selectedSlot = prevSlot;
+                    } else {
+                        mc.player.getInventory().selectedSlot = maceSlot;
+
+                        ((MinecraftClientAccessor) mc).invokeDoAttack();
+
+                        switchTime = System.currentTimeMillis();
+                        shouldSwitchBack = true;
+                    }
                 }
             }
         }
@@ -100,7 +131,8 @@ public final class BreachSwap extends Module {
     }
 
     private boolean hasBreach(ItemStack stack) {
-        RegistryKey<net.minecraft.enchantment.Enchantment> breachKey = RegistryKey.of(RegistryKeys.ENCHANTMENT, Identifier.of("minecraft", "breach"));
+        RegistryKey<net.minecraft.enchantment.Enchantment> breachKey = RegistryKey.of(RegistryKeys.ENCHANTMENT,
+                Identifier.of("minecraft", "breach"));
         return EnchantmentUtil.hasEnchantment(stack, mc.world, breachKey);
     }
 
