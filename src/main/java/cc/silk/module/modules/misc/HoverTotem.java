@@ -1,6 +1,8 @@
 package cc.silk.module.modules.misc;
 
+import cc.silk.event.impl.network.PacketEvent;
 import cc.silk.event.impl.player.TickEvent;
+import cc.silk.event.types.TransferOrder;
 import cc.silk.mixin.HandledScreenAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
@@ -10,8 +12,10 @@ import cc.silk.module.setting.RangeSetting;
 import cc.silk.utils.math.TimerUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
@@ -33,6 +37,8 @@ public final class HoverTotem extends Module {
     private final List<Long> recentIntervals = new ArrayList<>();
     private final List<Double> recentStandardDeviations = new ArrayList<>();
     private int swapCount = 0;
+    private boolean preventClose = false;
+    private boolean needsTotemSetup = false;
 
     public HoverTotem() {
         super("Hover Totem", "Puts a totem in your offhand and hotbar once hovered", -1, Category.MISC);
@@ -41,29 +47,94 @@ public final class HoverTotem extends Module {
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
-        if (isNull()) return;
-
+        if (isNull())
+            return;
 
         totemHandler();
+
+        if (preventClose && needsTotemSetup && hasTotemSetup() && mc.currentScreen instanceof InventoryScreen) {
+            preventClose = false;
+            needsTotemSetup = false;
+            mc.player.closeHandledScreen();
+        }
+    }
+
+    @EventHandler
+    private void onPacketEvent(PacketEvent event) {
+        if (isNull())
+            return;
+
+        if (event.getOrder() == TransferOrder.RECEIVE) {
+            if (event.getPacket() instanceof EntityStatusS2CPacket packet) {
+                if (packet.getStatus() == 35) {
+                    Entity entity = packet.getEntity(mc.world);
+                    if (entity != null && entity.equals(mc.player)) {
+                        preventClose = true;
+                        needsTotemSetup = true;
+
+                        mc.execute(() -> {
+                            if (mc.currentScreen == null) {
+                                mc.setScreen(new InventoryScreen(mc.player));
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        if (event.getOrder() == TransferOrder.SEND) {
+            if (event.getPacket().getClass().getSimpleName().contains("CloseHandledScreen")) {
+                if (preventClose) {
+                    if (!hasTotemSetup()) {
+                        event.setCancelled(true);
+                        mc.execute(() -> {
+                            if (!(mc.currentScreen instanceof InventoryScreen)) {
+                                mc.setScreen(new InventoryScreen(mc.player));
+                            }
+                        });
+                    } else {
+                        preventClose = false;
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean hasTotemSetup() {
+        if (isNull())
+            return true;
+
+        ItemStack offhandItem = mc.player.getOffHandStack();
+        boolean hasOffhandTotem = offhandItem.getItem() == Items.TOTEM_OF_UNDYING || ignoreOffhand.getValue();
+        boolean hasHotbarTotem = hasTotemInHotbar();
+
+        return hasOffhandTotem && hasHotbarTotem;
     }
 
     private void totemHandler() {
-        if (isNull()) return;
-        if (!(mc.currentScreen instanceof InventoryScreen inv)) return;
+        if (isNull())
+            return;
+        if (!(mc.currentScreen instanceof InventoryScreen inv))
+            return;
 
         Slot focusedSlot = ((HandledScreenAccessor) inv).getFocusedSlot();
-        if (focusedSlot == null) return;
+        if (focusedSlot == null)
+            return;
 
         ItemStack focusedItemStack = focusedSlot.getStack();
-        if (focusedItemStack.getItem() != Items.TOTEM_OF_UNDYING) return;
+        if (focusedItemStack.getItem() != Items.TOTEM_OF_UNDYING)
+            return;
 
-        if (focusedSlot.getIndex() < 9) return;
+        if (focusedSlot.getIndex() < 9)
+            return;
 
         ItemStack offhandItem = mc.player.getOffHandStack();
-        boolean needsOffhand = offhandItem.isEmpty() || (offhandItem.getItem() != Items.TOTEM_OF_UNDYING && !ignoreOffhand.getValue());
+        boolean needsOffhand = offhandItem.isEmpty()
+                || (offhandItem.getItem() != Items.TOTEM_OF_UNDYING && !ignoreOffhand.getValue());
         boolean needsHotbar = !hasTotemInHotbar();
 
-        if (!needsOffhand && !needsHotbar) return;
+        if (!needsOffhand && !needsHotbar)
+            return;
 
         long delay = generateNormalModeDelay();
 
@@ -77,22 +148,21 @@ public final class HoverTotem extends Module {
                         focusedSlot.getIndex(),
                         40,
                         SlotActionType.SWAP,
-                        mc.player
-                );
+                        mc.player);
             } else {
                 mc.interactionManager.clickSlot(
                         mc.player.currentScreenHandler.syncId,
                         focusedSlot.getIndex(),
                         0,
                         SlotActionType.QUICK_MOVE,
-                        mc.player
-                );
+                        mc.player);
             }
         }
     }
 
     private boolean hasTotemInHotbar() {
-        if (isNull()) return false;
+        if (isNull())
+            return false;
         return mc.player.getInventory().main.subList(0, 9).stream()
                 .anyMatch(stack -> stack.getItem() == Items.TOTEM_OF_UNDYING);
     }
@@ -103,7 +173,7 @@ public final class HoverTotem extends Module {
         long baseDelay = normalBaseDelay.getValueInt();
         int variation = normalVariation.getValueInt();
         double sdThreshold = normalSDThreshold.getValue();
-// what were these fuck ass comments bro :Sob:
+        // what were these fuck ass comments bro :Sob:
         long noise = (long) ((random.nextDouble() - 0.5) * variation * 2);
         noise += (System.currentTimeMillis() % 97) - 48;
 
@@ -121,12 +191,12 @@ public final class HoverTotem extends Module {
         long finalDelay = Math.max(80, Math.min(2000, baseDelay + noise));
 
         recentIntervals.add(finalDelay);
-        if (recentIntervals.size() > 10) recentIntervals.removeFirst();
+        if (recentIntervals.size() > 10)
+            recentIntervals.removeFirst();
         updateStandardDeviationTracking();
 
         return finalDelay;
     }
-
 
     private double calculateDoubleAverage(List<Long> list) {
         return list.stream().mapToDouble(Long::doubleValue).average().orElse(0);
@@ -137,7 +207,8 @@ public final class HoverTotem extends Module {
     }
 
     private void updateStandardDeviationTracking() {
-        if (recentIntervals.size() < 2) return;
+        if (recentIntervals.size() < 2)
+            return;
 
         double mean = calculateDoubleAverage(recentIntervals);
         double variance = 0.0;
@@ -148,7 +219,8 @@ public final class HoverTotem extends Module {
         double stdDev = Math.sqrt(variance);
 
         recentStandardDeviations.add(stdDev);
-        if (recentStandardDeviations.size() > 10) recentStandardDeviations.removeFirst();
+        if (recentStandardDeviations.size() > 10)
+            recentStandardDeviations.removeFirst();
     }
 
     @Override
@@ -160,6 +232,8 @@ public final class HoverTotem extends Module {
     @Override
     public void onDisable() {
         timer.reset();
+        preventClose = false;
+        needsTotemSetup = false;
         super.onDisable();
     }
 }
