@@ -206,8 +206,9 @@ public class SettingsPanel {
 
         NanoVGRenderer.drawRoundedRect(currentX + PADDING, sliderY, sliderWidth, sliderHeight, sliderRadius, sliderBg);
 
-        double minPercentage = (setting.getMinValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
-        double maxPercentage = (setting.getMaxValue() - setting.getMin()) / (setting.getMax() - setting.getMin());
+        double range = setting.getMax() - setting.getMin();
+        double minPercentage = range > 0 ? (setting.getMinValue() - setting.getMin()) / range : 0;
+        double maxPercentage = range > 0 ? (setting.getMaxValue() - setting.getMin()) / range : 1;
         float minX = (float) (sliderWidth * minPercentage);
         float maxX = (float) (sliderWidth * maxPercentage);
         float fillWidth = maxX - minX;
@@ -514,12 +515,11 @@ public class SettingsPanel {
                         typingRangeSlider = (RangeSetting) setting;
                         float sliderY = settingY + 13;
                         float sliderWidth = width - PADDING * 2;
-                        double minPercentage = (((RangeSetting) setting).getMinValue()
-                                - ((RangeSetting) setting).getMin())
-                                / (((RangeSetting) setting).getMax() - ((RangeSetting) setting).getMin());
-                        double maxPercentage = (((RangeSetting) setting).getMaxValue()
-                                - ((RangeSetting) setting).getMin())
-                                / (((RangeSetting) setting).getMax() - ((RangeSetting) setting).getMin());
+                        double range = ((RangeSetting) setting).getMax() - ((RangeSetting) setting).getMin();
+                        double minPercentage = range > 0 ? (((RangeSetting) setting).getMinValue()
+                                - ((RangeSetting) setting).getMin()) / range : 0;
+                        double maxPercentage = range > 0 ? (((RangeSetting) setting).getMaxValue()
+                                - ((RangeSetting) setting).getMin()) / range : 1;
                         float minX = (float) (sliderWidth * minPercentage);
                         float maxX = (float) (sliderWidth * maxPercentage);
                         float midX = (minX + maxX) / 2f;
@@ -598,10 +598,9 @@ public class SettingsPanel {
                     RangeSetting rangeSetting = (RangeSetting) setting;
                     float sliderY = settingY + 13;
                     float sliderWidth = width - PADDING * 2;
-                    double minPercentage = (rangeSetting.getMinValue() - rangeSetting.getMin())
-                            / (rangeSetting.getMax() - rangeSetting.getMin());
-                    double maxPercentage = (rangeSetting.getMaxValue() - rangeSetting.getMin())
-                            / (rangeSetting.getMax() - rangeSetting.getMin());
+                    double range = rangeSetting.getMax() - rangeSetting.getMin();
+                    double minPercentage = range > 0 ? (rangeSetting.getMinValue() - rangeSetting.getMin()) / range : 0;
+                    double maxPercentage = range > 0 ? (rangeSetting.getMaxValue() - rangeSetting.getMin()) / range : 1;
                     float minHandleX = currentX + PADDING + (float) (sliderWidth * minPercentage);
                     float maxHandleX = currentX + PADDING + (float) (sliderWidth * maxPercentage);
 
@@ -725,7 +724,8 @@ public class SettingsPanel {
         float sliderX = currentX + PADDING;
 
         double percentage = Math.max(0, Math.min(1, (mouseX - sliderX) / sliderWidth));
-        double newValue = setting.getMin() + (setting.getMax() - setting.getMin()) * percentage;
+        double range = setting.getMax() - setting.getMin();
+        double newValue = range > 0 ? setting.getMin() + range * percentage : setting.getMin();
 
         if (updateMin) {
             setting.setMinValue(newValue);

@@ -113,8 +113,8 @@ public final class KeyCrystal extends Module {
         int minPlace = (int) placeDelay.getMinValue();
         int maxPlace = (int) placeDelay.getMaxValue();
 
-        currentBreakDelay = minBreak + random.nextInt(Math.max(1, maxBreak - minBreak));
-        currentPlaceDelay = minPlace + random.nextInt(Math.max(1, maxPlace - minPlace));
+        currentBreakDelay = minBreak == maxBreak ? minBreak : minBreak + random.nextInt(maxBreak - minBreak + 1);
+        currentPlaceDelay = minPlace == maxPlace ? minPlace : minPlace + random.nextInt(maxPlace - minPlace + 1);
     }
 
     private void processCrystalPvP() {
@@ -136,7 +136,9 @@ public final class KeyCrystal extends Module {
                     ((MinecraftClientAccessor) mc).invokeDoAttack();
 
                     breakTimer.reset();
-                    currentBreakDelay = random.nextLong((long) breakDelay.getMinValue(), (long) breakDelay.getMaxValue());
+                    long minBreak = (long) breakDelay.getMinValue();
+                    long maxBreak = (long) breakDelay.getMaxValue();
+                    currentBreakDelay = minBreak == maxBreak ? minBreak : random.nextLong(minBreak, maxBreak + 1);
                 }
                 return;
             }
@@ -155,7 +157,9 @@ public final class KeyCrystal extends Module {
                         InventoryUtil.swapToSlot(Items.END_CRYSTAL);
                         ((MinecraftClientAccessor) mc).invokeDoItemUse();
                         placeTimer.reset();
-                        currentPlaceDelay = random.nextLong((long) placeDelay.getMinValue(), (long) placeDelay.getMaxValue());
+                        long minPlace = (long) placeDelay.getMinValue();
+                        long maxPlace = (long) placeDelay.getMaxValue();
+                        currentPlaceDelay = minPlace == maxPlace ? minPlace : random.nextLong(minPlace, maxPlace + 1);
                     }
                 }
                 else if (mc.world.getBlockState(placementPos).isAir() &&
@@ -165,7 +169,9 @@ public final class KeyCrystal extends Module {
                         ((MinecraftClientAccessor) mc).invokeDoItemUse();
                         hasPlacedObsidian = true;
                         placeTimer.reset();
-                        currentPlaceDelay = random.nextLong((long) placeDelay.getMinValue(), (long) placeDelay.getMaxValue());
+                        long minPlace = (long) placeDelay.getMinValue();
+                        long maxPlace = (long) placeDelay.getMaxValue();
+                        currentPlaceDelay = minPlace == maxPlace ? minPlace : random.nextLong(minPlace, maxPlace + 1);
                     }
                 }
             }
