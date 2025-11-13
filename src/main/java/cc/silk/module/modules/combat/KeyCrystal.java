@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.player.ItemUseEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -7,7 +8,6 @@ import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.KeybindSetting;
 import cc.silk.module.setting.NumberSetting;
-import cc.silk.module.setting.RangeSetting;
 import cc.silk.utils.keybinding.KeyUtils;
 import cc.silk.utils.math.TimerUtil;
 import cc.silk.utils.mc.InventoryUtil;
@@ -22,6 +22,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
@@ -39,8 +40,10 @@ public final class KeyCrystal extends Module {
     private final NumberSetting placeChance = new NumberSetting("Place Chance (%)", 0, 100, 100, 1);
     private final NumberSetting breakChance = new NumberSetting("Break Chance (%)", 0, 100, 100, 1);
 
-    private final RangeSetting breakDelay = new RangeSetting("Break Delay (MS)", 10, 500, 50, 100, 1);
-    private final RangeSetting placeDelay = new RangeSetting("Place Delay (MS)", 10, 500, 30, 80, 1);
+    private final NumberSetting minBreakDelay = new NumberSetting("Min Break Delay (MS)", 10, 500, 50, 1);
+    private final NumberSetting maxBreakDelay = new NumberSetting("Max Break Delay (MS)", 10, 500, 100, 1);
+    private final NumberSetting minPlaceDelay = new NumberSetting("Min Place Delay (MS)", 10, 500, 30, 1);
+    private final NumberSetting maxPlaceDelay = new NumberSetting("Max Place Delay (MS)", 10, 500, 80, 1);
 
     private final TimerUtil breakTimer = new TimerUtil();
     private final TimerUtil placeTimer = new TimerUtil();
@@ -59,34 +62,34 @@ public final class KeyCrystal extends Module {
         this.addSettings(
                 crystalKeybind,
                 placeChance, breakChance, stopOnKill,
-                breakDelay, placeDelay,
-                antiSuicide, antiWeakness);
+                minBreakDelay, maxBreakDelay, minPlaceDelay, maxPlaceDelay,
+                antiSuicide, antiWeakness
+        );
 
         this.getSettings().removeIf(setting -> setting instanceof KeybindSetting && !setting.equals(crystalKeybind));
     }
 
     @EventHandler
     private void onTickEvent(TickEvent event) {
-        if (isNull() || mc.currentScreen != null)
-            return;
+        if (isNull() || mc.currentScreen != null) return;
 
+        if (minBreakDelay.getValueFloat() >= maxBreakDelay.getValueFloat())
+            minBreakDelay.setValue(maxBreakDelay.getValueFloat() - 1);
+        if (minPlaceDelay.getValueFloat() >= maxPlaceDelay.getValueFloat())
+            minPlaceDelay.setValue(maxPlaceDelay.getValueFloat() - 1);
 
         boolean currentKeyState = KeyUtils.isKeyPressed(crystalKeybind.getKeyCode());
 
-        if (currentKeyState && !keyPressed)
-            startCrystalPvP();
-        else if (!currentKeyState && keyPressed)
-            stopCrystalPvP();
+        if (currentKeyState && !keyPressed) startCrystalPvP();
+        else if (!currentKeyState && keyPressed) stopCrystalPvP();
 
         keyPressed = currentKeyState;
 
-        if (isActive)
-            processCrystalPvP();
+        if (isActive) processCrystalPvP();
     }
 
     private void startCrystalPvP() {
-        if (isActive)
-            return;
+        if (isActive) return;
         isActive = true;
         originalSlot = mc.player.getInventory().selectedSlot;
         hasPlacedObsidian = false;
@@ -94,10 +97,8 @@ public final class KeyCrystal extends Module {
     }
 
     private void stopCrystalPvP() {
-        if (!isActive)
-            return;
-        if (originalSlot != -1)
-            mc.player.getInventory().selectedSlot = originalSlot;
+        if (!isActive) return;
+        if (originalSlot != -1) mc.player.getInventory().selectedSlot = originalSlot;
         isActive = false;
         originalSlot = -1;
         hasPlacedObsidian = false;
@@ -108,20 +109,27 @@ public final class KeyCrystal extends Module {
         breakTimer.reset();
         placeTimer.reset();
 
-        int minBreak = (int) breakDelay.getMinValue();
-        int maxBreak = (int) breakDelay.getMaxValue();
-        int minPlace = (int) placeDelay.getMinValue();
-        int maxPlace = (int) placeDelay.getMaxValue();
+        int minBreak = minBreakDelay.getValueInt();
+        int maxBreak = maxBreakDelay.getValueInt();
+        int minPlace = minPlaceDelay.getValueInt();
+        int maxPlace = maxPlaceDelay.getValueInt();
 
-        currentBreakDelay = minBreak == maxBreak ? minBreak : minBreak + random.nextInt(maxBreak - minBreak + 1);
-        currentPlaceDelay = minPlace == maxPlace ? minPlace : minPlace + random.nextInt(maxPlace - minPlace + 1);
+        if (minBreak >= maxBreak) {
+            maxBreak = minBreak + 1;
+            maxBreakDelay.setValue(maxBreak);
+        }
+        if (minPlace >= maxPlace) {
+            maxPlace = minPlace + 1;
+            maxPlaceDelay.setValue(maxPlace);
+        }
+
+        currentBreakDelay = minBreak + random.nextInt(maxBreak - minBreak);
+        currentPlaceDelay = minPlace + random.nextInt(maxPlace - minPlace);
     }
 
     private void processCrystalPvP() {
-        if (antiSuicide.getValue() && !mc.player.isOnGround())
-            return;
-        if (stopOnKill.getValue() && isDeadPlayerNearby())
-            return;
+        if (antiSuicide.getValue() && !mc.player.isOnGround()) return;
+        if (stopOnKill.getValue() && isDeadPlayerNearby()) return;
 
         int randomInt = random.nextInt(100) + 1;
 
@@ -135,43 +143,36 @@ public final class KeyCrystal extends Module {
 
                     ((MinecraftClientAccessor) mc).invokeDoAttack();
 
+
                     breakTimer.reset();
-                    long minBreak = (long) breakDelay.getMinValue();
-                    long maxBreak = (long) breakDelay.getMaxValue();
-                    currentBreakDelay = minBreak == maxBreak ? minBreak : random.nextLong(minBreak, maxBreak + 1);
+                    currentBreakDelay = random.nextLong(minBreakDelay.getValueInt(), maxBreakDelay.getValueInt());
                 }
                 return;
             }
         }
 
+
         if (mc.crosshairTarget instanceof BlockHitResult blockHit && placeTimer.hasElapsedTime(currentPlaceDelay)) {
             BlockPos targetBlock = blockHit.getBlockPos();
             BlockPos placementPos = targetBlock.offset(blockHit.getSide());
 
-            if (!mc.world.getBlockState(targetBlock).isAir() &&
-                    mc.world.getBlockState(targetBlock).isSolidBlock(mc.world, targetBlock)) {
-
-                if (isObsidianOrBedrock(targetBlock) && isValidCrystalPosition(placementPos)
-                        && randomInt <= placeChance.getValueInt()) {
-                    if (hasItemInHotbar(Items.END_CRYSTAL)) {
-                        InventoryUtil.swapToSlot(Items.END_CRYSTAL);
-                        ((MinecraftClientAccessor) mc).invokeDoItemUse();
-                        placeTimer.reset();
-                        long minPlace = (long) placeDelay.getMinValue();
-                        long maxPlace = (long) placeDelay.getMaxValue();
-                        currentPlaceDelay = minPlace == maxPlace ? minPlace : random.nextLong(minPlace, maxPlace + 1);
-                    }
+            if (isObsidianOrBedrock(targetBlock) && isValidCrystalPosition(placementPos)
+                    && randomInt <= placeChance.getValueInt()) {
+                if (hasItemInHotbar(Items.END_CRYSTAL)) {
+                    InventoryUtil.swapToSlot(Items.END_CRYSTAL);
+                    ((MinecraftClientAccessor) mc).invokeDoItemUse();
+                    placeTimer.reset();
+                    currentPlaceDelay = random.nextLong(minPlaceDelay.getValueInt(), maxPlaceDelay.getValueInt());
                 }
-                else if (mc.world.getBlockState(placementPos).isAir() &&
-                        isValidObsidianPosition(placementPos) && !hasPlacedObsidian) {
+            } else if (isValidPosition(placementPos) && !hasPlacedObsidian) {
+                BlockPos below = placementPos.down();
+                if (!mc.world.getBlockState(below).isAir()) {
                     if (hasItemInHotbar(Items.OBSIDIAN)) {
                         InventoryUtil.swapToSlot(Items.OBSIDIAN);
                         ((MinecraftClientAccessor) mc).invokeDoItemUse();
                         hasPlacedObsidian = true;
                         placeTimer.reset();
-                        long minPlace = (long) placeDelay.getMinValue();
-                        long maxPlace = (long) placeDelay.getMaxValue();
-                        currentPlaceDelay = minPlace == maxPlace ? minPlace : random.nextLong(minPlace, maxPlace + 1);
+                        currentPlaceDelay = random.nextLong(minPlaceDelay.getValueInt(), maxPlaceDelay.getValueInt());
                     }
                 }
             }
@@ -181,44 +182,31 @@ public final class KeyCrystal extends Module {
     private boolean hasItemInHotbar(Item item) {
         for (int i = 0; i < 9; i++) {
             var stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty() && stack.getItem() == item)
-                return true;
+            if (!stack.isEmpty() && stack.getItem() == item) return true;
         }
         return false;
     }
 
-    private boolean isValidObsidianPosition(BlockPos pos) {
-        if (mc.world == null)
-            return false;
-        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5)
-            return false;
-        if (!mc.world.getBlockState(pos).isAir())
-            return false;
+    private boolean isValidPosition(BlockPos pos) {
+        if (mc.world == null) return false;
+        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5) return false;
+        if (!mc.world.getBlockState(pos).isAir()) return false;
 
         BlockPos playerPos = mc.player.getBlockPos();
-        if (pos.equals(playerPos) || pos.equals(playerPos.up()))
-            return false;
-
-        BlockPos below = pos.down();
-        return mc.world.getBlockState(below).isSolidBlock(mc.world, below);
+        return !pos.equals(playerPos) && !pos.equals(playerPos.up());
     }
 
     private boolean isObsidianOrBedrock(BlockPos pos) {
-        if (mc.world == null)
-            return false;
+        if (mc.world == null) return false;
         var block = mc.world.getBlockState(pos).getBlock();
         return block == Blocks.OBSIDIAN || block == Blocks.BEDROCK;
     }
 
     private boolean isValidCrystalPosition(BlockPos pos) {
-        if (mc.world == null)
-            return false;
-        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5)
-            return false;
-        if (!mc.world.getBlockState(pos).isAir())
-            return false;
-        if (!mc.world.getBlockState(pos.up()).isAir())
-            return false;
+        if (mc.world == null) return false;
+        if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > 4.5) return false;
+        if (!mc.world.getBlockState(pos).isAir()) return false;
+        if (!mc.world.getBlockState(pos.up()).isAir()) return false;
 
         BlockPos playerPos = mc.player.getBlockPos();
         return !pos.equals(playerPos) && !pos.equals(playerPos.up()) &&
@@ -226,18 +214,17 @@ public final class KeyCrystal extends Module {
     }
 
     private boolean isDeadPlayerNearby() {
-        if (mc.world == null)
-            return false;
+        if (mc.world == null) return false;
         List<? extends Entity> players = mc.world.getPlayers();
         for (Entity e : players) {
-            if (e == mc.player)
-                continue;
+            if (e == mc.player) continue;
             if (e.isRemoved() || ((LivingEntity) e).getHealth() <= 0.0f)
                 if (e.squaredDistanceTo(mc.player) < 36)
                     return true;
         }
         return false;
     }
+
 
     @Override
     public void onDisable() {

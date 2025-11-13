@@ -13,7 +13,7 @@ import net.minecraft.item.Items;
 public final class AutoDoubleHand extends Module {
     private static final BooleanSetting inventorySwitch = new BooleanSetting("Inventory Switch", true);
     private static final NumberSetting totemSlot = new NumberSetting("Totem Slot", 1, 9, 9, 1);
-    private static final BooleanSetting healthSwitch = new BooleanSetting("Health Switch", true);
+    private static final BooleanSetting healthSwitch = new BooleanSetting("Health Switch", false);
     private static final NumberSetting healthThreshold = new NumberSetting("Health Threshold", 1.0, 20.0, 15.0, 0.5);
 
     private int originalSlot = -1;
@@ -44,17 +44,13 @@ public final class AutoDoubleHand extends Module {
             return true;
         }
 
-        if (healthSwitch.getValue() && shouldSwitchForHealth()) {
-            return true;
-        }
-
-        return false;
+        return healthSwitch.getValue() && shouldSwitchForHealth();
     }
 
     private boolean shouldSwitchForHealth() {
         if (mc.player.getHealth() > healthThreshold.getValue()) return false;
-        if (ItemUtil.isFood(mc.player.getMainHandStack())) return false;
-        return true;
+        if (mc.player.isUsingItem()) return false;
+        return !ItemUtil.isFood(mc.player.getMainHandStack());
     }
 
     private boolean isHoldingTotem() {
