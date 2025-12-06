@@ -40,10 +40,10 @@ public class Watermark extends Module {
 
     private void loadIcons() {
         if (fpsIcon == -1) {
-            fpsIcon = NanoVGRenderer.loadImage("assets/silk/imgs/fps.png");
+            fpsIcon = NanoVGRenderer.loadImage("assets/silk/textures/icons/fps.png");
         }
         if (pingIcon == -1) {
-            pingIcon = NanoVGRenderer.loadImage("assets/silk/imgs/ping.png");
+            pingIcon = NanoVGRenderer.loadImage("assets/silk/textures/icons/ping.png");
         }
     }
 
