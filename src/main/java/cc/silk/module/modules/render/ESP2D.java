@@ -16,6 +16,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.scoreboard.Team;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector4d;
@@ -34,6 +36,7 @@ public class ESP2D extends Module {
         private final BooleanSetting boxFill = new BooleanSetting("Box Fill", false);
         private final NumberSetting fillOpacity = new NumberSetting("Fill Opacity", 0, 255, 80, 5);
         private final BooleanSetting healthBar = new BooleanSetting("Health Bar", true);
+        private final BooleanSetting teamColor = new BooleanSetting("Team Color", false);
         private final ColorSetting boxColor = new ColorSetting("Box Color", new Color(255, 255, 255));
         private final ColorSetting playerColor = new ColorSetting("Player Color", new Color(255, 255, 255));
         private final ColorSetting passiveColor = new ColorSetting("Passive Color", new Color(0, 255, 0));
@@ -42,7 +45,7 @@ public class ESP2D extends Module {
         public ESP2D() {
                 super("2D ESP", "Draws 2D boxes around entities", -1, Category.RENDER);
                 addSettings(targets, showSelf, range, boxMode, boxSetting, roundRadius, boxFill, fillOpacity, healthBar,
-                                boxColor, playerColor, passiveColor, hostileColor);
+                                teamColor, boxColor, playerColor, passiveColor, hostileColor);
         }
 
         @EventHandler
@@ -117,7 +120,7 @@ public class ESP2D extends Module {
                                 float endPosX = (float) position.z;
                                 float endPosY = (float) position.w;
 
-                                Color accentColor = boxColor.getValue();
+                                Color accentColor = getColorForEntity(entity);
 
                                 if (boxFill.getValue()) {
                                         int opacity = fillOpacity.getValueInt();
@@ -263,13 +266,23 @@ public class ESP2D extends Module {
         }
 
         private Color getColorForEntity(Entity entity) {
+                if (teamColor.getValue() && entity instanceof LivingEntity livingEntity) {
+                        Team team = livingEntity.getScoreboardTeam();
+                        if (team != null) {
+                                Formatting teamFormatting = team.getColor();
+                                if (teamFormatting != null && teamFormatting.getColorValue() != null) {
+                                        return new Color(teamFormatting.getColorValue());
+                                }
+                        }
+                }
+                
                 if (entity instanceof PlayerEntity)
                         return playerColor.getValue();
                 if (entity instanceof PassiveEntity)
                         return passiveColor.getValue();
                 if (entity instanceof HostileEntity)
                         return hostileColor.getValue();
-                return Color.WHITE;
+                return boxColor.getValue();
         }
 
         private boolean shouldRender(Entity entity) {

@@ -5,9 +5,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import cc.silk.event.impl.render.Render3DEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
+import cc.silk.module.setting.BooleanSetting;
 import cc.silk.module.setting.ColorSetting;
 import cc.silk.module.setting.ModeSetting;
 import cc.silk.module.setting.NumberSetting;
+import cc.silk.SilkClient;
+import cc.silk.utils.render.W2SUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.render.*;
@@ -23,7 +26,7 @@ import java.awt.*;
 
 public final class TargetESP extends Module {
 
-    private static final Identifier FIREFLY_TEXTURE = Identifier.of("silk", "imgs/firefly.png");
+    private static final Identifier FIREFLY_TEXTURE = Identifier.of("silk", "textures/visuals/firefly.png");
 
     private final ModeSetting targets = new ModeSetting("Targets", "Players", "Players", "Living");
     private final NumberSetting layers = new NumberSetting("Layers", 1, 5, 3, 1);
@@ -35,11 +38,14 @@ public final class TargetESP extends Module {
     private final ColorSetting color = new ColorSetting("Color", new Color(120, 240, 255, 220));
     private final ColorSetting gradientColor1 = new ColorSetting("Gradient Color 1", new Color(255, 0, 0, 220));
     private final ColorSetting gradientColor2 = new ColorSetting("Gradient Color 2", new Color(0, 0, 255, 220));
+    private final BooleanSetting debug = new BooleanSetting("Debug", false);
+
+    private long lastDebugTime = 0;
 
     public TargetESP() {
         super("Target ESP", "Ghost-like spiral orbs around players", -1, Category.RENDER);
         addSettings(targets, layers, orbsPerLayer, orbSize, speed, heightOffset, colorMode, color,
-                gradientColor1, gradientColor2);
+                gradientColor1, gradientColor2, debug);
     }
 
     @EventHandler
@@ -64,13 +70,20 @@ public final class TargetESP extends Module {
 
         float iAge = (System.currentTimeMillis() % 100000) / 50.0f;
 
+        int entityCount = 0;
         for (var entity : mc.world.getEntities()) {
             if (!shouldRender(entity))
                 continue;
 
+            entityCount++;
             double tPosX = entity.prevX + (entity.getX() - entity.prevX) * tickDelta - cam.x;
             double tPosY = entity.prevY + (entity.getY() - entity.prevY) * tickDelta - cam.y + yOff;
             double tPosZ = entity.prevZ + (entity.getZ() - entity.prevZ) * tickDelta - cam.z;
+
+            if (debug.getValue() && System.currentTimeMillis() - lastDebugTime > 1000) {
+                SilkClient.INSTANCE.getLogger().info("[TargetESP] Entity: {} at relative pos: ({}, {}, {})", 
+                    entity.getName().getString(), tPosX, tPosY, tPosZ);
+            }
 
             if (mc.player.canSee(entity)) {
                 RenderSystem.enableDepthTest();
@@ -107,10 +120,13 @@ public final class TargetESP extends Module {
                     double ghostY = sinQuad;
                     double ghostZ = Math.sin(radians) * entity.getWidth();
 
+                    double worldX = tPosX + ghostX;
+                    double worldY = tPosY + ghostY;
+                    double worldZ = tPosZ + ghostZ;
+
                     MatrixStack matrices = new MatrixStack();
-                    matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(mc.gameRenderer.getCamera().getPitch()));
-                    matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(mc.gameRenderer.getCamera().getYaw() + 180.0F));
-                    matrices.translate(tPosX + ghostX, tPosY + ghostY, tPosZ + ghostZ);
+                    matrices.multiplyPositionMatrix(W2SUtil.matrixWorldSpace);
+                    matrices.translate(worldX, worldY, worldZ);
                     matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-mc.gameRenderer.getCamera().getYaw()));
                     matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(mc.gameRenderer.getCamera().getPitch()));
 
@@ -128,6 +144,11 @@ public final class TargetESP extends Module {
             if (mc.player.canSee(entity)) {
                 RenderSystem.depthMask(true);
             }
+        }
+
+        if (debug.getValue() && System.currentTimeMillis() - lastDebugTime > 1000) {
+            SilkClient.INSTANCE.getLogger().info("[TargetESP] Rendered {} entities", entityCount);
+            lastDebugTime = System.currentTimeMillis();
         }
 
         RenderSystem.enableDepthTest();
