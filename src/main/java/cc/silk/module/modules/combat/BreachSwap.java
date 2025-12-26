@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.AttackEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
@@ -76,7 +77,7 @@ public final class BreachSwap extends Module {
     }
 
     @EventHandler
-    public void onTick(TickEvent event) {
+    public void onTick(HandleInputEvent event) {
         if (isNull())
             return;
         if (ShieldBreaker.breakingShield)

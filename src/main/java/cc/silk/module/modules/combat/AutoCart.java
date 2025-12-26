@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -32,7 +33,7 @@ public final class AutoCart extends Module {
     }
 
     @EventHandler
-    private void onTickEvent(TickEvent event) {
+    private void onTickEvent(HandleInputEvent event) {
         if (isNull()) return;
 
         if (mc.player.isUsingItem() && mc.player.getActiveItem().getItem() == Items.BOW) {

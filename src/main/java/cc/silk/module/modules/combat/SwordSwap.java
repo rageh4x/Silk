@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -28,7 +29,7 @@ public class SwordSwap extends Module {
     }
 
     @EventHandler
-    public void onTick(TickEvent event) {
+    public void onTick(HandleInputEvent event) {
         if (isNull()) return;
 
         if (shouldSwitchBack && System.currentTimeMillis() - switchTime >= switchDelay.getValue()) {

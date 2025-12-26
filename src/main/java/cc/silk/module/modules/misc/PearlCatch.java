@@ -65,7 +65,6 @@ public final class PearlCatch extends Module {
 
         originalSlot = mc.player.getInventory().selectedSlot;
         mc.player.getInventory().selectedSlot = pearlSlot;
-        mc.player.swingHand(Hand.MAIN_HAND);
         ((MinecraftClientAccessor) mc).invokeDoItemUse();
         needsSwitchBack = true;
         switchTimer.reset();

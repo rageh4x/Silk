@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.DoAttackEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
@@ -78,7 +79,7 @@ public final class ShieldBreaker extends Module {
     }
 
     @EventHandler
-    private void onTickEvent(TickEvent event) {
+    private void onTickEvent(HandleInputEvent event) {
         if (!canRun())
             return;
 

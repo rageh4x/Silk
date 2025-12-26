@@ -1,7 +1,9 @@
 package cc.silk.module.modules.combat;
 
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.TickEvent;
+import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.module.setting.BooleanSetting;
@@ -39,7 +41,7 @@ public final class ElytraHotSwap extends Module {
     }
 
     @EventHandler
-    private void onTickEvent(TickEvent event) {
+    private void onTickEvent(HandleInputEvent event) {
         if (isNull()) return;
 
         boolean currentKeyState = KeyUtils.isKeyPressed(hotswapKey.getKeyCode());
@@ -154,13 +156,13 @@ public final class ElytraHotSwap extends Module {
             mc.player.getInventory().selectedSlot = elytraSlot;
 
             if (mc.interactionManager != null) {
-                mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+                ((MinecraftClientAccessor)mc).invokeDoItemUse();
             }
 
             mc.player.getInventory().selectedSlot = currentSlot;
         } else {
             if (mc.interactionManager != null) {
-                mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+                ((MinecraftClientAccessor)mc).invokeDoItemUse();
             }
         }
     }
@@ -176,13 +178,13 @@ public final class ElytraHotSwap extends Module {
                     mc.player.getInventory().selectedSlot = chestplateSlot;
 
                     if (mc.interactionManager != null) {
-                        mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+                        ((MinecraftClientAccessor)mc).invokeDoItemUse();
                     }
 
                     mc.player.getInventory().selectedSlot = currentSlot;
                 } else {
                     if (mc.interactionManager != null) {
-                        mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+                        ((MinecraftClientAccessor)mc).invokeDoItemUse();
                     }
                 }
                 return;
@@ -193,7 +195,7 @@ public final class ElytraHotSwap extends Module {
             mc.player.getInventory().setStack(36 + mc.player.getInventory().selectedSlot, previousChestArmor.copy());
 
             if (mc.interactionManager != null) {
-                mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+                ((MinecraftClientAccessor)mc).invokeDoItemUse();
             }
 
             previousChestArmor = ItemStack.EMPTY;

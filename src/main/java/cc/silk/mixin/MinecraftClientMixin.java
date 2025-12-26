@@ -1,6 +1,7 @@
 package cc.silk.mixin;
 
 import cc.silk.SilkClient;
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.network.DisconnectEvent;
 import cc.silk.event.impl.player.DoAttackEvent;
 import cc.silk.event.impl.player.ItemUseEvent;
@@ -48,7 +49,7 @@ public class MinecraftClientMixin implements IMinecraft {
         if (optionalClientModule.isPresent()) {
             Client client = optionalClientModule.get();
             if (client.isEnabled() && client.getTitle()) {
-                cir.setReturnValue("Silk 1.21.1");
+                cir.setReturnValue("Silk 1.21.4");
             }
         }
     }
@@ -58,6 +59,14 @@ public class MinecraftClientMixin implements IMinecraft {
         if (SilkClient.INSTANCE != null) {
             ProfileManager profileManager = SilkClient.INSTANCE.getProfileManager();
             profileManager.loadProfile("default");
+        }
+    }
+
+    @Inject(method = "handleInputEvents", at = @At("HEAD"))
+    public void silk$handleInputEvents(CallbackInfo ci) {
+        if (SilkClient.INSTANCE != null) {
+            HandleInputEvent event = new HandleInputEvent();
+            SilkClient.INSTANCE.getSilkEventBus().post(event);
         }
     }
 

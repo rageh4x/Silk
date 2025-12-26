@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
@@ -32,7 +33,7 @@ public final class SwordHotSwap extends Module {
     }
 
     @EventHandler
-    private void onTickEvent(TickEvent event) {
+    private void onTickEvent(HandleInputEvent event) {
         if (isNull() || mc.player == null) return;
 
         boolean currentKeyState = KeyUtils.isKeyPressed(hotswapKey.getKeyCode());

@@ -1,5 +1,6 @@
 package cc.silk.module.modules.misc;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -31,7 +32,7 @@ public final class WindChargeKey extends Module {
     }
 
     @EventHandler
-    private void onTickEvent(TickEvent event) {
+    private void onTickEvent(HandleInputEvent event) {
         if (isNull() || mc.currentScreen != null) return;
 
         boolean currentKeyState = KeyUtils.isKeyPressed(windChargeKeybind.getKeyCode());

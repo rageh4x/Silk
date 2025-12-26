@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
@@ -44,7 +45,7 @@ public final class AutoMace extends Module {
     }
 
     @EventHandler
-    private void preMotion(TickEvent event) {
+    private void preMotion(HandleInputEvent event) {
         if (isNull())
             return;
 

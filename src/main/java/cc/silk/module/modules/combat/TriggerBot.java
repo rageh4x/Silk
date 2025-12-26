@@ -1,5 +1,6 @@
 package cc.silk.module.modules.combat;
 
+import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.TickEvent;
 import cc.silk.event.impl.world.WorldChangeEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
@@ -78,7 +79,7 @@ public final class TriggerBot extends Module {
     }
 
     @EventHandler
-    private void tick(TickEvent event) {
+    private void handleInputEvent(HandleInputEvent event) {
         if (isNull())
             return;
         assert mc.player != null;
@@ -129,9 +130,8 @@ public final class TriggerBot extends Module {
                     delay *= (long) multiplier;
                 }
                 case "None" -> delay = 0;
-                default ->
-                    delay = (long) MathUtils.randomDoubleBetween(reactionTime.getMinValue(),
-                            reactionTime.getMaxValue());
+                default -> delay = (long) MathUtils.randomDoubleBetween(reactionTime.getMinValue(),
+                        reactionTime.getMaxValue());
             }
 
             currentReactionDelay = delay;

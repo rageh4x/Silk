@@ -4,6 +4,7 @@ import cc.silk.utils.IMinecraft;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.Vec3d;
 
+// Fix this fuck nigga
 public final class CombatUtil implements IMinecraft {
     public static boolean isShieldFacingAway(final LivingEntity en) {
 
