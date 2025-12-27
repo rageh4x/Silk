@@ -4,6 +4,9 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import org.lwjgl.glfw.GLFW;
+
+import java.awt.*;
 
 import static cc.silk.SilkClient.shouldUseMouseEvent;
 
@@ -22,14 +25,7 @@ public final class ClickSimulator {
             KeyBinding.setKeyPressed(key, true);
             KeyBinding.onKeyPressed(key);
 
-            new Thread(() -> {
-                try {
-                    Thread.sleep(30);
-                } catch (InterruptedException ignored) {
-                }
-                KeyBinding.setKeyPressed(key, false);
-            }).start();
-
+            mc.execute(() -> KeyBinding.setKeyPressed(key, false));
         }
     }
 }

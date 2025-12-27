@@ -2,7 +2,6 @@ package cc.silk.module.modules.combat;
 
 import cc.silk.event.impl.input.HandleInputEvent;
 import cc.silk.event.impl.player.DoAttackEvent;
-import cc.silk.event.impl.player.TickEvent;
 import cc.silk.mixin.MinecraftClientAccessor;
 import cc.silk.module.Category;
 import cc.silk.module.Module;
@@ -20,6 +19,7 @@ import net.minecraft.item.Items;
 import net.minecraft.util.hit.EntityHitResult;
 
 public final class ShieldBreaker extends Module {
+
     public static boolean breakingShield = false;
 
     private final NumberSetting cps = new NumberSetting("CPS", 1, 20, 20, 1);
@@ -27,10 +27,9 @@ public final class ShieldBreaker extends Module {
     private final NumberSetting swapDelay = new NumberSetting("Swap Delay", 0, 500, 50, 10);
     private final NumberSetting attackDelay = new NumberSetting("Attack Delay", 0, 500, 50, 10);
     private final NumberSetting swapBackDelay = new NumberSetting("Swap Back Delay", 0, 500, 100, 10);
-
-    private final ModeSetting mode = new ModeSetting("Mode", "Auto", "Auto", "OnHit");
     private final BooleanSetting revertSlot = new BooleanSetting("Revert Slot", true);
     private final BooleanSetting rayTraceCheck = new BooleanSetting("Check Facing", true);
+    private final BooleanSetting autoStun = new BooleanSetting("Auto Stun", true);
     private final BooleanSetting disableIfUsingItem = new BooleanSetting("Disable if using item", true);
     private final BooleanSetting ignoreFriends = new BooleanSetting("Ignore Friends", false);
 
@@ -41,15 +40,15 @@ public final class ShieldBreaker extends Module {
     private final TimerUtil swapBackTimer = new TimerUtil();
 
     private int savedSlot = -1;
-    private boolean lastAttackPressed = false;
-
     public ShieldBreaker() {
         super("Shield Breaker", "Automatically breaks the opponent's shield", -1, Category.COMBAT);
-        this.addSettings(mode, cps, reactionDelay, swapDelay, attackDelay, swapBackDelay,
-                revertSlot, rayTraceCheck, disableIfUsingItem, ignoreFriends);
+        addSettings(
+               cps, reactionDelay, swapDelay, attackDelay, swapBackDelay,
+                revertSlot, rayTraceCheck, disableIfUsingItem, ignoreFriends, autoStun
+        );
     }
 
-    private boolean canRun() {
+    private boolean canRunAuto() {
         if (isNull() || mc.currentScreen != null)
             return false;
         if (!InventoryUtil.hasWeapon(AxeItem.class))
@@ -60,9 +59,9 @@ public final class ShieldBreaker extends Module {
     }
 
     private PlayerEntity getTargetPlayer() {
-        if (!(mc.crosshairTarget instanceof EntityHitResult entityHit))
+        if (!(mc.crosshairTarget instanceof EntityHitResult hit))
             return null;
-        if (!(entityHit.getEntity() instanceof PlayerEntity target))
+        if (!(hit.getEntity() instanceof PlayerEntity target))
             return null;
         if (FriendManager.isFriend(target.getUuid()) && ignoreFriends.getValue())
             return null;
@@ -70,53 +69,22 @@ public final class ShieldBreaker extends Module {
     }
 
     @EventHandler
-    private void onAttackEvent(DoAttackEvent event) {
+    private void onTickEvent(HandleInputEvent event) {
         if (isNull())
             return;
-        if (mode.isMode("OnHit")) {
-            lastAttackPressed = true;
-        }
-    }
 
-    @EventHandler
-    private void onTickEvent(HandleInputEvent event) {
-        if (!canRun())
+        if (!canRunAuto())
             return;
 
         PlayerEntity target = getTargetPlayer();
         if (target == null)
             return;
 
-        boolean isOnHitMode = mode.isMode("OnHit");
+
         boolean isBlocking = target.isBlocking() && target.isHolding(Items.SHIELD);
         boolean canBreak = !rayTraceCheck.getValue() || !CombatUtil.isShieldFacingAway(target);
-        boolean shouldActivate = !isOnHitMode || lastAttackPressed;
 
-        if (isBlocking && canBreak && shouldActivate) {
-
-            if (!(mc.player.getMainHandStack().getItem() instanceof AxeItem)) {
-                if (reactionTimer.hasElapsedTime(reactionDelay.getValueInt())
-                        && swapTimer.hasElapsedTime(swapDelay.getValueInt())) {
-                    breakingShield = true;
-                    if (savedSlot == -1)
-                        savedSlot = mc.player.getInventory().selectedSlot;
-                    InventoryUtil.swapToWeapon(AxeItem.class);
-                    attackTimer.reset();
-                }
-            }
-
-            if (mc.player.getMainHandStack().getItem() instanceof AxeItem) {
-                if (attackTimer.hasElapsedTime(attackDelay.getValueInt()) || savedSlot == -1) {
-                    ((MinecraftClientAccessor) mc).invokeDoAttack();
-                    cpsTimer.reset();
-                    attackTimer.reset();
-                    swapBackTimer.reset();
-                    breakingShield = false;
-                    lastAttackPressed = false;
-                }
-            }
-
-        } else {
+        if (!isBlocking || !canBreak) {
             if (!reactionTimer.hasElapsedTime(reactionDelay.getValueInt() / 2))
                 reactionTimer.reset();
 
@@ -125,6 +93,34 @@ public final class ShieldBreaker extends Module {
                     mc.player.getInventory().selectedSlot = savedSlot;
                 savedSlot = -1;
             }
+            return;
+        }
+
+        if (!(mc.player.getMainHandStack().getItem() instanceof AxeItem)) {
+            if (reactionTimer.hasElapsedTime(reactionDelay.getValueInt())
+                    && swapTimer.hasElapsedTime(swapDelay.getValueInt())) {
+
+                breakingShield = true;
+
+                if (savedSlot == -1)
+                    savedSlot = mc.player.getInventory().selectedSlot;
+
+                InventoryUtil.swapToWeapon(AxeItem.class);
+                attackTimer.reset();
+            }
+            return;
+        }
+        if (attackTimer.hasElapsedTime(attackDelay.getValueInt()) || savedSlot == -1) {
+            ((MinecraftClientAccessor) mc).invokeDoAttack();
+
+            if (autoStun.getValue()) {
+                ((MinecraftClientAccessor) mc).invokeDoAttack();
+            }
+
+            cpsTimer.reset();
+            attackTimer.reset();
+            swapBackTimer.reset();
+            breakingShield = false;
         }
     }
 
@@ -135,7 +131,6 @@ public final class ShieldBreaker extends Module {
         }
         savedSlot = -1;
         breakingShield = false;
-        lastAttackPressed = false;
         super.onDisable();
     }
 }
