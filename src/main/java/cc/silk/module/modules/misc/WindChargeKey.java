@@ -18,7 +18,6 @@ public final class WindChargeKey extends Module {
     private final KeybindSetting windChargeKeybind = new KeybindSetting("Wind Charge Key", GLFW.GLFW_KEY_G, true);
     private final NumberSetting throwDelay = new NumberSetting("Throw Delay", 50, 1000, 200, 25);
     private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 0, 500, 50, 10);
-    private final BooleanSetting autoJump = new BooleanSetting("Auto Jump", true);
     private final TimerUtil throwTimer = new TimerUtil();
     private final TimerUtil switchTimer = new TimerUtil();
     private boolean keyPressed = false;
@@ -27,7 +26,7 @@ public final class WindChargeKey extends Module {
 
     public WindChargeKey() {
         super("Wind Charge Key", "Automatically throws wind charges", -1, Category.MISC);
-        this.addSettings(windChargeKeybind, throwDelay, switchDelay, autoJump);
+        this.addSettings(windChargeKeybind, throwDelay, switchDelay);
         this.getSettings().removeIf(setting -> setting instanceof KeybindSetting && !setting.equals(windChargeKeybind));
     }
 
@@ -57,10 +56,6 @@ public final class WindChargeKey extends Module {
 
         if (mc.player.getItemCooldownManager().isCoolingDown(new net.minecraft.item.ItemStack(Items.WIND_CHARGE))) {
             return;
-        }
-
-        if (autoJump.getValue() && mc.player.isOnGround()) {
-            mc.player.jump();
         }
 
         originalSlot = mc.player.getInventory().selectedSlot;

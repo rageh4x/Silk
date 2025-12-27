@@ -7,6 +7,7 @@ import cc.silk.utils.jvm.ModMenuHider;
 import cc.silk.utils.notification.NotificationManager;
 import cc.silk.utils.render.font.FontManager;
 import io.github.racoondog.norbit.EventBus;
+import java.lang.invoke.MethodHandles;
 import lombok.Getter;
 import meteordevelopment.orbit.IEventBus;
 import net.fabricmc.api.ClientModInitializer;
@@ -14,12 +15,15 @@ import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-
 @Getter
 public final class SilkClient implements ClientModInitializer {
+
     public static final String CLIENT_VERSION = "v1.0";
-    public static final boolean shouldUseMouseEvent = System.getProperty("os.name").toLowerCase().contains("windows");
+    public static final boolean shouldUseMouseEvent = System.getProperty(
+        "os.name"
+    )
+        .toLowerCase()
+        .contains("windows");
     public static SilkClient INSTANCE;
     public static MinecraftClient mc;
     public final IEventBus SilkEventBus;
@@ -34,7 +38,13 @@ public final class SilkClient implements ClientModInitializer {
         INSTANCE = this;
         mc = MinecraftClient.getInstance();
         SilkEventBus = EventBus.threadSafe();
-        SilkEventBus.registerLambdaFactory("cc.silk", (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
+        SilkEventBus.registerLambdaFactory("cc.silk", (lookupInMethod, klass) ->
+            (MethodHandles.Lookup) lookupInMethod.invoke(
+                null,
+                klass,
+                MethodHandles.lookup()
+            )
+        );
 
         this.moduleManager = new ModuleManager();
         this.fontManager = new FontManager();
@@ -44,6 +54,7 @@ public final class SilkClient implements ClientModInitializer {
 
         SilkEventBus.subscribe(mouseModuleHandler);
         SilkEventBus.subscribe(notificationManager);
+
         new Thread(() -> {
             try {
                 ModMenuHider.hideFromModMenu();
@@ -52,7 +63,8 @@ public final class SilkClient implements ClientModInitializer {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-        }).start();
+        })
+            .start();
     }
 
     @Override
