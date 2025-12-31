@@ -27,7 +27,6 @@ import java.util.Random;
 public final class HoverTotem extends Module {
     public static final RangeSetting delayMS = new RangeSetting("Delay (MS)", 1, 1000, 200, 400, 0.5);
     public static final BooleanSetting ignoreOffhand = new BooleanSetting("Ignore Offhand", false);
-    public static final BooleanSetting autoOpenGUI = new BooleanSetting("Auto Open GUI", true);
     private final NumberSetting normalBaseDelay = new NumberSetting("Base Delay", 50, 1000, 200, 1);
     private final NumberSetting normalVariation = new NumberSetting("Variation", 10, 1000, 150, 1);
     private final NumberSetting normalSDThreshold = new NumberSetting("SD Threshold", 1, 500, 80, 1);
@@ -36,86 +35,20 @@ public final class HoverTotem extends Module {
     private final List<Long> recentIntervals = new ArrayList<>();
     private final List<Double> recentStandardDeviations = new ArrayList<>();
     private int swapCount = 0;
-    private boolean preventClose = false;
     private boolean needsTotemSetup = false;
 
     public HoverTotem() {
         super("Hover Totem", "Puts a totem in your offhand and hotbar once hovered", -1, Category.MISC);
-        this.addSettings(delayMS, ignoreOffhand, autoOpenGUI, normalBaseDelay, normalVariation, normalSDThreshold);
+        this.addSettings(delayMS, ignoreOffhand, normalBaseDelay, normalVariation, normalSDThreshold);
     }
 
     @EventHandler
-    private void onTickEvent(HandleInputEvent event) {
+    private void onTickEvent(TickEvent event) {
         if (isNull()) return;
         totemHandler();
-        if (preventClose && needsTotemSetup && hasTotemSetup() && mc.currentScreen instanceof InventoryScreen) {
-            preventClose = false;
+        if (needsTotemSetup && hasTotemSetup() && mc.currentScreen instanceof InventoryScreen) {
             needsTotemSetup = false;
             mc.player.closeHandledScreen();
-        }
-    }
-
-    @EventHandler
-    private void onPacketEvent(PacketEvent event) {
-        if (isNull()) return;
-        if (event.getOrder() == TransferOrder.RECEIVE) {
-            if (event.getPacket() instanceof EntityStatusS2CPacket packet) {
-                if (packet.getStatus() == 35) {
-                    Entity entity = packet.getEntity(mc.world);
-                    if (entity != null && entity.equals(mc.player)) {
-                        if (!hasTotemSetup()) {
-                            preventClose = true;
-                            needsTotemSetup = true;
-                            if (autoOpenGUI.getValue()) {
-                                mc.execute(() -> {
-                                    if (mc.currentScreen == null) {
-                                        mc.setScreen(new InventoryScreen(mc.player));
-                                    }
-                                });
-                            }
-                        } else {
-                            preventClose = false;
-                            needsTotemSetup = false;
-                        }
-                    }
-                }
-            }
-        }
-        if (event.getOrder() == TransferOrder.SEND) {
-            if (event.getPacket().getClass().getSimpleName().contains("CloseHandledScreen")) {
-                if (preventClose) {
-                    if (!hasTotemSetup()) {
-                        event.setCancelled(true);
-                        if (autoOpenGUI.getValue()) {
-                            mc.execute(() -> {
-                                if (!(mc.currentScreen instanceof InventoryScreen)) {
-                                    mc.setScreen(new InventoryScreen(mc.player));
-                                }
-                            });
-                        }
-                    } else {
-                        preventClose = false;
-                    }
-                }
-            }
-        }
-        if (event.getOrder() == TransferOrder.SEND) {
-            if (event.getPacket().getClass().getSimpleName().contains("CloseHandledScreen")) {
-                if (preventClose) {
-                    if (!hasTotemSetup()) {
-                        event.setCancelled(true);
-                        if (autoOpenGUI.getValue()) {
-                            mc.execute(() -> {
-                                if (!(mc.currentScreen instanceof InventoryScreen)) {
-                                    mc.setScreen(new InventoryScreen(mc.player));
-                                }
-                            });
-                        }
-                    } else {
-                        preventClose = false;
-                    }
-                }
-            }
         }
     }
 
@@ -207,7 +140,6 @@ public final class HoverTotem extends Module {
     @Override
     public void onDisable() {
         timer.reset();
-        preventClose = false;
         needsTotemSetup = false;
         super.onDisable();
     }

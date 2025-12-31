@@ -6,6 +6,6 @@ import cc.silk.module.Module;
 public class Secret extends Module {
 
     public Secret() {
-        super("Secret", "https://discord.gg/cysense", 0, Category.CLIENT);
+        super("Secrett ily", "You too paid!!", 0, Category.CLIENT);
     }
 }
