@@ -45,7 +45,7 @@ public final class AutoMace extends Module {
     }
 
     @EventHandler
-    private void preMotion(HandleInputEvent event) {
+    private void preMotion(TickEvent event) {
         if (isNull())
             return;
 
