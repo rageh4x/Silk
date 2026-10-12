@@ -2,9 +2,9 @@ package cc.silk.gui.newgui.components;
 
 import cc.silk.SilkClient;
 import cc.silk.profiles.ProfileManager;
-import cc.silk.utils.render.nanovg.NanoVGRenderer;
 import cc.silk.utils.render.GuiGlowHelper;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.MinecraftClient;
 
 import java.awt.*;
 import java.io.File;
@@ -61,151 +61,87 @@ public class ConfigPanel {
         }
     }
 
-    public void render(int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
+    public void render(DrawContext context, int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
         int bgAlpha = (int) (255 * alpha);
         float transparency = cc.silk.module.modules.client.ClientSettingsModule.getGuiTransparency();
 
         int panelAlpha = (int) (255 * alpha * (1f - transparency));
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
         Color headerBg = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(), panelAlpha);
-        Color borderColor = new Color(40, 40, 46, panelAlpha);
-        Color textColor = new Color(TEXT_COLOR.getRed(), TEXT_COLOR.getGreen(), TEXT_COLOR.getBlue(), bgAlpha);
+        int textColor = new Color(TEXT_COLOR.getRed(), TEXT_COLOR.getGreen(), TEXT_COLOR.getBlue(), bgAlpha).getRGB();
         Color accentColor = cc.silk.module.modules.client.NewClickGUIModule.getAccentColor();
 
         int displayedConfigs = Math.min(configs.size() + 1, MAX_VISIBLE_CONFIGS);
         int totalHeight = HEADER_HEIGHT + (displayedConfigs * CONFIG_ENTRY_HEIGHT);
-        boolean scrollable = configs.size() + 1 > MAX_VISIBLE_CONFIGS;
 
-        NanoVGRenderer.drawRoundedRect(x, y, width, totalHeight, CORNER_RADIUS, panelBg);
-        NanoVGRenderer.drawRoundedRectOutline(x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
+        int ix = (int) x;
+        int iy = (int) y;
+        int iwidth = width;
 
-        NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerBg);
-        NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT - CORNER_RADIUS, width, CORNER_RADIUS, headerBg);
+        context.fill(ix, iy, ix + iwidth, iy + totalHeight, panelBg.getRGB());
+        context.fill(ix, iy, ix + iwidth, iy + HEADER_HEIGHT, headerBg.getRGB());
 
-        float iconSize = 12f;
-        float iconX = Math.round(x + 6 + iconSize / 2f);
-        float iconY = Math.round(y + HEADER_HEIGHT / 2f);
-        Color iconColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha);
-        NanoVGRenderer.drawIcon("\uf0f6", iconX, iconY, iconSize, iconColor);
-
-        float fontSize = 10f;
-        float textX = Math.round(x + 6 + iconSize + 4);
-        float textY = Math.round(y + (HEADER_HEIGHT - fontSize) / 2f);
-        NanoVGRenderer.drawText("Configs", textX, textY, fontSize, textColor);
-
-        float loadIconX = Math.round(x + width - 22f);
-        float loadIconY = Math.round(y + HEADER_HEIGHT / 2f);
-        boolean loadHover = isMouseOver(mouseX, mouseY, x + width - 28f, y, 14f, HEADER_HEIGHT);
-        Color loadColor = (selectedConfig != null && loadHover)
-                ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
-                : new Color(textColor.getRed(), textColor.getGreen(), textColor.getBlue(),
-                selectedConfig != null ? (int) (bgAlpha * 0.7f) : (int) (bgAlpha * 0.3f));
-        NanoVGRenderer.drawIcon("\uf019", loadIconX, loadIconY, 9f, loadColor);
-
-        float saveIconX = Math.round(x + width - 10f);
-        float saveIconY = Math.round(y + HEADER_HEIGHT / 2f);
-        boolean saveHover = isMouseOver(mouseX, mouseY, x + width - 16f, y, 12f, HEADER_HEIGHT);
-        boolean willOverride = selectedConfig != null;
-        Color saveColor = (saveHover || willOverride)
-                ? new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), bgAlpha)
-                : new Color(textColor.getRed(), textColor.getGreen(), textColor.getBlue(), (int) (bgAlpha * 0.7f));
-        NanoVGRenderer.drawIcon("\uf0c7", saveIconX, saveIconY, 9f, saveColor);
+        int textX = ix + 6;
+        int textY = iy + (HEADER_HEIGHT - 8) / 2;
+        context.drawText(MinecraftClient.getInstance().textRenderer, "Configs", textX, textY, textColor, false);
 
         float contentY = y + HEADER_HEIGHT;
-        int moduleAreaHeight = displayedConfigs * CONFIG_ENTRY_HEIGHT;
-        if (scrollable) {
-            NanoVGRenderer.scissor(x, contentY, width, moduleAreaHeight);
-        }
-
         scrollOffset += (targetScrollOffset - scrollOffset) * 0.3f;
 
         float currentY = contentY - scrollOffset;
         for (ConfigEntry config : configs) {
-            renderConfigEntry(config, currentY, mouseX, mouseY, alpha, textColor, accentColor);
+            renderConfigEntry(context, config, currentY, mouseX, mouseY, alpha, textColor, accentColor);
             currentY += CONFIG_ENTRY_HEIGHT;
         }
 
-        renderNewConfigEntry(currentY, mouseX, mouseY, alpha, textColor, accentColor);
-
-        if (scrollable) {
-            NanoVGRenderer.resetScissor();
-
-            float scrollbarHeight = ((float) displayedConfigs / (configs.size() + 1)) * moduleAreaHeight;
-            float scrollbarY = contentY
-                    + (scrollOffset / ((configs.size() + 1) * CONFIG_ENTRY_HEIGHT)) * moduleAreaHeight;
-
-            Color scrollbarColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
-                    (int) (100 * alpha));
-            NanoVGRenderer.drawRoundedRect(x + width - 3, scrollbarY, 2, scrollbarHeight, 1f, scrollbarColor);
-        }
+        renderNewConfigEntry(context, currentY, mouseX, mouseY, alpha, textColor, accentColor);
     }
 
-    private void renderConfigEntry(ConfigEntry config, float entryY, int mouseX, int mouseY, float alpha,
-                                   Color textColor, Color accentColor) {
+    private void renderConfigEntry(DrawContext context, ConfigEntry config, float entryY, int mouseX, int mouseY, float alpha,
+                                   int textColor, Color accentColor) {
         boolean hover = isMouseOver(mouseX, mouseY, x, entryY, width, CONFIG_ENTRY_HEIGHT);
         boolean selected = config.name.equals(selectedConfig);
 
+        int iy = (int) entryY;
+        int ix = (int) x;
+        int iwidth = width;
+
         if (selected) {
             int selectedAlpha = (int) (50 * alpha);
-            Color selectedBg = new Color(accentColor.getRed(), accentColor.getGreen(),
-                    accentColor.getBlue(), selectedAlpha);
-            NanoVGRenderer.drawRect(x, entryY, width, CONFIG_ENTRY_HEIGHT, selectedBg);
+            Color selectedBg = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), selectedAlpha);
+            context.fill(ix, iy, ix + iwidth, iy + CONFIG_ENTRY_HEIGHT, selectedBg.getRGB());
         } else if (hover) {
             int hoverAlpha = (int) (30 * alpha);
-            Color hoverBg = new Color(ENTRY_HOVER_BG.getRed(), ENTRY_HOVER_BG.getGreen(),
-                    ENTRY_HOVER_BG.getBlue(), hoverAlpha);
-            NanoVGRenderer.drawRect(x, entryY, width, CONFIG_ENTRY_HEIGHT, hoverBg);
+            Color hoverBg = new Color(ENTRY_HOVER_BG.getRed(), ENTRY_HOVER_BG.getGreen(), ENTRY_HOVER_BG.getBlue(), hoverAlpha);
+            context.fill(ix, iy, ix + iwidth, iy + CONFIG_ENTRY_HEIGHT, hoverBg.getRGB());
         }
 
-        boolean isDeleteConfirm = config.name.equals(deleteConfirmConfig)
-                && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
-
-        if (isDeleteConfirm) {
-            int deleteAlpha = (int) (80 * alpha);
-            Color deleteBg = new Color(180, 50, 50, deleteAlpha);
-            NanoVGRenderer.drawRect(x, entryY, width, CONFIG_ENTRY_HEIGHT, deleteBg);
-        }
-
-        String displayName = isDeleteConfirm ? "Delete?" : config.name;
-        float textWidth = NanoVGRenderer.getTextWidth(displayName, 8f);
-        if (!isDeleteConfirm && textWidth > width - 8) {
-            while (textWidth > width - 12 && displayName.length() > 3) {
-                displayName = displayName.substring(0, displayName.length() - 1);
-                textWidth = NanoVGRenderer.getTextWidth(displayName + "...", 8f);
-            }
-            displayName += "...";
-        }
-
-        float entryFontSize = 8f;
-        float entryTextX = Math.round(x + (isDeleteConfirm ? (width - textWidth) / 2f : 4f));
-        float entryTextY = Math.round(entryY + (CONFIG_ENTRY_HEIGHT - entryFontSize) / 2f);
-        NanoVGRenderer.drawText(displayName, entryTextX, entryTextY, entryFontSize, textColor);
+        String displayName = config.name;
+        int entryTextX = ix + 4;
+        int entryTextY = iy + (CONFIG_ENTRY_HEIGHT - 8) / 2;
+        context.drawText(MinecraftClient.getInstance().textRenderer, displayName, entryTextX, entryTextY, textColor, false);
 
         config.bounds = new float[]{x, entryY, width, CONFIG_ENTRY_HEIGHT};
     }
 
-    private void renderNewConfigEntry(float entryY, int mouseX, int mouseY, float alpha,
-                                      Color textColor, Color accentColor) {
+    private void renderNewConfigEntry(DrawContext context, float entryY, int mouseX, int mouseY, float alpha,
+                                      int textColor, Color accentColor) {
         boolean hover = isMouseOver(mouseX, mouseY, x, entryY, width, CONFIG_ENTRY_HEIGHT);
+
+        int iy = (int) entryY;
+        int ix = (int) x;
+        int iwidth = width;
 
         if (hover || namingNewConfig) {
             int hoverAlpha = (int) (50 * alpha);
-            Color hoverBg = new Color(accentColor.getRed(), accentColor.getGreen(),
-                    accentColor.getBlue(), hoverAlpha);
-            NanoVGRenderer.drawRect(x, entryY, width, CONFIG_ENTRY_HEIGHT, hoverBg);
+            Color hoverBg = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), hoverAlpha);
+            context.fill(ix, iy, ix + iwidth, iy + CONFIG_ENTRY_HEIGHT, hoverBg.getRGB());
         }
 
         String displayText = namingNewConfig ? (newConfigName.isEmpty() ? "_" : newConfigName) : "+ New";
-
-        float newEntryFontSize = 8f;
-        float newEntryTextX = Math.round(x + 4f);
-        float newEntryTextY = Math.round(entryY + (CONFIG_ENTRY_HEIGHT - newEntryFontSize) / 2f);
-        NanoVGRenderer.drawText(displayText, newEntryTextX, newEntryTextY, newEntryFontSize, textColor);
-
-        if (namingNewConfig && System.currentTimeMillis() % 1000 < 500) {
-            float cursorX = x + 4f + NanoVGRenderer.getTextWidth(newConfigName, 8f);
-            NanoVGRenderer.drawRect(cursorX, entryY + 2f, 1f, 10f, textColor);
-        }
+        int newEntryTextX = ix + 4;
+        int newEntryTextY = iy + (CONFIG_ENTRY_HEIGHT - 8) / 2;
+        context.drawText(MinecraftClient.getInstance().textRenderer, displayText, newEntryTextX, newEntryTextY, textColor, false);
     }
 
     private boolean isMouseOver(double mouseX, double mouseY, float x, float y, float width, float height) {
@@ -215,26 +151,6 @@ public class ConfigPanel {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button != 0 && button != 1)
             return false;
-
-        if (button == 0 && isMouseOver(mouseX, mouseY, x + width - 28f, y, 14f, HEADER_HEIGHT)) {
-            if (selectedConfig != null) {
-                ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
-                if (pm != null) {
-                    pm.loadProfile(selectedConfig);
-                }
-            }
-            return true;
-        }
-
-        if (button == 0 && isMouseOver(mouseX, mouseY, x + width - 16f, y, 12f, HEADER_HEIGHT)) {
-            ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
-            if (pm != null) {
-                String saveName = selectedConfig != null ? selectedConfig : "quicksave";
-                pm.saveProfile(saveName, true);
-                refreshConfigs();
-            }
-            return true;
-        }
 
         if (isMouseOver(mouseX, mouseY, x, y, width, HEADER_HEIGHT)) {
             if (button == 1) {
@@ -261,26 +177,6 @@ public class ConfigPanel {
                 if (button == 0) {
                     selectedConfig = config.name;
                     deleteConfirmConfig = null;
-                } else if (button == 1) {
-                    boolean isAlreadyConfirming = config.name.equals(deleteConfirmConfig)
-                            && System.currentTimeMillis() - deleteConfirmTime < DELETE_CONFIRM_TIMEOUT;
-
-                    if (isAlreadyConfirming) {
-                        ProfileManager pm = SilkClient.INSTANCE.getProfileManager();
-                        if (pm != null) {
-                            File profileFile = new File(pm.getProfileDir(), config.name + ".json");
-                            if (profileFile.delete()) {
-                                if (config.name.equals(selectedConfig)) {
-                                    selectedConfig = null;
-                                }
-                                deleteConfirmConfig = null;
-                                refreshConfigs();
-                            }
-                        }
-                    } else {
-                        deleteConfirmConfig = config.name;
-                        deleteConfirmTime = System.currentTimeMillis();
-                    }
                 }
                 return true;
             }
