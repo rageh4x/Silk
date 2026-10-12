@@ -18,8 +18,13 @@ public final class ClickGUIModule extends Module {
 
     @Override
     public void onEnable() {
-        if (mc.currentScreen == null) {
-            mc.setScreen(new NewClickGUI());
+        try {
+            if (mc.currentScreen == null) {
+                mc.setScreen(new NewClickGUI());
+            }
+        } catch (Exception e) {
+            // Android par agar NanoVG load na ho toh crash hone se bachane ke liye try-catch
+            System.err.println("ClickGUI open nahi ho saka: " + e.getMessage());
         }
         setEnabled(false);
     }
