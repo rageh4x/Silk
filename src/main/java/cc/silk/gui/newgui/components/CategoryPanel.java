@@ -366,4 +366,4 @@ public class CategoryPanel {
             settingsPanel.renderGlow(context, alpha);
         }
     }
-            }
+                }
