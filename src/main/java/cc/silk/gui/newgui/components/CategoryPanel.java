@@ -2,9 +2,9 @@ package cc.silk.gui.newgui.components;
 
 import cc.silk.module.Category;
 import cc.silk.module.Module;
-import cc.silk.utils.render.nanovg.NanoVGRenderer;
 import cc.silk.utils.render.GuiGlowHelper;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.MinecraftClient;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -84,14 +84,13 @@ public class CategoryPanel {
             if (collapseProgress < 0f)
                 collapseProgress = 0f;
         }
-
     }
 
     public void setSearchQuery(String query) {
         this.searchQuery = query.toLowerCase();
     }
 
-    public void render(int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
+    public void render(DrawContext context, int mouseX, int mouseY, float alpha, float scale, int centerX, int centerY) {
         int visibleCount = 0;
         for (ModuleButton button : moduleButtons) {
             if (button.getSearchAlpha() > 0.01f) {
@@ -109,35 +108,30 @@ public class CategoryPanel {
         float transparency = cc.silk.module.modules.client.ClientSettingsModule.getGuiTransparency();
         int panelAlpha = (int) (255 * alpha * (1f - transparency));
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
-        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(),
-                panelAlpha);
-        Color borderColor = new Color(40, 40, 46, panelAlpha);
+        Color headerColor = new Color(HEADER_COLOR.getRed(), HEADER_COLOR.getGreen(), HEADER_COLOR.getBlue(), panelAlpha);
 
-        NanoVGRenderer.drawRoundedRect(x, y, width, totalHeight, CORNER_RADIUS, panelBg);
-        NanoVGRenderer.drawRoundedRectOutline(x, y, width, totalHeight, CORNER_RADIUS, 1f, borderColor);
+        int ix = (int) x;
+        int iy = (int) y;
+        int iwidth = width;
 
-        NanoVGRenderer.drawRoundedRect(x, y, width, HEADER_HEIGHT, CORNER_RADIUS, headerColor);
-        NanoVGRenderer.drawRect(x, y + HEADER_HEIGHT - CORNER_RADIUS, width, CORNER_RADIUS, headerColor);
+        context.fill(ix, iy, ix + iwidth, iy + totalHeight, panelBg.getRGB());
+        context.fill(ix, iy, ix + iwidth, iy + HEADER_HEIGHT, headerColor.getRGB());
 
         String categoryName = category.getName();
-        float fontSize = 10f;
-        float iconSize = CategoryIcon.getIconSize();
-        float iconX = Math.round(x + 6);
-        float iconY = Math.round(y + (HEADER_HEIGHT - iconSize) / 2f);
-        float textX = Math.round(x + 6 + iconSize + 4);
-        float textY = Math.round(y + (HEADER_HEIGHT - fontSize) / 2f);
+        int iconSize = CategoryIcon.getIconSize();
+        int iconX = ix + 6;
+        int iconY = iy + (HEADER_HEIGHT - iconSize) / 2;
+        int textX = ix + 6 + iconSize + 4;
+        int textY = iy + (HEADER_HEIGHT - 8) / 2;
 
         Color accentColor = getAccentColor();
-        Color iconColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
-                (int) (255 * alpha));
-        Color textColor = new Color(240, 240, 245, (int) (255 * alpha));
+        Color iconColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), (int) (255 * alpha));
+        int textColor = new Color(240, 240, 245, (int) (255 * alpha)).getRGB();
 
-        CategoryIcon.drawIcon(category, iconX, iconY, iconColor);
-        NanoVGRenderer.drawText(categoryName, textX, textY, fontSize, textColor);
+        CategoryIcon.drawIcon(context, category, iconX, iconY, iconColor);
+        context.drawText(MinecraftClient.getInstance().textRenderer, categoryName, textX, textY, textColor, false);
 
         if (expandProgress > 0.01f) {
-            NanoVGRenderer.scissor(x, y + HEADER_HEIGHT, width, moduleAreaHeight);
-
             float moduleY = y + HEADER_HEIGHT - scrollOffset;
             float moduleAlpha = alpha * expandProgress;
 
@@ -158,8 +152,6 @@ public class CategoryPanel {
 
             hoveredModule = newHoveredModule;
 
-            NanoVGRenderer.resetScissor();
-
             if (scrollable && visibleCount > MAX_VISIBLE_MODULES) {
                 float scrollbarHeight = ((float) displayedModules / visibleCount) * moduleAreaHeight;
                 float scrollbarY = y + HEADER_HEIGHT
@@ -167,16 +159,16 @@ public class CategoryPanel {
 
                 Color scrollbarColor = new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(),
                         (int) (150 * alpha * expandProgress));
-                NanoVGRenderer.drawRoundedRect(x + width - SCROLLBAR_WIDTH - 2, scrollbarY, SCROLLBAR_WIDTH,
-                        scrollbarHeight, SCROLLBAR_WIDTH / 2f, scrollbarColor);
+                context.fill((int)(x + width - SCROLLBAR_WIDTH - 2), (int)scrollbarY, 
+                             (int)(x + width - 2), (int)(scrollbarY + scrollbarHeight), scrollbarColor.getRGB());
             }
         }
     }
 
-    public void renderSettingsPanel(int mouseX, int mouseY, float alpha, int screenWidth, int screenHeight) {
+    public void renderSettingsPanel(DrawContext context, int mouseX, int mouseY, float alpha, int screenWidth, int screenHeight) {
         if (settingsPanel != null && settingsPanel.isAnimating()) {
             settingsPanel.setScreenDimensions(screenWidth, screenHeight);
-            settingsPanel.render(mouseX, mouseY, alpha);
+            settingsPanel.render(context, mouseX, mouseY, alpha);
         }
     }
 
@@ -374,4 +366,4 @@ public class CategoryPanel {
             settingsPanel.renderGlow(context, alpha);
         }
     }
-}
+            }
