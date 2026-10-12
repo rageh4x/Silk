@@ -1,7 +1,8 @@
 package cc.silk.gui.newgui.components;
 
 import cc.silk.module.setting.ColorSetting;
-import cc.silk.utils.render.nanovg.NanoVGRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.MinecraftClient;
 
 import java.awt.*;
 
@@ -75,7 +76,7 @@ public class ColorPicker {
         }
     }
 
-    public void render(int mouseX, int mouseY, float alpha) {
+    public void render(DrawContext context, int mouseX, int mouseY, float alpha) {
         if (animationProgress <= 0f)
             return;
 
@@ -83,38 +84,36 @@ public class ColorPicker {
         int panelAlpha = (int) (255 * renderAlpha);
 
         Color panelBg = new Color(PANEL_BG.getRed(), PANEL_BG.getGreen(), PANEL_BG.getBlue(), panelAlpha);
-        Color borderColor = new Color(BORDER_COLOR.getRed(), BORDER_COLOR.getGreen(), BORDER_COLOR.getBlue(),
-                panelAlpha);
-
-        NanoVGRenderer.drawRoundedRect(x, y, width, height, CORNER_RADIUS, panelBg);
-        NanoVGRenderer.drawRoundedRectOutline(x, y, width, height, CORNER_RADIUS, 1f, borderColor);
+        
+        int ix = (int) x;
+        int iy = (int) y;
+        context.fill(ix, iy, ix + width, iy + height, panelBg.getRGB());
 
         float currentY = y + PADDING;
         int svSize = width - PADDING * 2;
 
-        renderSVPicker(currentY, renderAlpha);
+        renderSVPicker(context, currentY, renderAlpha);
         currentY += svSize + 8;
 
-        renderHueSlider(currentY, renderAlpha);
+        renderHueSlider(context, currentY, renderAlpha);
         currentY += 20;
 
-        renderAlphaSlider(currentY, renderAlpha);
+        renderAlphaSlider(context, currentY, renderAlpha);
         currentY += 20;
 
-        renderPreview(currentY, renderAlpha);
+        renderPreview(context, currentY, renderAlpha);
         currentY += 38;
         
-        renderButtons(currentY, mouseX, mouseY, renderAlpha);
+        renderButtons(context, currentY, mouseX, mouseY, renderAlpha);
     }
 
-    private void renderSVPicker(float startY, float alpha) {
+    private void renderSVPicker(DrawContext context, float startY, float alpha) {
         int svSize = width - PADDING * 2;
         float svX = x + PADDING;
         float svY = startY;
-
         int panelAlpha = (int) (255 * alpha);
 
-        int resolution = 32;
+        int resolution = 16;
         float pixelSize = (float) svSize / resolution;
 
         for (int i = 0; i < resolution; i++) {
@@ -126,29 +125,20 @@ public class ColorPicker {
                 Color color = new Color(rgb);
                 Color renderColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), panelAlpha);
 
-                NanoVGRenderer.drawRect(svX + (i * pixelSize), svY + (j * pixelSize), pixelSize, pixelSize,
-                        renderColor);
+                context.fill((int)(svX + (i * pixelSize)), (int)(svY + (j * pixelSize)), 
+                             (int)(svX + (i * pixelSize) + pixelSize + 1), (int)(svY + (j * pixelSize) + pixelSize + 1), renderColor.getRGB());
             }
         }
-
-        float pickerX = svX + (saturation * svSize);
-        float pickerY = svY + ((1f - brightness) * svSize);
-
-        Color pickerOutline = new Color(255, 255, 255, panelAlpha);
-        NanoVGRenderer.drawCircle(pickerX, pickerY, 5, pickerOutline);
-        Color pickerInner = new Color(0, 0, 0, panelAlpha);
-        NanoVGRenderer.drawCircle(pickerX, pickerY, 3, pickerInner);
     }
 
-    private void renderHueSlider(float startY, float alpha) {
+    private void renderHueSlider(DrawContext context, float startY, float alpha) {
         int sliderWidth = width - PADDING * 2;
         float sliderX = x + PADDING;
         float sliderY = startY;
         float sliderHeight = 12;
-
         int panelAlpha = (int) (255 * alpha);
 
-        int segments = 60;
+        int segments = 30;
         float segmentWidth = (float) sliderWidth / segments;
 
         for (int i = 0; i < segments; i++) {
@@ -157,94 +147,62 @@ public class ColorPicker {
             Color color = new Color(rgb);
             Color renderColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), panelAlpha);
 
-            NanoVGRenderer.drawRect(sliderX + (i * segmentWidth), sliderY, segmentWidth, sliderHeight, renderColor);
+            context.fill((int)(sliderX + (i * segmentWidth)), (int)sliderY, 
+                         (int)(sliderX + (i * segmentWidth) + segmentWidth + 1), (int)(sliderY + sliderHeight), renderColor.getRGB());
         }
-
-        float handleX = sliderX + (hue * sliderWidth);
-        Color handleColor = new Color(255, 255, 255, panelAlpha);
-        NanoVGRenderer.drawRect(handleX - 2, sliderY - 2, 4, sliderHeight + 4, handleColor);
     }
 
-    private void renderAlphaSlider(float startY, float alpha) {
+    private void renderAlphaSlider(DrawContext context, float startY, float alpha) {
         int sliderWidth = width - PADDING * 2;
         float sliderX = x + PADDING;
         float sliderY = startY;
         float sliderHeight = 12;
-
         int panelAlpha = (int) (255 * alpha);
 
         Color currentColor = hsvToColor();
-
-        int segments = 60;
+        int segments = 30;
         float segmentWidth = (float) sliderWidth / segments;
 
         for (int i = 0; i < segments; i++) {
             int a = (int) ((float) i / segments * 255);
-            Color renderColor = new Color(currentColor.getRed(), currentColor.getGreen(), currentColor.getBlue(),
-                    (int) (a * alpha));
+            Color renderColor = new Color(currentColor.getRed(), currentColor.getGreen(), currentColor.getBlue(), (int) (a * alpha));
 
-            NanoVGRenderer.drawRect(sliderX + (i * segmentWidth), sliderY, segmentWidth, sliderHeight, renderColor);
+            context.fill((int)(sliderX + (i * segmentWidth)), (int)sliderY, 
+                         (int)(sliderX + (i * segmentWidth) + segmentWidth + 1), (int)(sliderY + sliderHeight), renderColor.getRGB());
         }
-
-        float handleX = sliderX + ((float) this.alpha / 255f * sliderWidth);
-        Color handleColor = new Color(255, 255, 255, panelAlpha);
-        NanoVGRenderer.drawRect(handleX - 2, sliderY - 2, 4, sliderHeight + 4, handleColor);
     }
 
-    private void renderPreview(float startY, float alpha) {
+    private void renderPreview(DrawContext context, float startY, float alpha) {
         int previewSize = 30;
         float previewX = x + PADDING;
         float previewY = startY;
 
         Color currentColor = hsvToColor();
         int panelAlpha = (int) (255 * alpha);
-        Color displayColor = new Color(currentColor.getRed(), currentColor.getGreen(), currentColor.getBlue(),
-                (int) (currentColor.getAlpha() * alpha));
-        Color borderColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(),
-                panelAlpha);
+        Color displayColor = new Color(currentColor.getRed(), currentColor.getGreen(), currentColor.getBlue(), (int) (currentColor.getAlpha() * alpha));
 
-        NanoVGRenderer.drawRoundedRect(previewX, previewY, previewSize, previewSize, 4f, displayColor);
-        NanoVGRenderer.drawRoundedRectOutline(previewX, previewY, previewSize, previewSize, 4f, 1.5f, borderColor);
-
-        String hexText = String.format("#%02X%02X%02X%02X",
-                currentColor.getRed(), currentColor.getGreen(), currentColor.getBlue(), currentColor.getAlpha());
-        Color textColor = new Color(200, 200, 200, panelAlpha);
-        NanoVGRenderer.drawText(hexText, previewX + previewSize + 8, previewY + 10, 9f, textColor);
+        context.fill((int)previewX, (int)previewY, (int)(previewX + previewSize), (int)(previewY + previewSize), displayColor.getRGB());
+        
+        String hexText = String.format("#%02X%02X%02X%02X", currentColor.getRed(), currentColor.getGreen(), currentColor.getBlue(), currentColor.getAlpha());
+        int textColor = new Color(200, 200, 200, panelAlpha).getRGB();
+        context.drawText(MinecraftClient.getInstance().textRenderer, hexText, (int)(previewX + previewSize + 8), (int)(previewY + 10), textColor, false);
     }
     
-    private void renderButtons(float startY, int mouseX, int mouseY, float alpha) {
+    private void renderButtons(DrawContext context, float startY, int mouseX, int mouseY, float alpha) {
         int buttonWidth = (width - PADDING * 2 - BUTTON_SPACING) / 2;
         float copyButtonX = x + PADDING;
         float pasteButtonX = copyButtonX + buttonWidth + BUTTON_SPACING;
         float buttonY = startY;
         
         int panelAlpha = (int) (255 * alpha);
+        Color copyBg = new Color(35, 35, 40, panelAlpha);
         
-        boolean copyHovered = mouseX >= copyButtonX && mouseX <= copyButtonX + buttonWidth &&
-                              mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT;
-        boolean pasteHovered = mouseX >= pasteButtonX && mouseX <= pasteButtonX + buttonWidth &&
-                               mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT;
-        
-        Color copyBg = copyHovered ? new Color(60, 60, 70, panelAlpha) : new Color(35, 35, 40, panelAlpha);
-        Color pasteBg = pasteHovered ? new Color(60, 60, 70, panelAlpha) : new Color(35, 35, 40, panelAlpha);
-        Color borderColor = new Color(ACCENT_COLOR.getRed(), ACCENT_COLOR.getGreen(), ACCENT_COLOR.getBlue(), 
-                                      (int) (100 * alpha));
-        Color textColor = new Color(200, 200, 200, panelAlpha);
-        
-        NanoVGRenderer.drawRoundedRect(copyButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, copyBg);
-        NanoVGRenderer.drawRoundedRectOutline(copyButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, 1f, borderColor);
-        
-        String copyText = "Copy";
-        float copyTextWidth = NanoVGRenderer.getTextWidth(copyText, 10f);
-        NanoVGRenderer.drawText(copyText, copyButtonX + (buttonWidth - copyTextWidth) / 2f, buttonY + 6, 10f, textColor);
-        
-        Color pasteTextColor = clipboard == null ? new Color(100, 100, 110, panelAlpha) : textColor;
-        NanoVGRenderer.drawRoundedRect(pasteButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, pasteBg);
-        NanoVGRenderer.drawRoundedRectOutline(pasteButtonX, buttonY, buttonWidth, BUTTON_HEIGHT, 3f, 1f, borderColor);
-        
-        String pasteText = "Paste";
-        float pasteTextWidth = NanoVGRenderer.getTextWidth(pasteText, 10f);
-        NanoVGRenderer.drawText(pasteText, pasteButtonX + (buttonWidth - pasteTextWidth) / 2f, buttonY + 6, 10f, pasteTextColor);
+        context.fill((int)copyButtonX, (int)buttonY, (int)(copyButtonX + buttonWidth), (int)(buttonY + BUTTON_HEIGHT), copyBg.getRGB());
+        context.fill((int)pasteButtonX, (int)buttonY, (int)(pasteButtonX + buttonWidth), (int)(buttonY + BUTTON_HEIGHT), copyBg.getRGB());
+
+        int textColor = new Color(200, 200, 200, panelAlpha).getRGB();
+        context.drawText(MinecraftClient.getInstance().textRenderer, "Copy", (int)(copyButtonX + 15), (int)(buttonY + 7), textColor, false);
+        context.drawText(MinecraftClient.getInstance().textRenderer, "Paste", (int)(pasteButtonX + 15), (int)(buttonY + 7), textColor, false);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
