@@ -4,13 +4,11 @@ import cc.silk.module.Category;
 import cc.silk.module.Module;
 import cc.silk.gui.newgui.components.CategoryPanel;
 import cc.silk.gui.newgui.components.ConfigPanel;
-import cc.silk.gui.FriendsScreen;
 import cc.silk.gui.effects.SnowEffect;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,17 +23,6 @@ public class NewClickGUI extends Screen {
     private long lastFrameTime = System.currentTimeMillis();
     
     private final SnowEffect snowEffect = new SnowEffect();
-
-    private String searchQuery = "";
-    private boolean searchFocused = false;
-    private float searchExpandProgress = 0f;
-    private float searchBarY = 0;
-    private static final int SEARCH_BAR_WIDTH = 300;
-    private static final int SEARCH_ICON_SIZE = 35;
-
-    private static final int FRIENDS_BUTTON_SIZE = 35;
-    private float friendsButtonX = 0;
-    private float friendsButtonY = 0;
 
     public NewClickGUI() {
         super(Text.literal("ClickGUI"));
@@ -94,12 +81,15 @@ public class NewClickGUI extends Screen {
         try {
             for (CategoryPanel panel : panels) {
                 panel.update(deltaTime);
-                panel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
+                // DrawContext yahan pass kiya gaya hai:
+                panel.render(context, mouseX, mouseY, alpha, scale, centerX, centerY);
+                panel.renderSettingsPanel(context, mouseX, mouseY, alpha, width, height);
             }
 
             if (configPanel != null) {
                 configPanel.update(deltaTime);
-                configPanel.render(mouseX, mouseY, alpha, scale, centerX, centerY);
+                // DrawContext yahan bhi pass kiya gaya hai:
+                configPanel.render(context, mouseX, mouseY, alpha, scale, centerX, centerY);
             }
         } catch (Exception e) {
             // Error handling taaki game crash na ho
